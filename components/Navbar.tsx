@@ -1,3 +1,11 @@
-export function Navbar() {
-  <></>;
+"use client";
+
+import styles from "./Navbar.module.css";
+
+export default function Navbar() {
+  return (
+    <div>
+
+    </div>
+  )
 }

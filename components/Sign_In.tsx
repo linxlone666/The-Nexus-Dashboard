@@ -2,12 +2,6 @@
 
 import { useState } from "react";
 
-const benefits = [
-  "Live cameras and incident response",
-  "Access control and smart alarms",
-  "Parking and connected systems",
-];
-
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -27,19 +21,16 @@ export default function SignIn() {
             Monitor your spaces, systems, and safety from a single operations
             dashboard.
           </p>
-          <ul className="mt-5 text-[13px] text-[#707070]">
-            {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className="h-2.5 w-2.5 border border-[#777]"
-                />
-                {benefit}
-              </li>
-            ))}
-          </ul>
+          <p className="text-[13px] text-[#707070] mt-5">
+            Live cameras and incident response
+          </p>
+          <p className="text-[13px] text-[#707070]">
+            Access control and smart alarms
+          </p>
+          <p className="text-[13px] text-[#707070]">
+            Parking and connected systems
+          </p>
         </div>
-
         <p className="text-[11px] text-[#8a8a8a]">
           Unified operations / The Nexus Dashboard
         </p>

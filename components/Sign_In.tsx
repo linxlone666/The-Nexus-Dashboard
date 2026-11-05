@@ -21,14 +21,14 @@ export default function SignIn() {
             Monitor your spaces, systems, and safety from a single operations
             dashboard.
           </p>
-          <p className="text-[13px] text-[#707070] mt-5">
-            Live cameras and incident response
+          <p className="text-[13px] text-[#707070] mt-5 flex">
+            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Live cameras and incident response
           </p>
-          <p className="text-[13px] text-[#707070]">
-            Access control and smart alarms
+          <p className="text-[13px] text-[#707070] mt-5 flex">
+            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Access control and smart alarms
           </p>
-          <p className="text-[13px] text-[#707070]">
-            Parking and connected systems
+          <p className="text-[13px] text-[#707070] mt-5 flex">
+            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Parking and connected systems
           </p>
         </div>
         <p className="text-[11px] text-[#8a8a8a]">

@@ -88,7 +88,7 @@ export default function SignIn() {
               <label className="flex items-center gap-1.5 text-[#555]">
                 <input
                   type="checkbox"
-                  className="h-3 w-3 rounded-none border-[#858585] text-[#3f3f3f] focus:ring-[#555]"
+                  className="h-3 w-3 rounded-none border-[#858585] text-[#3f3f3f] focus:ring-[#555] mb-0.5"
                 />
                 Remember me
               </label>
@@ -120,7 +120,7 @@ export default function SignIn() {
             Continue with company SSO
           </button>
           <p className="mt-4 text-[10px] text-[#8a8a8a]">
-            Need an account? Contact your administrator.
+            Need an account?, Contact your administrator.
           </p>
 
           <nav
@@ -130,11 +130,11 @@ export default function SignIn() {
             <a href="#privacy" className="hover:text-[#444] hover:underline">
               Privacy policy
             </a>
-            <span aria-hidden="true">&middot;</span>
+            <span>&middot;</span>
             <a href="#terms" className="hover:text-[#444] hover:underline">
               Terms
             </a>
-            <span aria-hidden="true">&middot;</span>
+            <span>&middot;</span>
             <a href="#help" className="hover:text-[#444] hover:underline">
               Help
             </a>

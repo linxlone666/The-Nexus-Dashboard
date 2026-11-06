@@ -1,5 +1,5 @@
 export default function AdminMainCardRecent() {
-  const box = "col-span-1 gap-1 w-full ";
+  const box = "col-span-1 pb-2 gap-1 w-full ";
   return (
     <div className=" grid grid-cols-1 align-bottom border border-gray-300 h-full bg-white text-left p-4 rounded-lg shadow-md  w-full  ">
       <div className=" grid grid-cols-1 gap-1 text-left ">

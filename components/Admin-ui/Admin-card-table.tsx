@@ -16,25 +16,25 @@ import {
 export default function AdminMainCardTable() {
   const text_native_select =
     "text-left text-blue-500 hover:text-blue-700 cursor-pointer";
+  const text_th = "text-3xl font-bold text-gray-800";
   return (
     <div className="flex items-center w-full py-2">
       <div className="col-span-3  gap-4 p-3 w-full">
         <div className="border border-gray-300 h-full bg-white text-left p-4 rounded-lg shadow-md ">
           <div className="grid grid-cols-2 gap-4">
-            <h2>Users and access</h2>
-            <h3 className="text-right text-blue-500 hover:text-blue-700 cursor-pointer">
-              View all &gt;
-            </h3>
+            <h1 className=" text-2xl font-bold">Users</h1>
           </div>
           {/* search input */}
 
-          <div className="flex flex-nowrap gap-2 mt-2">
-            <input
-              className="rounded-md"
-              type="text"
-              id="search"
-              placeholder="Search users..."
-            />
+          <div className="flex  gap-2 mt-2">
+            <label htmlFor="" className=" flex-column-reverse">
+              <input
+                className="rounded-md"
+                type="text"
+                id="search"
+                placeholder="Search users..."
+              />
+            </label>
             <div>
               <NativeSelect className="text-center text-blue-500 hover:text-blue-700 cursor-pointer">
                 <NativeSelectOption
@@ -57,18 +57,57 @@ export default function AdminMainCardTable() {
                 </NativeSelectOption>
               </NativeSelect>
             </div>
+
+            <div>
+              <NativeSelect className="text-center text-blue-500 hover:text-blue-700 cursor-pointer">
+                <NativeSelectOption
+                  className={text_native_select}
+                  value="option1"
+                >
+                  Role All
+                </NativeSelectOption>
+                <NativeSelectOption
+                  className={text_native_select}
+                  value="option1"
+                >
+                  User
+                </NativeSelectOption>
+                <NativeSelectOption
+                  className={text_native_select}
+                  value="option2"
+                >
+                  Admin
+                </NativeSelectOption>
+                <NativeSelectOption
+                  className={text_native_select}
+                  value="option2"
+                >
+                  Super Admin
+                </NativeSelectOption>
+              </NativeSelect>
+            </div>
           </div>
 
           {/* table */}
           <div className="w-full mt-3">
             <TableRoot>
               <TableHeader>
-                <TableRow className="bg-background-soft-50 [&>th]:text-text-50">
-                  <TableHead scope="col">Name / Email</TableHead>
-                  <TableHead scope="col">Role</TableHead>
-                  <TableHead scope="col">Status</TableHead>
-                  <TableHead scope="col">Last active</TableHead>
-                  <TableHead scope="col">Action</TableHead>
+                <TableRow className="bg-background-soft-50 [&>th]:text-text-500 ">
+                  <TableHead scope="col" className={text_th}>
+                    Name / Email
+                  </TableHead>
+                  <TableHead scope="col" className={text_th}>
+                    Role
+                  </TableHead>
+                  <TableHead scope="col" className={text_th}>
+                    Status
+                  </TableHead>
+                  <TableHead scope="col" className={text_th}>
+                    Last active
+                  </TableHead>
+                  <TableHead scope="col" className={text_th}>
+                    Action
+                  </TableHead>
                 </TableRow>
               </TableHeader>
 

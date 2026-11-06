@@ -6,25 +6,28 @@ export default function AdminUI() {
     "border border-gray-300 h-10 bg-white text-black hover:bg-[#6BDEC1] hover:text-white";
   const bottom_In =
     "border border-gray-300 h-10 bg-[#138C80] text-white  hover:bg-[#6BDEC1] hover:text-black";
+
   return (
     <div className="flex flex-col items-center w-full py-2">
-      {/* Admin UI title */}
+      {/*  title  */}
+      <div className=" flex flex-nowrap justify-between border-b border-gray-300 w-full">
+        <h1 className="text-3xl font-bold m-0 p-4 ">NEXUS</h1>
+      </div>
+      {/* the second title  */}
       <div className=" flex gap-4 justify-between w-full p-6 ">
         <div className="flex flex-col items-left justify-center gap-2">
           <p className="text-sm font-medium text-gray-800">
-            NEXUS / SITE ADMINISTRATION
+            NEXUS / Admin / Users
           </p>
-          <h1 className="text-3xl font-bold text-gray-800">
-            Site administration
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
           <p className="text-sm font-medium text-gray-800">
-            Manage users, devices, and connected systems at Nexus Headquarters.
+            Manage user accounts, roles, permissions and project access.
           </p>
         </div>
         {/* Action buttons */}
         <div className="flex flex-nowrap gap-4 mt-1">
-          <Button className={bottom_Ex}>Export report</Button>
-          <Button className={bottom_In}>Invite user</Button>
+          <Button className={bottom_Ex}>Export users</Button>
+          <Button className={bottom_In}> + Add user</Button>
         </div>
       </div>
     </div>

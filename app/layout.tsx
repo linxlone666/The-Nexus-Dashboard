@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AdminUI from "@/components/Admin-ui/Admin-title";
-import AdminBody from "@/components/Admin-ui/Admin-card-top";
+import AdminTopCard from "@/components/Admin-ui/Admin-card-top";
 import AdminMainCardTable from "@/components/Admin-ui/Admin-card-table";
-import AdminMainCardRecent from "@/components/Admin-ui/Admin-card-Recent";
+import AdminMainCardDetails from "@/components/Admin-ui/Admin-card-Details";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,13 +28,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="flex flex-col min-h-screen">
           {children}
           <AdminUI />
-          <AdminBody />
           <div className="grid grid-cols-3 items-baseline">
             <div className="col-span-2">
+              <AdminTopCard />
               <AdminMainCardTable />
             </div>
             <div className="col-span-1">
-              <AdminMainCardRecent />
+              <AdminMainCardDetails />
             </div>
           </div>
         </div>

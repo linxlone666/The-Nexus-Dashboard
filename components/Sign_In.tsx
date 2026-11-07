@@ -2,12 +2,6 @@
 
 import { useState } from "react";
 
-const benefits = [
-  "Live cameras and incident response",
-  "Access control and smart alarms",
-  "Parking and connected systems",
-];
-
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -27,19 +21,16 @@ export default function SignIn() {
             Monitor your spaces, systems, and safety from a single operations
             dashboard.
           </p>
-          <ul className="mt-5 text-[13px] text-[#707070]">
-            {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className="h-2.5 w-2.5 border border-[#777]"
-                />
-                {benefit}
-              </li>
-            ))}
-          </ul>
+          <p className="text-[13px] text-[#707070] mt-5 flex">
+            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Live cameras and incident response
+          </p>
+          <p className="text-[13px] text-[#707070] mt-5 flex">
+            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Access control and smart alarms
+          </p>
+          <p className="text-[13px] text-[#707070] mt-5 flex">
+            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Parking and connected systems
+          </p>
         </div>
-
         <p className="text-[11px] text-[#8a8a8a]">
           Unified operations / The Nexus Dashboard
         </p>
@@ -97,7 +88,7 @@ export default function SignIn() {
               <label className="flex items-center gap-1.5 text-[#555]">
                 <input
                   type="checkbox"
-                  className="h-3 w-3 rounded-none border-[#858585] text-[#3f3f3f] focus:ring-[#555]"
+                  className="h-3 w-3 rounded-none border-[#858585] text-[#3f3f3f] focus:ring-[#555] mb-0.5"
                 />
                 Remember me
               </label>
@@ -129,7 +120,7 @@ export default function SignIn() {
             Continue with company SSO
           </button>
           <p className="mt-4 text-[10px] text-[#8a8a8a]">
-            Need an account? Contact your administrator.
+            Need an account?, Contact your administrator.
           </p>
 
           <nav
@@ -139,11 +130,11 @@ export default function SignIn() {
             <a href="#privacy" className="hover:text-[#444] hover:underline">
               Privacy policy
             </a>
-            <span aria-hidden="true">&middot;</span>
+            <span>&middot;</span>
             <a href="#terms" className="hover:text-[#444] hover:underline">
               Terms
             </a>
-            <span aria-hidden="true">&middot;</span>
+            <span>&middot;</span>
             <a href="#help" className="hover:text-[#444] hover:underline">
               Help
             </a>

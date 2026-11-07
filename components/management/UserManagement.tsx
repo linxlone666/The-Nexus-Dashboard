@@ -32,11 +32,11 @@ const initialUsers: User[] = [
 const permissions = [
   ["View Dashboard", "Main dashboard"],
   ["Access Projects", "Assigned projects"],
-  ["Manage Vendors", "Vendor information"],
-  ["Manage Integrations", "Data integrations"],
-  ["View Audit Logs", "System logs"],
-  ["Manage Users", "User accounts"],
-  ["Manage Settings", "Platform settings"],
+  ["Manage Vendors", "Vendor information", true],
+  ["Manage Integrations", "Data integrations", true],
+  ["View Audit Logs", "System logs", true],
+  ["Manage Users", "User accounts", true],
+  ["Manage Settings", "Platform settings", true],
 ] as const;
 
 const projects = ["Retail Analytics", "Customer Insights", "Sales Dashboard", "Marketing Data"];
@@ -50,6 +50,7 @@ function Status({ status }: { status: User["status"] }) {
 }
 
 export function UserManagement({ role: managementRole = "Admin" }: { role?: ManagementRole }) {
+  const canManagePlatform = managementRole === "Superadmin";
   const [users, setUsers] = useState(initialUsers);
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("All");
@@ -76,6 +77,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
     (status === "All" || user.status === status) &&
     (projectAccess === "All" || (projectAccess === "Assigned" ? user.projects > 0 : user.projects === 0)),
   );
+  const canEditSelected = selected !== null && (canManagePlatform || selected.role === "User");
   const allVisibleChecked = visible.length > 0 && visible.every((user) => checked.includes(user.email));
 
   function openUser(user: User) {
@@ -101,7 +103,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
       return;
     }
     const user: User = {
-      name, email, role: data.get("role") === "Admin" ? "Admin" : "User",
+      name, email, role: canManagePlatform && data.get("role") === "Admin" ? "Admin" : "User",
       projects: 0, status: "Pending", lastActive: "—",
     };
     setUsers((current) => [...current, user]);
@@ -147,7 +149,11 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
         <div>
           <p>NEXUS / {managementRole} / Users</p>
           <h1>User Management</h1>
-          <div className={styles.muted}>Manage user accounts, roles, permissions and project access.</div>
+          <div className={styles.muted}>
+            {canManagePlatform
+              ? "Manage user accounts, roles, permissions and project access."
+              : "Manage standard users and their access to existing projects."}
+          </div>
         </div>
         <div className={styles.actions}>
           <button type="button" onClick={exportUsers} disabled={!checked.length && !visible.length}>Export users</button>
@@ -236,15 +242,16 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                 <fieldset className={styles.permissionGroup}>
                   <legend>System Permissions</legend>
                   <p className={styles.muted}>Select what this user can access in the system.</p>
-                  {permissions.map(([name, description]) => (
+                  {permissions.map(([name, description, platformOnly]) => (
                     <label key={name} className={styles.permission}>
-                      <span><input type="checkbox" checked={draft.permissions.includes(name)} onChange={(event) => {
+                      <span><input type="checkbox" checked={draft.permissions.includes(name)}
+                        disabled={!canEditSelected || (platformOnly && !canManagePlatform)} onChange={(event) => {
                         const enabled = event.target.checked;
                         setDraft((current) => ({ ...current, permissions: enabled
                           ? [...current.permissions, name] : current.permissions.filter((item) => item !== name) }));
                         setMessage("");
                       }} />{name}</span>
-                      <small>{description}</small>
+                      <small>{platformOnly && !canManagePlatform ? "Superadmin only" : description}</small>
                     </label>
                   ))}
                 </fieldset>
@@ -258,16 +265,16 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                       value={projectQuery} onChange={(event) => setProjectQuery(event.target.value)} />
                     {projects.filter((project) => project.toLowerCase().includes(projectQuery.trim().toLowerCase())).map((project) => (
                       <div className={styles.permission} key={project}>
-                        <label><input type="checkbox" checked={Boolean(draft.projects[project])}
+                        <label><input type="checkbox" checked={Boolean(draft.projects[project])} disabled={!canEditSelected}
                           onChange={(event) => setProject(project, event.target.checked ? "Viewer" : "")} />{project}</label>
                         <select aria-label={`Access level for ${project}`} value={draft.projects[project] || "Viewer"}
-                          disabled={!draft.projects[project]} onChange={(event) => setProject(project, event.target.value)}>
+                          disabled={!canEditSelected || !draft.projects[project]} onChange={(event) => setProject(project, event.target.value)}>
                           <option>Viewer</option><option>Editor</option>
                         </select>
                       </div>
                     ))}
                   </fieldset>
-                  <div className={styles.actions}>
+                  {canEditSelected ? <div className={styles.actions}>
                     <button type="button" onClick={() => { setDraft(accessByEmail[selected.email] ?? emptyAccess); setMessage(""); }}>Cancel</button>
                     <button type="button" className={styles.primary} onClick={() => {
                       setAccessByEmail((current) => ({ ...current, [selected.email]: draft }));
@@ -277,7 +284,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                       });
                       setMessage("Permissions saved in this preview.");
                     }}>Save Permissions</button>
-                  </div>
+                  </div> : <p className={styles.muted}>Administrator accounts can be edited by Superadmin.</p>}
                 </>
               )}
             </>
@@ -291,7 +298,9 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
           <h2 id="add-user-heading">Add User</h2>
           <label>Name<input name="name" required autoComplete="name" /></label>
           <label>Email<input name="email" type="email" required autoComplete="email" /></label>
-          <label>Role<select name="role"><option>User</option><option>Admin</option></select></label>
+          {canManagePlatform && (
+            <label>Role<select name="role"><option>User</option><option>Admin</option></select></label>
+          )}
           {inviteError && <p role="alert">{inviteError}</p>}
           <div className={styles.actions}>
             <button type="button" onClick={() => inviteDialog.current?.close()}>Cancel</button>

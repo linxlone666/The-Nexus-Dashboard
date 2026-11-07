@@ -11,10 +11,10 @@ import styles from "./management.module.css";
 
 const overview = {
   Admin: {
-    description: "Monitor user access and manage projects in your workspace.",
+    description: "Manage standard users and review existing projects in your workspace.",
     links: [
-      ["Users", "User Management", "Review accounts, roles, and permissions."],
-      ["Projects", "Project Management", "Review project status in your workspace."],
+      ["Users", "User Management", "Manage standard users and their project access."],
+      ["Projects", "Project Management", "Browse existing projects, organizations, and onboarding status."],
     ],
     attention: "Access requests awaiting review",
     detail: "10 requests are pending in the sample workspace.",

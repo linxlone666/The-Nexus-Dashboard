@@ -5,12 +5,15 @@ import { auditCategories, useAuditLog } from "./audit-log";
 import { ManagementMetrics } from "./ManagementMetrics";
 import { ManagementShell } from "./ManagementShell";
 import type { ManagementRole } from "./ManagementShell";
+import { auditTimeZones, useManagementPreferences } from "./management-preferences";
 import styles from "./management.module.css";
-
-const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 export function AuditLogs({ role }: { role: ManagementRole }) {
   const activity = useAuditLog();
+  const { timeZone } = useManagementPreferences(role);
+  const timeFormat = new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium", timeStyle: "short", timeZone: timeZone === "local" ? undefined : timeZone,
+  });
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [outcome, setOutcome] = useState("All");
@@ -39,6 +42,7 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
 
       <section className={styles.card} aria-labelledby="audit-events">
         <h2 id="audit-events">Activity history</h2>
+        <p className={styles.muted}>Time zone: {auditTimeZones[timeZone]}</p>
         <div className={`${styles.userFilters} ${styles.projectFilters}`}>
           <input type="search" aria-label="Search audit activity" placeholder="Search actions, targets, or roles..."
             value={query} onChange={(event) => setQuery(event.target.value)} />

@@ -3,6 +3,8 @@
   --surface: #fff;
   --ink: #163236;
   --muted: #506769;
+  --table-padding-block: 9px;
+  --list-padding-block: 7px;
   --line: #dce6e4;
   --accent: #08786d;
   --tint: #e0f0eb;
@@ -18,6 +20,8 @@
   line-height: 1.45;
 }
 
+
+.shell[data-density="compact"] { --table-padding-block: 5px; --list-padding-block: 3px; }
 
 .header {
   grid-area: header;
@@ -128,12 +132,12 @@ a.primary { display: inline-flex; align-items: center; min-height: 35px; border:
 .tableScroll { overflow-x: auto; }
 .table { width: 100%; border-collapse: collapse; text-align: left; }
 .table thead { background: #ebf5f1; }
-.table th, .table td { padding: 9px 10px; border-bottom: 1px solid #edf1f0; }
+.table th, .table td { padding: var(--table-padding-block) 10px; border-bottom: 1px solid #edf1f0; }
 .table th { font-weight: 650; }
 .table td { color: var(--muted); }
 .table tbody tr:hover { background: #f3f9f6; }
 .userTable { min-width: 610px; font-size: 12px; }
-.userTable th, .userTable td { padding: 7px 6px; white-space: nowrap; }
+.userTable th, .userTable td { padding: var(--list-padding-block) 6px; white-space: nowrap; }
 .shell button.rowButton { min-height: 26px; padding: 2px; border: 0; background: transparent; font-weight: inherit; text-align: left; }
 .shell button.rowButton:hover { text-decoration: underline; }
 .shell button.rowButton:has(.icon) { display: grid; place-items: center; }
@@ -164,6 +168,14 @@ a.primary { display: inline-flex; align-items: center; min-height: 35px; border:
 .dialog { width: min(420px, calc(100% - 32px)); margin: auto; padding: 24px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); }
 .dialog::backdrop { background: rgb(16 43 50 / 52%); }
 .dialog form { display: grid; gap: 12px; }
+
+.settingsForm { display: grid; gap: 18px; }
+.settingsForm label { display: grid; gap: 6px; max-width: 420px; }
+.settingsForm label > span:first-child { font-weight: 650; }
+.settingsSummary { margin-top: 12px; }
+.settingsSummary div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.settingsSummary dt { color: var(--muted); }
+.settingsSummary dd { margin: 0; text-align: right; font-weight: 650; }
 
 @media (max-width: 1160px) {
   .columns { grid-template-columns: minmax(0, 1fr); }

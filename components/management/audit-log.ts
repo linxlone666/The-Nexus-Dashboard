@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { ManagementRole } from "./ManagementShell";
 
-export const auditCategories = ["Users", "Projects", "Vendors"] as const;
+export const auditCategories = ["Users", "Projects", "Vendors", "Settings"] as const;
 
 type AuditActivity = {
   role: ManagementRole;

@@ -3,6 +3,7 @@
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useManagementPreferences } from "./management-preferences";
 import styles from "./management.module.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--management-font" });
@@ -10,8 +11,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--management-font" });
 export type ManagementRole = "Admin" | "Superadmin";
 
 export const managementRoutes = {
-  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects", Vendors: null, Integrations: "/admin/integrations", "Audit Logs": "/admin/audit-logs" },
-  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin", Vendors: "/superadmin/vendors", Integrations: "/superadmin/integrations", "Audit Logs": "/superadmin/audit-logs" },
+  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects", Vendors: null, Integrations: "/admin/integrations", "Audit Logs": "/admin/audit-logs", Settings: "/admin/settings" },
+  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin", Vendors: "/superadmin/vendors", Integrations: "/superadmin/integrations", "Audit Logs": "/superadmin/audit-logs", Settings: "/superadmin/settings" },
 } as const;
 
 const navigation = [
@@ -21,7 +22,7 @@ const navigation = [
   { name: "Vendors", icon: "grid" },
   { name: "Integrations", icon: "sliders" },
   { name: "Audit Logs", icon: "chart" },
-  { name: "Settings", icon: "sliders", disabled: true },
+  { name: "Settings", icon: "sliders" },
 ] as const;
 
 export function Icon({ name }: { name: string }) {
@@ -48,9 +49,10 @@ export function ManagementShell({
   children: ReactNode;
 }) {
   const routes = managementRoutes[role];
+  const { density } = useManagementPreferences(role);
 
   return (
-    <div className={`${styles.shell} ${inter.variable}`}>
+    <div className={`${styles.shell} ${inter.variable}`} data-density={density}>
       <header className={styles.header}>
         <Link className={styles.brand} href={routes.Overview}>NEXUS</Link>
         <div className={styles.headerActions}>
@@ -65,7 +67,7 @@ export function ManagementShell({
       </header>
       <nav className={styles.sidebar} aria-label={`${role} management`}>
         {navigation.map((item) => {
-          const href = "disabled" in item ? null : routes[item.name];
+          const href = routes[item.name];
           return href ? (
             <Link key={item.name} href={href} aria-current={active === item.name ? "page" : undefined}>
               <Icon name={item.icon} />{item.name}

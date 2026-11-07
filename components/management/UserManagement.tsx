@@ -2,7 +2,10 @@
 
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { ManagementMetrics } from "./ManagementMetrics";
 import { Icon, ManagementShell } from "./ManagementShell";
+import type { ManagementRole } from "./ManagementShell";
+import { userMetrics } from "./management-data";
 import styles from "./management.module.css";
 
 type User = {
@@ -25,13 +28,6 @@ const initialUsers: User[] = [
   { name: "Sarah Lee", email: "sarah@example.com", role: "User", projects: 6, status: "Active", lastActive: "Apr 24, 2026" },
 ];
 
-const metrics = [
-  ["Total Users", 124, "All registered users"],
-  ["Active Users", 98, "Users with active access"],
-  ["Inactive Users", 16, "Deactivated or suspended"],
-  ["Pending Requests", 10, "Awaiting approval"],
-] as const;
-
 const permissions = [
   ["View Dashboard", "Main dashboard"],
   ["Access Projects", "Assigned projects"],
@@ -52,7 +48,7 @@ function Status({ status }: { status: User["status"] }) {
   return <span className={`${styles.badge} ${styles[status.toLowerCase()]}`}>{status}</span>;
 }
 
-export function UserManagement() {
+export function UserManagement({ role: managementRole = "Admin" }: { role?: ManagementRole }) {
   const [users, setUsers] = useState(initialUsers);
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("All");
@@ -142,17 +138,10 @@ export function UserManagement() {
   }
 
   return (
-    <ManagementShell active="Users" header={
-      <>
-        <input className={styles.headerSearch} type="search" placeholder="Search users, projects, vendors..."
-          aria-label="Search management users" value={query} onChange={(event) => setQuery(event.target.value)} />
-        <Icon name="bell" />
-        <div className={styles.profile}><span className={styles.avatar}>JD</span><span><strong>John Doe</strong><small>Admin</small></span></div>
-      </>
-    }>
+    <ManagementShell role={managementRole} active="Users" query={query} onQueryChange={setQuery} searchLabel="Search management users">
       <div className={styles.heading}>
         <div>
-          <p>NEXUS / Admin / Users</p>
+          <p>NEXUS / {managementRole} / Users</p>
           <h1>User Management</h1>
           <div className={styles.muted}>Manage user accounts, roles, permissions and project access.</div>
         </div>
@@ -165,14 +154,11 @@ export function UserManagement() {
 
       <div className={styles.columns}>
         <div className={styles.userList}>
-          <dl className={styles.metrics}>
-            {metrics.map(([label, value, description], index) => (
-              <div className={styles.card} key={label}>
-                <dt>{label}</dt><dd>{value + (index === 0 || index === 3 ? users.length - initialUsers.length : 0)}</dd>
-                <dd className={styles.muted}>{description}</dd>
-              </div>
-            ))}
-          </dl>
+          <ManagementMetrics metrics={userMetrics.map(([label, value, description], index) => [
+            label,
+            value + (index === 0 || index === 3 ? users.length - initialUsers.length : 0),
+            description,
+          ])} />
 
           <section className={styles.card} aria-labelledby="users-heading">
             <h2 id="users-heading">Users</h2>

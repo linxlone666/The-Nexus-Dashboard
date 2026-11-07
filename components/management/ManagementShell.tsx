@@ -1,3 +1,5 @@
+"use client";
+
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -5,14 +7,21 @@ import styles from "./management.module.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--management-font" });
 
+export type ManagementRole = "Admin" | "Superadmin";
+
+export const managementRoutes = {
+  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects" },
+  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin" },
+} as const;
+
 const navigation = [
-  { name: "Overview", icon: "grid", href: "/dashboard" },
-  { name: "Users", icon: "door", href: "/admin" },
-  { name: "Projects", icon: "grid", href: "/superadmin" },
-  { name: "Vendors", icon: "grid" },
-  { name: "Integrations", icon: "sliders" },
-  { name: "Audit Logs", icon: "chart" },
-  { name: "Settings", icon: "sliders" },
+  { name: "Overview", icon: "grid" },
+  { name: "Users", icon: "door" },
+  { name: "Projects", icon: "grid" },
+  { name: "Vendors", icon: "grid", disabled: true },
+  { name: "Integrations", icon: "sliders", disabled: true },
+  { name: "Audit Logs", icon: "chart", disabled: true },
+  { name: "Settings", icon: "sliders", disabled: true },
 ] as const;
 
 export function Icon({ name }: { name: string }) {
@@ -24,28 +33,44 @@ export function Icon({ name }: { name: string }) {
 }
 
 export function ManagementShell({
+  role,
   active,
-  header,
+  query,
+  onQueryChange,
+  searchLabel,
   children,
 }: {
-  active: "Users" | "Projects";
-  header: ReactNode;
+  role: ManagementRole;
+  active: keyof (typeof managementRoutes)[ManagementRole];
+  query: string;
+  onQueryChange: (query: string) => void;
+  searchLabel: string;
   children: ReactNode;
 }) {
+  const routes = managementRoutes[role];
+
   return (
-    <div className={`${styles.shell} ${inter.variable} ${active === "Projects" ? styles.superadmin : ""}`}>
+    <div className={`${styles.shell} ${inter.variable}`}>
       <header className={styles.header}>
-        <Link className={styles.brand} href="/dashboard">NEXUS</Link>
-        <div className={styles.headerActions}>{header}</div>
+        <Link className={styles.brand} href={routes.Overview}>NEXUS</Link>
+        <div className={styles.headerActions}>
+          <input className={styles.headerSearch} type="search" placeholder="Search users, projects, vendors..."
+            aria-label={searchLabel} value={query} onChange={(event) => onQueryChange(event.target.value)} />
+          <Icon name="bell" />
+          <div className={styles.profile}>
+            <span className={styles.avatar} aria-hidden="true">JD</span>
+            <span><strong>John Doe</strong><small>{role}</small></span>
+          </div>
+        </div>
       </header>
-      <nav className={styles.sidebar} aria-label="Management">
+      <nav className={styles.sidebar} aria-label={`${role} management`}>
         {navigation.map((item) =>
-          "href" in item ? (
-            <Link key={item.name} href={item.href} aria-current={active === item.name ? "page" : undefined}>
+          "disabled" in item ? (
+            <span key={item.name} aria-disabled="true"><Icon name={item.icon} />{item.name}</span>
+          ) : (
+            <Link key={item.name} href={routes[item.name]} aria-current={active === item.name ? "page" : undefined}>
               <Icon name={item.icon} />{item.name}
             </Link>
-          ) : (
-            <span key={item.name} aria-disabled="true"><Icon name={item.icon} />{item.name}</span>
           ),
         )}
       </nav>

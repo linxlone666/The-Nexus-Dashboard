@@ -10,8 +10,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--management-font" });
 export type ManagementRole = "Admin" | "Superadmin";
 
 export const managementRoutes = {
-  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects", Vendors: null },
-  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin", Vendors: "/superadmin/vendors" },
+  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects", Vendors: null, Integrations: "/admin/integrations" },
+  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin", Vendors: "/superadmin/vendors", Integrations: "/superadmin/integrations" },
 } as const;
 
 const navigation = [
@@ -19,7 +19,7 @@ const navigation = [
   { name: "Users", icon: "door" },
   { name: "Projects", icon: "grid" },
   { name: "Vendors", icon: "grid" },
-  { name: "Integrations", icon: "sliders", disabled: true },
+  { name: "Integrations", icon: "sliders" },
   { name: "Audit Logs", icon: "chart", disabled: true },
   { name: "Settings", icon: "sliders", disabled: true },
 ] as const;

@@ -103,7 +103,7 @@ export function InitializeProject() {
 
     const problem = saveProject({
       name: name.trim(), key: key.trim(), organization, description: description.trim(), environment, owner,
-      vendor: vendor.name, baseUrl: baseUrl.trim(), authentication, credentialReference: credentialReference.trim(),
+      vendor: vendor.name, vendorId: vendor.id, baseUrl: baseUrl.trim(), authentication, credentialReference: credentialReference.trim(),
       mappings: mappings.map((mapping) => ({ ...mapping, name: mapping.name.trim() })),
       sites: null, status: "Onboarding", updated: new Date().toISOString().slice(0, 10),
     });

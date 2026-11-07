@@ -12,6 +12,7 @@ export type InitializedProject = {
   environment: string;
   owner: string;
   vendor: string;
+  vendorId?: string;
   baseUrl: string;
   authentication: string;
   credentialReference: string;

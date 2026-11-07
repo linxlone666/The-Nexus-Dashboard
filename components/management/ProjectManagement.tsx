@@ -1,17 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { ManagementMetrics } from "./ManagementMetrics";
 import { Icon, ManagementShell } from "./ManagementShell";
 import type { ManagementRole } from "./ManagementShell";
-import { organizations, projectMetrics, projects } from "./management-data";
+import { getProjectMetrics, organizations } from "./management-data";
+import { useProjects } from "./project-storage";
 import styles from "./management.module.css";
 
 export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRole }) {
+  const projects = useProjects();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
   const [organization, setOrganization] = useState("All");
-  const [selectedName, setSelectedName] = useState<string | null>(projects[0].name);
+  const [selectedKey, setSelectedKey] = useState<string | null>();
   const [tab, setTab] = useState<"General" | "Activity">("General");
 
   const visible = projects.filter((project) =>
@@ -19,10 +22,10 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
     (status === "All" || project.status === status) &&
     (organization === "All" || project.organization === organization),
   );
-  const selected = visible.find((project) => project.name === selectedName);
+  const selected = selectedKey === undefined ? visible[0] : visible.find((project) => project.key === selectedKey);
 
-  function openProject(name: string) {
-    setSelectedName(name);
+  function openProject(key: string) {
+    setSelectedKey(key);
     setTab("General");
   }
 
@@ -34,11 +37,14 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
           <h1>Project Management</h1>
           <div className={styles.muted}>Browse projects, organizations, and onboarding status.</div>
         </div>
+        {role === "Superadmin" && (
+          <Link className={styles.primary} href="/superadmin/projects/initialize">+ Initialize New Project</Link>
+        )}
       </div>
 
       <div className={styles.columns}>
         <div className={styles.userList}>
-          <ManagementMetrics metrics={projectMetrics} />
+          <ManagementMetrics metrics={getProjectMetrics(projects)} />
           <section className={styles.card} aria-labelledby="projects-heading">
             <h2 id="projects-heading">Projects</h2>
             <div className={`${styles.userFilters} ${styles.projectFilters}`}>
@@ -62,9 +68,9 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
                 </tr></thead>
                 <tbody>
                   {visible.map((project) => (
-                    <tr key={project.name}>
+                    <tr key={project.key}>
                       <th scope="row"><button type="button" className={styles.rowButton}
-                        aria-pressed={selected?.name === project.name} onClick={() => openProject(project.name)}>
+                        aria-pressed={selected?.key === project.key} onClick={() => openProject(project.key)}>
                         {project.name}
                       </button></th>
                       <td>{project.organization}</td>
@@ -72,7 +78,7 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
                       <td><span className={`${styles.badge} ${project.status === "Active" ? styles.active : styles.pending}`}>{project.status}</span></td>
                       <td>{project.updated}</td>
                       <td><button type="button" className={styles.rowButton} aria-label={`Details for ${project.name}`}
-                        onClick={() => openProject(project.name)}>•••</button></td>
+                        onClick={() => openProject(project.key)}>•••</button></td>
                     </tr>
                   ))}
                   {!visible.length && <tr><td colSpan={6}>No projects match your filters.</td></tr>}
@@ -87,7 +93,7 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
           <div className={styles.detailHeading}>
             <h2 id="project-details">Project Details</h2>
             {selected && <button type="button" className={styles.rowButton} aria-label="Close project details"
-              onClick={() => setSelectedName(null)}><Icon name="close" /></button>}
+              onClick={() => setSelectedKey(null)}><Icon name="close" /></button>}
           </div>
           {selected ? (
             <>
@@ -105,7 +111,15 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
                 <div className={styles.record}>
                   <p>Organization: {selected.organization}</p>
                   <p>{selected.sites === null ? "Site count pending" : `Connected sites: ${selected.sites}`}</p>
-                  {selected.status === "Onboarding" && <p>Organization administrator pending.</p>}
+                  {"mappings" in selected ? (
+                    <>
+                      <p>Project key: {selected.key}</p>
+                      <p>Environment: {selected.environment}</p>
+                      <p>Owner: {selected.owner}</p>
+                      <p>Vendor: {selected.vendor} · {selected.mappings.length} mapped sources</p>
+                      {selected.description && <p>{selected.description}</p>}
+                    </>
+                  ) : selected.status === "Onboarding" && <p>Organization administrator pending.</p>}
                 </div>
               ) : <p className={styles.record}>Record updated · {selected.updated}</p>}
             </>

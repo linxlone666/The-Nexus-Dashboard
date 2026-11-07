@@ -5,13 +5,13 @@ import { useState } from "react";
 import { ManagementMetrics } from "./ManagementMetrics";
 import { ManagementShell, managementRoutes } from "./ManagementShell";
 import type { ManagementRole } from "./ManagementShell";
-import { projectMetrics, userMetrics } from "./management-data";
+import { getProjectMetrics, userMetrics } from "./management-data";
+import { useProjects } from "./project-storage";
 import styles from "./management.module.css";
 
 const overview = {
   Admin: {
     description: "Monitor user access and manage projects in your workspace.",
-    metrics: userMetrics,
     links: [
       ["Users", "User Management", "Review accounts, roles, and permissions."],
       ["Projects", "Project Management", "Review project status in your workspace."],
@@ -22,7 +22,6 @@ const overview = {
   },
   Superadmin: {
     description: "Monitor organizations, project onboarding, and administration across the platform.",
-    metrics: projectMetrics,
     links: [
       ["Projects", "Project Management", "Review organizations and project onboarding."],
       ["Users", "User Management", "Review user access across organizations."],
@@ -35,6 +34,7 @@ const overview = {
 
 export function ManagementOverview({ role }: { role: ManagementRole }) {
   const [query, setQuery] = useState("");
+  const projects = useProjects();
   const data = overview[role];
   const routes = managementRoutes[role];
   const links = data.links.filter(([, name, description]) =>
@@ -50,7 +50,7 @@ export function ManagementOverview({ role }: { role: ManagementRole }) {
           <div className={styles.muted}>{data.description}</div>
         </div>
       </div>
-      <ManagementMetrics metrics={data.metrics} />
+      <ManagementMetrics metrics={role === "Admin" ? userMetrics : getProjectMetrics(projects)} />
       <div className={styles.columns}>
         <section className={styles.card} aria-labelledby="management-shortcuts">
           <h2 id="management-shortcuts">Management shortcuts</h2>

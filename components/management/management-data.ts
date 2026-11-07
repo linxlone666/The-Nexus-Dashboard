@@ -6,15 +6,17 @@ export const userMetrics = [
 ] as const;
 
 export const projects = [
-  { name: "Retail Analytics", organization: "Nexus Headquarters", sites: 6, status: "Active", updated: "Today, 09:48" },
-  { name: "Customer Insights", organization: "North Campus", sites: 12, status: "Active", updated: "Today, 08:30" },
-  { name: "Sales Dashboard", organization: "Riverside Properties", sites: null, status: "Onboarding", updated: "Yesterday" },
+  { key: "retail-analytics", name: "Retail Analytics", organization: "Nexus Headquarters", sites: 6, status: "Active", updated: "Today, 09:48" },
+  { key: "customer-insights", name: "Customer Insights", organization: "North Campus", sites: 12, status: "Active", updated: "Today, 08:30" },
+  { key: "sales-dashboard", name: "Sales Dashboard", organization: "Riverside Properties", sites: null, status: "Onboarding", updated: "Yesterday" },
 ] as const;
 
 export const organizations = [...new Set(projects.map((project) => project.organization))];
-export const projectMetrics = [
-  ["Total Projects", projects.length, "All sample projects"],
-  ["Active Projects", projects.filter((project) => project.status === "Active").length, "Projects in operation"],
-  ["Onboarding", projects.filter((project) => project.status === "Onboarding").length, "Projects being set up"],
-  ["Organizations", organizations.length, "Organizations with projects"],
-] as const;
+export function getProjectMetrics(entries: readonly { organization: string; status: string }[]) {
+  return [
+    ["Total Projects", entries.length, "All sample projects"],
+    ["Active Projects", entries.filter((project) => project.status === "Active").length, "Projects in operation"],
+    ["Onboarding", entries.filter((project) => project.status === "Onboarding").length, "Projects being set up"],
+    ["Organizations", new Set(entries.map((project) => project.organization)).size, "Organizations with projects"],
+  ] as const;
+}

@@ -35,15 +35,15 @@ export function Icon({ name }: { name: string }) {
 export function ManagementShell({
   role,
   active,
-  query,
+  query = "",
   onQueryChange,
   searchLabel,
   children,
 }: {
   role: ManagementRole;
   active: keyof (typeof managementRoutes)[ManagementRole];
-  query: string;
-  onQueryChange: (query: string) => void;
+  query?: string;
+  onQueryChange?: (query: string) => void;
   searchLabel: string;
   children: ReactNode;
 }) {
@@ -55,7 +55,7 @@ export function ManagementShell({
         <Link className={styles.brand} href={routes.Overview}>NEXUS</Link>
         <div className={styles.headerActions}>
           <input className={styles.headerSearch} type="search" placeholder="Search users, projects, vendors..."
-            aria-label={searchLabel} value={query} onChange={(event) => onQueryChange(event.target.value)} />
+            aria-label={searchLabel} value={query} disabled={!onQueryChange} onChange={(event) => onQueryChange?.(event.target.value)} />
           <Icon name="bell" />
           <div className={styles.profile}>
             <span className={styles.avatar} aria-hidden="true">JD</span>

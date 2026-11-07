@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { recordAuditActivity } from "./audit-log";
 import { ManagementMetrics } from "./ManagementMetrics";
 import { Icon, ManagementShell } from "./ManagementShell";
 import type { ManagementRole } from "./ManagementShell";
@@ -104,6 +105,9 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
       projects: 0, status: "Pending", lastActive: "—",
     };
     setUsers((current) => [...current, user]);
+    recordAuditActivity({
+      role: managementRole, category: "Users", action: "Demo user added", target: user.name, outcome: "Success",
+    });
     setQuery("");
     setRole("All");
     setStatus("All");
@@ -267,6 +271,10 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                     <button type="button" onClick={() => { setDraft(accessByEmail[selected.email] ?? emptyAccess); setMessage(""); }}>Cancel</button>
                     <button type="button" className={styles.primary} onClick={() => {
                       setAccessByEmail((current) => ({ ...current, [selected.email]: draft }));
+                      recordAuditActivity({
+                        role: managementRole, category: "Users", action: "Permissions saved",
+                        target: selected.name, outcome: "Success",
+                      });
                       setMessage("Permissions saved in this preview.");
                     }}>Save Permissions</button>
                   </div>

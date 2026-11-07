@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { recordAuditActivity } from "./audit-log";
 import { organizations } from "./management-data";
 import { ManagementShell, managementRoutes } from "./ManagementShell";
 import { saveProject } from "./project-storage";
@@ -111,6 +112,9 @@ export function InitializeProject() {
       setError(problem);
       return;
     }
+    recordAuditActivity({
+      role: "Superadmin", category: "Projects", action: "Project initialized", target: name.trim(), outcome: "Success",
+    });
     router.push(projectsUrl);
   }
 

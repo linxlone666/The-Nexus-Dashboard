@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { recordAuditActivity } from "./audit-log";
 import { ManagementMetrics } from "./ManagementMetrics";
 import { Icon, ManagementShell } from "./ManagementShell";
 import { parseVendorEndpoint, saveVendor, useVendors } from "./vendor-catalog";
@@ -77,6 +78,10 @@ export function VendorManagement() {
       setFormError(error);
       return;
     }
+    recordAuditActivity({
+      role: "Superadmin", category: "Vendors", action: editing ? "Vendor updated" : "Vendor added",
+      target: vendor.name, outcome: "Success",
+    });
     dialog.current?.close();
     setSelectedId(vendor.id);
     setTab("Credentials");
@@ -93,6 +98,10 @@ export function VendorManagement() {
       testMessage: passed
         ? "Demo connection successful. Project setup can use this provider when sample sources are available."
         : "Demo connection failed. Check the endpoint and credential reference, then retry.",
+    });
+    recordAuditActivity({
+      role: "Superadmin", category: "Vendors", action: "Demo connection tested",
+      target: vendor.name, outcome: passed && !error ? "Success" : "Failed",
     });
     setTestError(error ?? "");
   }

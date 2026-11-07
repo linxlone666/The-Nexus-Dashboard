@@ -18,7 +18,7 @@ export default function AdminMainCardTable() {
     "text-left text-blue-500 hover:text-blue-700 cursor-pointer";
   const text_th = "text-3xl font-bold text-gray-800";
   return (
-    <div className="flex items-center w-full py-2">
+    <div className="flex items-center w-full ">
       <div className="col-span-3  gap-4 p-3 w-full">
         <div className="border border-gray-300 h-full bg-white text-left p-4 rounded-lg shadow-md ">
           <div className="grid grid-cols-2 gap-4">
@@ -26,7 +26,7 @@ export default function AdminMainCardTable() {
           </div>
           {/* search input */}
 
-          <div className="flex  gap-2 mt-2">
+          <div className="flex gap-2 mt-2">
             <label htmlFor="" className=" flex-column-reverse">
               <input
                 className="rounded-md"

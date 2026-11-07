@@ -1,7 +1,6 @@
 export default function AdminTopCard() {
   const box =
-    "border border-gray-300 h-full bg-white text-left p-4 rounded-lg shadow-md hover:bg-[#6BDEC1] hover:text-white";
-
+    "border border-gray-300 h-full bg-white text-left p-4 rounded-lg ";
   const text_p = "font-medium text-gray-800";
   const text_h1 = "text-xl font-bold text-gray-800";
   const text_xp = "font-medium text-red-500 text-sm";

@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/tailgrids/core/table";
 import { Button } from "../tailgrids/core/button";
+import { botton_In } from "./card-secon-title";
 export default function AdminMainCardDetails() {
   return (
     <div className=" flex  items-center w-full pr-4  ">
@@ -44,7 +45,7 @@ export default function AdminMainCardDetails() {
           </TableRoot>
         </div>
         <div className="flex justify-end mt-2.5">
-          <Button>Save permissions</Button>
+          <Button className={botton_In}>Save permissions</Button>
         </div>
       </div>
     </div>

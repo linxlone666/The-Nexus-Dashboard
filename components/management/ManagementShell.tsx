@@ -10,15 +10,15 @@ const inter = Inter({ subsets: ["latin"], variable: "--management-font" });
 export type ManagementRole = "Admin" | "Superadmin";
 
 export const managementRoutes = {
-  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects" },
-  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin" },
+  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects", Vendors: null },
+  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin", Vendors: "/superadmin/vendors" },
 } as const;
 
 const navigation = [
   { name: "Overview", icon: "grid" },
   { name: "Users", icon: "door" },
   { name: "Projects", icon: "grid" },
-  { name: "Vendors", icon: "grid", disabled: true },
+  { name: "Vendors", icon: "grid" },
   { name: "Integrations", icon: "sliders", disabled: true },
   { name: "Audit Logs", icon: "chart", disabled: true },
   { name: "Settings", icon: "sliders", disabled: true },
@@ -64,15 +64,16 @@ export function ManagementShell({
         </div>
       </header>
       <nav className={styles.sidebar} aria-label={`${role} management`}>
-        {navigation.map((item) =>
-          "disabled" in item ? (
-            <span key={item.name} aria-disabled="true"><Icon name={item.icon} />{item.name}</span>
-          ) : (
-            <Link key={item.name} href={routes[item.name]} aria-current={active === item.name ? "page" : undefined}>
+        {navigation.map((item) => {
+          const href = "disabled" in item ? null : routes[item.name];
+          return href ? (
+            <Link key={item.name} href={href} aria-current={active === item.name ? "page" : undefined}>
               <Icon name={item.icon} />{item.name}
             </Link>
-          ),
-        )}
+          ) : (
+            <span key={item.name} aria-disabled="true"><Icon name={item.icon} />{item.name}</span>
+          );
+        })}
       </nav>
       <main className={styles.main}>{children}</main>
     </div>

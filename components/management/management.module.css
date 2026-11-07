@@ -89,7 +89,7 @@
 .metrics dd:first-of-type { font-size: clamp(24px, 1.95vw, 38px); font-weight: 750; line-height: 1.2; }
 .metrics .muted { font-size: 12px; }
 
-.shell input:is([type="search"], [type="email"], [name="name"]), .shell select, .shell button {
+.shell input:is([type="search"], [type="email"], [type="url"], [name="name"], [name="reference"]), .shell select, .shell button {
   min-width: 0;
   min-height: 35px;
   padding: 6px 10px;
@@ -113,6 +113,10 @@ a.primary { display: inline-flex; align-items: center; min-height: 35px; border:
 
 .actions { justify-content: flex-end; flex-wrap: wrap; }
 .userFilters { display: grid; grid-template-columns: minmax(120px, 2.2fr) repeat(3, minmax(76px, 1fr)) auto; align-items: end; gap: 10px; margin-bottom: 16px; }
+
+.vendorFilters { grid-template-columns: minmax(120px, 2fr) minmax(130px, 1fr) auto; }
+.vendorTest { margin-top: 10px; }
+.error { background: #fbe9e6; color: #942e23; }
 
 .projectFilters { grid-template-columns: minmax(120px, 2.2fr) minmax(92px, 1fr) minmax(110px, 1.3fr) auto; }
 .overviewLinks { display: grid; gap: 12px; margin-top: 14px; }

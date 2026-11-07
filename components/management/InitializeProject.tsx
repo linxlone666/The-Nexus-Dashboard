@@ -7,6 +7,8 @@ import type { FormEvent } from "react";
 import { organizations } from "./management-data";
 import { ManagementShell, managementRoutes } from "./ManagementShell";
 import { saveProject } from "./project-storage";
+import { parseVendorEndpoint, useVendors } from "./vendor-catalog";
+import type { Vendor, VendorSource } from "./vendor-catalog";
 import styles from "./management.module.css";
 import wizard from "./InitializeProject.module.css";
 
@@ -18,30 +20,10 @@ const environments = [
 ] as const;
 const owners = ["John Doe · Admin", "Alex Lim · Superadmin"];
 const types = ["CCTV", "Alarm", "Parking", "Access"];
-const vendors = [
-  {
-    name: "Demo Security", connected: true, url: "https://demo-security.example/v1", reference: "demo-security-key",
-    sources: [
-      { source: "lobby-camera", type: "CCTV", name: "Lobby camera" },
-      { source: "loading-dock", type: "Alarm", name: "Loading dock" },
-      { source: "parking-count", type: "", name: "Parking count" },
-    ],
-  },
-  {
-    name: "CCTV Systems", connected: true, url: "https://cctv-systems.example/v1", reference: "cctv-systems-key",
-    sources: [
-      { source: "north-camera", type: "CCTV", name: "North camera" },
-      { source: "south-camera", type: "CCTV", name: "South camera" },
-    ],
-  },
-  {
-    name: "Access Control", connected: false, url: "", reference: "",
-    sources: [{ source: "main-entrance", type: "Access", name: "Main entrance" }],
-  },
-];
 
 export function InitializeProject() {
   const router = useRouter();
+  const vendors = useVendors();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
@@ -49,13 +31,13 @@ export function InitializeProject() {
   const [description, setDescription] = useState("");
   const [environment, setEnvironment] = useState<(typeof environments)[number][0]>("Production");
   const [owner, setOwner] = useState(owners[0]);
-  const [vendor, setVendor] = useState<(typeof vendors)[number]>();
+  const [vendor, setVendor] = useState<Vendor>();
   const [vendorQuery, setVendorQuery] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [authentication, setAuthentication] = useState("API key");
   const [credentialReference, setCredentialReference] = useState("");
   const [tested, setTested] = useState(false);
-  const [mappings, setMappings] = useState<(typeof vendors)[number]["sources"]>([]);
+  const [mappings, setMappings] = useState<VendorSource[]>([]);
   const [error, setError] = useState("");
   const heading = useRef<HTMLHeadingElement>(null);
   const projectsUrl = managementRoutes.Superadmin.Projects;
@@ -71,11 +53,11 @@ export function InitializeProject() {
     setStep(next);
   }
 
-  function selectVendor(next: (typeof vendors)[number]) {
-    if (vendor === next) return;
+  function selectVendor(next: Vendor) {
+    if (vendor?.id === next.id) return;
     setVendor(next);
     setBaseUrl(next.url);
-    setAuthentication("API key");
+    setAuthentication(next.authentication);
     setCredentialReference(next.reference);
     setMappings(next.sources);
     setTested(false);
@@ -83,15 +65,7 @@ export function InitializeProject() {
   }
 
   function testConnection() {
-    let endpoint: URL;
-    try {
-      endpoint = new URL(baseUrl.trim());
-    } catch {
-      setError("Enter a valid API base URL.");
-      return;
-    }
-    if (!["http:", "https:"].includes(endpoint.protocol) || endpoint.username || endpoint.password ||
-      endpoint.search || endpoint.hash) {
+    if (!parseVendorEndpoint(baseUrl)) {
       setError("Use an HTTP or HTTPS base URL without credentials, query parameters, or fragments.");
       return;
     }
@@ -109,8 +83,8 @@ export function InitializeProject() {
       setError("Enter a project name and a key using lowercase letters, numbers, and single hyphens.");
       return;
     }
-    if (step === 1 && !vendor) {
-      setError("Select a connected vendor.");
+    if (step === 1 && !vendors.some((item) => item.id === vendor?.id && item.status === "Connected" && item.sources.length > 0)) {
+      setError("Select a connected vendor with sample data sources.");
       return;
     }
     if (step === 2 && !tested) {
@@ -191,7 +165,7 @@ export function InitializeProject() {
 
             {step === 1 && (
               <>
-                <p className={styles.muted}>Choose an existing demo provider.</p>
+                <p className={styles.muted}>Choose a connected demo provider with sample data sources.</p>
                 <input type="search" aria-label="Search vendors" placeholder="Search vendors..."
                   value={vendorQuery} onChange={(event) => setVendorQuery(event.target.value)} />
                 <div className={styles.tableScroll}>
@@ -200,9 +174,9 @@ export function InitializeProject() {
                     <tbody>
                       {visibleVendors.map((item) => (
                         <tr key={item.name}>
-                          <th scope="row">{item.name}</th><td>{item.connected ? "Connected" : "Offline"}</td><td>{item.sources.length}</td>
-                          <td><input type="radio" name="vendor" aria-label={`Select ${item.name}`} disabled={!item.connected}
-                            checked={vendor === item} onChange={() => selectVendor(item)} /></td>
+                          <th scope="row">{item.name}</th><td>{item.status}</td><td>{item.sources.length}</td>
+                          <td><input type="radio" name="vendor" aria-label={`Select ${item.name}`} disabled={item.status !== "Connected" || !item.sources.length}
+                            checked={vendor?.id === item.id} onChange={() => selectVendor(item)} /></td>
                         </tr>
                       ))}
                       {!visibleVendors.length &&

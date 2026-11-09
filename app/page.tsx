@@ -1,5 +1,13 @@
-import { redirect } from "next/navigation";
+import { Navbar } from "@/components/Navbar";
 
 export default function Home() {
-  redirect("/login");
+  return (
+    <>
+      <Navbar
+        site="Nexus Headquarters"
+        workspace="Control room"
+        user={{ name: "Alex", initials: "AL" }}
+      />
+    </>
+  );
 }

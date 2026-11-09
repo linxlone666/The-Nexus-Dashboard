@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/data/credential";
+import { Check } from "@tailgrids/icons";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -56,16 +57,16 @@ export default function SignIn() {
             dashboard.
           </span>
           <span className="text-[13px] text-[#707070] mt-5 flex">
-            <div className="border border-solid h-3 w-3 mr-2 mt-1"></div>Live
-            cameras and incident response
+            <Check className="mr-1" />
+            Live cameras and incident response
           </span>
           <span className="text-[13px] text-[#707070] mt-5 flex">
-            <div className="border border-solid h-3 w-3 mr-2 mt-1"></div>Access
-            control and smart alarms
+            <Check className="mr-1" />
+            Access control and smart alarms
           </span>
           <span className="text-[13px] text-[#707070] mt-5 flex">
-            <div className="border border-solid h-3 w-3 mr-2 mt-1"></div>Parking
-            and connected systems
+            <Check className="mr-1" />
+            Parking and connected systems
           </span>
         </div>
         <p className="text-[11px] text-[#8a8a8a]">

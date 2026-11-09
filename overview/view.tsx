@@ -78,7 +78,6 @@ export default function Operations() {
             Build with AI
           </button>
         </div>
-      </header>
 
       {/* SUMMARY CARDS */}
       <div className="mb-4 grid grid-cols-4 gap-4">

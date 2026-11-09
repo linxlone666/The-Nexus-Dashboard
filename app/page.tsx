@@ -1,3 +1,13 @@
+import { Navbar } from "@/components/Navbar";
+
 export default function Home() {
-  return <></>;
+  return (
+    <>
+      <Navbar
+        site="Nexus Headquarters"
+        workspace="Control room"
+        user={{ name: "Alex", initials: "AL" }}
+      />
+    </>
+  );
 }

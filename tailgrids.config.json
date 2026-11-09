@@ -1,5 +1,5 @@
 {
-  "theme": "dark",
+  "theme": "default",
   "alias": "@",
   "framework": "Next.js",
   "mainCssFile": "app/globals.css"

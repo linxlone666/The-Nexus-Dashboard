@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import AdminUI from "./AdminUI";
+import Developer from "./developer";
 
 export const metadata: Metadata = {
-  title: "Nexus | Admin",
+  title: "Nexus | developer",
   description: "Manage users, roles, permissions, and project access.",
 };
 
-export default function AdminPage() {
-  return <AdminUI />;
+export default function Page() {
+  return <Developer />;
 }

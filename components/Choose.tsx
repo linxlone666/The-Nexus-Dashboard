@@ -1,8 +1,20 @@
 ﻿"use client";
 
 import { Check, ChevronRight } from "@tailgrids/icons";
+import Accept from "./Accept";
+import Unavailable from "./unavailable";
+import { useState } from "react";
 
 export default function Choose() {
+  const [showAccept, setShowAccept] = useState(false);
+  const [showUna, setShowUna] = useState(false);
+  if (showUna) {
+    return <Unavailable />;
+  }
+  if (showAccept) {
+    return <Accept />;
+  }
+
   return (
     <main className="grid min-h-screen bg-white font-sans text-[#424242] lg:grid-cols-2">
       {/* กล่อง Benefits */}
@@ -45,7 +57,8 @@ export default function Choose() {
           </p>
 
           <div className="mb-3 mt-3">
-            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]">
+            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]"
+            onClick={() => setShowAccept(true)}>
               <h3 className="text-[20px] font-bold leading-6">
                 Nexus Headquarters
               </h3>
@@ -56,7 +69,8 @@ export default function Choose() {
             </button>
           </div>
           <div>
-            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]">
+            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]"
+            onClick={() => setShowUna(true)}>
               <h3 className="text-[20px] font-bold leading-6">North Campus</h3>
               <span className="mt-1 text-[16px] leading-5 text-[#676767]">
                 Viewer · Bangkok

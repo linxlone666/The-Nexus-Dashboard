@@ -1,8 +1,14 @@
 "use client";
 
 import { Check, ChevronLeft } from "@tailgrids/icons";
+import Choose from "./Choose";
+import { useState } from "react";
 
 export default function Unavailable() {
+  const [showChoose, setShowChoose] = useState(false);
+  if (showChoose) {
+      return <Choose />
+    }
   return (
     <main className="grid min-h-screen bg-white font-sans text-[#424242] lg:grid-cols-2">
       {/* กล่อง Benefits */}
@@ -45,7 +51,8 @@ export default function Unavailable() {
           </p>
 
           <div className="mb-3 mt-3">
-            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]">
+            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]"
+            onClick={() => setShowChoose(true)}>
               <h3 className="text-[20px] font-bold leading-6">
                 You don’t have access to this workspace.
               </h3>
@@ -59,6 +66,7 @@ export default function Unavailable() {
             <button
             type="submit"
             className="mt-3 h-8 w-full bg-[#3e3e3e] text-[10px] font-semibold text-white transition hover:bg-[#222]"
+            onClick={() => setShowChoose(true)}
           >
             Choose workspace
           </button>

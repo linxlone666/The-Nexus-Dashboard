@@ -1,8 +1,14 @@
 "use client";
 
 import { Check } from "@tailgrids/icons";
+import { useState } from "react";
+import Accept from "./Accept";
 
 export default function Expired() {
+  const [showAccept, setShowAccept] = useState(false);
+  if (showAccept) {
+    return <Accept />;
+  }
   return (
     <main className="grid min-h-screen bg-white font-sans text-[#424242] lg:grid-cols-2">
       {/* กล่อง Benefits */}
@@ -47,6 +53,7 @@ export default function Expired() {
           <button
             type="submit"
             className="mt-3 h-8 w-full bg-[#3e3e3e] text-[10px] font-semibold text-white transition hover:bg-[#222]"
+            onClick={() => setShowAccept(true)}          
           >
             Request new link
           </button>

@@ -4,9 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/data/credential";
 import { Check } from "@tailgrids/icons";
+import Choose from "./Choose";
+import Reset from "./Reset_Password";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showChoose, setShowChoose] = useState(false);
+  const [showReset, setShowReset] = useState(false)
   const router = useRouter();
   const handleLogin = async () => {
     const emailDom = document.getElementById("email") as HTMLInputElement;
@@ -40,6 +44,12 @@ export default function SignIn() {
       }
     }
   };
+  if (showChoose) {
+    return <Choose />
+  }
+  if (showReset) {
+    return <Reset/>
+  }
 
   return (
     <main className="grid min-h-screen bg-white font-sans text-[#424242] lg:grid-cols-2">
@@ -147,6 +157,7 @@ export default function SignIn() {
             <button
               type="submit"
               className="h-8 w-full bg-[#3e3e3e] text-[10px] font-semibold text-white transition hover:bg-[#222]"
+              onClick={() => setShowChoose(true)}
             >
               Sign in
             </button>
@@ -160,6 +171,7 @@ export default function SignIn() {
           <button
             type="button"
             className="h-8 w-full border border-[#cfcfcf] text-[10px] font-semibold transition hover:border-[#777] hover:bg-[#fafafa]"
+            onClick={() => setShowReset(true)}
           >
             Continue with company SSO
           </button>

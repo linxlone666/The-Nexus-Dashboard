@@ -109,7 +109,7 @@ function saveUsers(saved: SavedUsers) {
   return true;
 }
 
-const tabs = ["General", "Permissions", "Project Access", "Activity"] as const;
+const tabs = ["General", "Permissions", "Activity"] as const;
 type UserTab = (typeof tabs)[number];
 
 function Status({ status, className }: { status: User["status"]; className?: string }) {
@@ -349,25 +349,23 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
               )}
               {tab === "Activity" && <p className={styles.record}>Last active: {selected.lastActive}</p>}
               {tab === "Permissions" && (
-                <fieldset className={styles.permissionGroup}>
-                  <legend>System Permissions</legend>
-                  <p className={styles.muted}>Select what this user can access in the system.</p>
-                  {permissions.map(([name, description, platformOnly]) => (
-                    <label key={name} className={styles.permission}>
-                      <span><input type="checkbox" checked={draft.permissions.includes(name)}
-                        disabled={!canEditSelected || (platformOnly && !canManagePlatform)} onChange={(event) => {
-                        const enabled = event.target.checked;
-                        setDraftChanges({ ...draft, permissions: enabled
-                          ? [...draft.permissions, name] : draft.permissions.filter((item) => item !== name) });
-                        setMessage("");
-                      }} />{name}</span>
-                      <small>{platformOnly && !canManagePlatform ? "Superadmin only" : description}</small>
-                    </label>
-                  ))}
-                </fieldset>
-              )}
-              {(tab === "Permissions" || tab === "Project Access") && (
                 <>
+                  <fieldset className={styles.permissionGroup}>
+                    <legend>System Permissions</legend>
+                    <p className={styles.muted}>Select what this user can access in the system.</p>
+                    {permissions.map(([name, description, platformOnly]) => (
+                      <label key={name} className={styles.permission}>
+                        <span><input type="checkbox" checked={draft.permissions.includes(name)}
+                          disabled={!canEditSelected || (platformOnly && !canManagePlatform)} onChange={(event) => {
+                          const enabled = event.target.checked;
+                          setDraftChanges({ ...draft, permissions: enabled
+                            ? [...draft.permissions, name] : draft.permissions.filter((item) => item !== name) });
+                          setMessage("");
+                        }} />{name}</span>
+                        <small>{platformOnly && !canManagePlatform ? "Superadmin only" : description}</small>
+                      </label>
+                    ))}
+                  </fieldset>
                   <fieldset className={styles.permissionGroup}>
                     <legend>Project Access</legend>
                     <p className={styles.muted}>Select which projects this user can access.</p>

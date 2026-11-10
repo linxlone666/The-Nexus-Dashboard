@@ -1,10 +1,13 @@
 "use client";
 
+import { Badge } from "@/components/tailgrids/core/badge";
+import { Button } from "@/components/tailgrids/core/button";
+import { Input } from "@/components/tailgrids/core/input";
 import Link from "next/link";
 import { useState } from "react";
 import { ManagementMetrics } from "./ManagementMetrics";
-import { Icon, ManagementShell } from "./ManagementShell";
-import type { ManagementRole } from "./ManagementShell";
+import { Icon, AdminSuperadminLayout } from "./AdminSuperadminLayout";
+import type { ManagementRole } from "./AdminSuperadminLayout";
 import { getProjectMetrics, organizations } from "./management-data";
 import { useProjects } from "./project-storage";
 import styles from "./management.module.css";
@@ -30,7 +33,7 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
   }
 
   return (
-    <ManagementShell role={role} active="Projects" query={query} onQueryChange={setQuery} searchLabel="Search projects from the top bar">
+    <AdminSuperadminLayout role={role} active="Projects" query={query} onQueryChange={setQuery} searchLabel="Search projects from the top bar">
       <div className={styles.heading}>
         <div>
           <p>NEXUS / {role} / Projects</p>
@@ -48,7 +51,7 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
           <section className={styles.card} aria-labelledby="projects-heading">
             <h2 id="projects-heading">Projects</h2>
             <div className={`${styles.userFilters} ${styles.projectFilters}`}>
-              <input type="search" placeholder="Search projects..." aria-label="Search projects"
+              <Input type="search" placeholder="Search projects..." aria-label="Search projects"
                 value={query} onChange={(event) => setQuery(event.target.value)} />
               <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}>
                 <option>All</option><option>Active</option><option>Onboarding</option>
@@ -57,7 +60,7 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
                 <option>All</option>
                 {organizations.map((name) => <option key={name}>{name}</option>)}
               </select></label>
-              <button type="button" onClick={() => { setQuery(""); setStatus("All"); setOrganization("All"); }}>Reset</button>
+              <Button size="xs" appearance="outline" type="button" onPress={() => { setQuery(""); setStatus("All"); setOrganization("All"); }}>Reset</Button>
             </div>
             <div className={styles.tableScroll}>
               <table className={`${styles.table} ${styles.userTable}`}>
@@ -75,7 +78,7 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
                       </button></th>
                       <td>{project.organization}</td>
                       <td>{project.sites ?? "—"}</td>
-                      <td><span className={`${styles.badge} ${project.status === "Active" ? styles.active : styles.pending}`}>{project.status}</span></td>
+                      <td><Badge color={project.status === "Active" ? "success" : "warning"}>{project.status}</Badge></td>
                       <td>{project.updated}</td>
                       <td><button type="button" className={styles.rowButton} aria-label={`Details for ${project.name}`}
                         onClick={() => openProject(project.key)}>•••</button></td>
@@ -100,7 +103,7 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
               <div className={styles.profile}>
                 <span className={styles.avatar}><Icon name="grid" /></span>
                 <div><h3>{selected.name}</h3><p className={styles.muted}>{selected.organization}</p></div>
-                <span className={`${styles.badge} ${selected.status === "Active" ? styles.active : styles.pending}`}>{selected.status}</span>
+                <Badge className="ml-auto" color={selected.status === "Active" ? "success" : "warning"}>{selected.status}</Badge>
               </div>
               <div className={styles.tabs} aria-label="Project information">
                 {(["General", "Activity"] as const).map((name) => (
@@ -126,6 +129,6 @@ export function ProjectManagement({ role = "Superadmin" }: { role?: ManagementRo
           ) : <p className={styles.muted}>Select a project to see its details.</p>}
         </aside>
       </div>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

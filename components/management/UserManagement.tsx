@@ -1,11 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Badge } from "@/components/tailgrids/core/badge";
+import { Button } from "@/components/tailgrids/core/button";
+import { Input } from "@/components/tailgrids/core/input";
+import { useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import { recordAuditActivity } from "./audit-log";
 import { ManagementMetrics } from "./ManagementMetrics";
-import { Icon, ManagementShell } from "./ManagementShell";
-import type { ManagementRole } from "./ManagementShell";
+import { Icon, AdminSuperadminLayout } from "./AdminSuperadminLayout";
+import type { ManagementRole } from "./AdminSuperadminLayout";
 import { userMetrics } from "./management-data";
 import styles from "./management.module.css";
 
@@ -42,30 +45,94 @@ const permissions = [
 const projects = ["Retail Analytics", "Customer Insights", "Sales Dashboard", "Marketing Data"];
 type Access = { permissions: string[]; projects: Record<string, string> };
 const emptyAccess: Access = { permissions: [], projects: {} };
+const initialAccess: Record<string, Access> = {
+  [initialUsers[0].email]: {
+    permissions: ["View Dashboard", "Access Projects", "Manage Integrations"],
+    projects: { "Retail Analytics": "Editor", "Customer Insights": "Viewer" },
+  },
+};
+
+type SavedUsers = {
+  addedUsers: User[];
+  accessByEmail: Record<string, Access>;
+  rolesByEmail?: Record<string, User["role"]>;
+};
+const storageKey = "nexus-management-users";
+const storageEvent = "nexus-users-updated";
+
+function getSnapshot() {
+  try {
+    return localStorage.getItem(storageKey) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function readUsers(snapshot: string): SavedUsers {
+  if (snapshot) {
+    try {
+      const saved: SavedUsers | null = JSON.parse(snapshot);
+      if (Array.isArray(saved?.addedUsers) && saved.accessByEmail && typeof saved.accessByEmail === "object") return saved;
+    } catch {
+      // Fall back to the starter records if the saved data cannot be read.
+    }
+  }
+  return { addedUsers: [], accessByEmail: {} };
+}
+
+function getUsers(saved: SavedUsers) {
+  return [...initialUsers, ...saved.addedUsers].map((user) => {
+    const role = saved.rolesByEmail?.[user.email];
+    return role === "User" || role === "Admin" ? { ...user, role } : user;
+  });
+}
+
+function subscribe(listener: () => void) {
+  function onStorage(event: StorageEvent) {
+    if (event.key === storageKey || event.key === null) listener();
+  }
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(storageEvent, listener);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(storageEvent, listener);
+  };
+}
+
+function saveUsers(saved: SavedUsers) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(saved));
+  } catch {
+    return false;
+  }
+  window.dispatchEvent(new Event(storageEvent));
+  return true;
+}
+
 const tabs = ["General", "Permissions", "Project Access", "Activity"] as const;
 type UserTab = (typeof tabs)[number];
 
-function Status({ status }: { status: User["status"] }) {
-  return <span className={`${styles.badge} ${styles[status.toLowerCase()]}`}>{status}</span>;
+function Status({ status, className }: { status: User["status"]; className?: string }) {
+  return <Badge className={className} color={status === "Active" ? "success" : status === "Pending" ? "warning" : "gray"}>{status}</Badge>;
 }
 
 export function UserManagement({ role: managementRole = "Admin" }: { role?: ManagementRole }) {
   const canManagePlatform = managementRole === "Superadmin";
-  const [users, setUsers] = useState(initialUsers);
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => "");
+  const saved = readUsers(snapshot);
+  const users = getUsers(saved);
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("All");
   const [status, setStatus] = useState("All");
   const [projectAccess, setProjectAccess] = useState("All");
   const [checked, setChecked] = useState<string[]>([]);
-  const [selected, setSelected] = useState<User | null>(initialUsers[0]);
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(initialUsers[0].email);
+  const selected = users.find((user) => user.email === selectedEmail);
+  const [roleDraft, setRoleDraft] = useState<User["role"] | null>(null);
   const [tab, setTab] = useState<UserTab>("Permissions");
-  const [accessByEmail, setAccessByEmail] = useState<Record<string, Access>>({
-    [initialUsers[0].email]: {
-      permissions: ["View Dashboard", "Access Projects", "Manage Integrations"],
-      projects: { "Retail Analytics": "Editor", "Customer Insights": "Viewer" },
-    },
-  });
-  const [draft, setDraft] = useState<Access>(accessByEmail[initialUsers[0].email]);
+  const [draftChanges, setDraftChanges] = useState<Access | null>(null);
+  const savedAccess = selected ? saved.accessByEmail[selected.email] ?? initialAccess[selected.email] ?? emptyAccess : emptyAccess;
+  const draft = draftChanges ?? savedAccess;
   const [projectQuery, setProjectQuery] = useState("");
   const [message, setMessage] = useState("");
   const [inviteError, setInviteError] = useState("");
@@ -77,15 +144,38 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
     (status === "All" || user.status === status) &&
     (projectAccess === "All" || (projectAccess === "Assigned" ? user.projects > 0 : user.projects === 0)),
   );
-  const canEditSelected = selected !== null && (canManagePlatform || selected.role === "User");
+  const canEditSelected = selected && (canManagePlatform || selected.role === "User");
   const allVisibleChecked = visible.length > 0 && visible.every((user) => checked.includes(user.email));
 
   function openUser(user: User) {
-    setSelected(user);
-    setDraft(accessByEmail[user.email] ?? emptyAccess);
+    setSelectedEmail(user.email);
+    setRoleDraft(null);
+    setDraftChanges(null);
     setTab("Permissions");
     setProjectQuery("");
     setMessage("");
+  }
+
+  function saveRole(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedEmail || !roleDraft) return;
+
+    const current = readUsers(getSnapshot());
+    const user = getUsers(current).find(({ email }) => email === selectedEmail);
+    if (!user || user.role === roleDraft) return;
+
+    const rolesByEmail = { ...current.rolesByEmail, [user.email]: roleDraft };
+    if (!saveUsers({ ...current, rolesByEmail })) {
+      setMessage("This browser could not save the role.");
+      return;
+    }
+
+    setRoleDraft(null);
+    setDraftChanges(null);
+    recordAuditActivity({
+      role: managementRole, category: "Users", action: "User role changed", target: user.name, outcome: "Success",
+    });
+    setMessage("Role updated to " + roleDraft + ".");
   }
 
   function addUser(event: FormEvent<HTMLFormElement>) {
@@ -98,7 +188,8 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
       setInviteError("Enter a name.");
       return;
     }
-    if (users.some((user) => user.email === email)) {
+    const current = readUsers(getSnapshot());
+    if ([...initialUsers, ...current.addedUsers].some((user) => user.email === email)) {
       setInviteError("A user with this email already exists.");
       return;
     }
@@ -106,7 +197,10 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
       name, email, role: canManagePlatform && data.get("role") === "Admin" ? "Admin" : "User",
       projects: 0, status: "Pending", lastActive: "—",
     };
-    setUsers((current) => [...current, user]);
+    if (!saveUsers({ ...current, addedUsers: [...current.addedUsers, user] })) {
+      setInviteError("This browser could not save the user.");
+      return;
+    }
     recordAuditActivity({
       role: managementRole, category: "Users", action: "Demo user added", target: user.name, outcome: "Success",
     });
@@ -139,12 +233,12 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
   }
 
   function setProject(project: string, level: string) {
-    setDraft((current) => ({ ...current, projects: { ...current.projects, [project]: level } }));
+    setDraftChanges({ ...draft, projects: { ...draft.projects, [project]: level } });
     setMessage("");
   }
 
   return (
-    <ManagementShell role={managementRole} active="Users" query={query} onQueryChange={setQuery} searchLabel="Search management users">
+    <AdminSuperadminLayout role={managementRole} active="Users" query={query} onQueryChange={setQuery} searchLabel="Search management users">
       <div className={styles.heading}>
         <div>
           <p>NEXUS / {managementRole} / Users</p>
@@ -156,9 +250,9 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
           </div>
         </div>
         <div className={styles.actions}>
-          <button type="button" onClick={exportUsers} disabled={!checked.length && !visible.length}>Export users</button>
-          <button type="button" className={styles.primary}
-            onClick={() => { setInviteError(""); inviteDialog.current?.showModal(); }}>+ Add User</button>
+          <Button size="xs" appearance="outline" type="button" onPress={exportUsers} disabled={!checked.length && !visible.length}>Export users</Button>
+          <Button size="xs" type="button"
+            onPress={() => { setInviteError(""); inviteDialog.current?.showModal(); }}>+ Add User</Button>
         </div>
       </div>
 
@@ -173,7 +267,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
           <section className={styles.card} aria-labelledby="users-heading">
             <h2 id="users-heading">Users</h2>
             <div className={styles.userFilters}>
-              <input type="search" placeholder="Search users..." aria-label="Search users"
+              <Input type="search" placeholder="Search users..." aria-label="Search users"
                 value={query} onChange={(event) => setQuery(event.target.value)} />
               <label>Role<select value={role} onChange={(event) => setRole(event.target.value)}>
                 <option>All</option><option>User</option><option>Admin</option>
@@ -184,7 +278,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
               <label>Project Access<select value={projectAccess} onChange={(event) => setProjectAccess(event.target.value)}>
                 <option>All</option><option>Assigned</option><option>Unassigned</option>
               </select></label>
-              <button type="button" onClick={() => { setQuery(""); setRole("All"); setStatus("All"); setProjectAccess("All"); }}>Reset</button>
+              <Button size="xs" appearance="outline" type="button" onPress={() => { setQuery(""); setRole("All"); setStatus("All"); setProjectAccess("All"); }}>Reset</Button>
             </div>
 
             <div className={styles.tableScroll}>
@@ -203,7 +297,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                         onChange={(event) => setChecked(event.target.checked ? [...checked, user.email] : checked.filter((email) => email !== user.email))} /></td>
                       <th scope="row"><button type="button" className={styles.rowButton}
                         aria-pressed={selected?.email === user.email} onClick={() => openUser(user)}>{user.name}</button></th>
-                      <td>{user.email}</td><td><span className={styles.badge}>{user.role}</span></td>
+                      <td>{user.email}</td><td><Badge color="gray">{user.role}</Badge></td>
                       <td>{user.projects} {user.projects === 1 ? "project" : "projects"}</td>
                       <td><Status status={user.status} /></td><td>{user.lastActive}</td>
                       <td><button type="button" className={styles.rowButton} aria-label={`Details for ${user.name}`} onClick={() => openUser(user)}>•••</button></td>
@@ -221,7 +315,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
           <div className={styles.detailHeading}>
             <h2 id="user-details">User Details</h2>
             {selected && <button type="button" className={styles.rowButton} aria-label="Close user details"
-              onClick={() => { setSelected(null); setMessage(""); }}><Icon name="close" /></button>}
+              onClick={() => { setSelectedEmail(null); setMessage(""); }}><Icon name="close" /></button>}
           </div>
           {selected ? (
             <>
@@ -230,13 +324,29 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                   {selected.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}
                 </span>
                 <div><h3>{selected.name}</h3><p className={styles.muted}>{selected.email}</p></div>
-                <Status status={selected.status} />
+                <Status status={selected.status} className="ml-auto" />
               </div>
               <div className={styles.tabs} aria-label="User information">
                 {tabs.map((name) => <button type="button" key={name} aria-pressed={tab === name}
                   onClick={() => setTab(name)}>{name}</button>)}
               </div>
-              {tab === "General" && <p className={styles.record}>Role: {selected.role} · {selected.projects} assigned projects</p>}
+              {tab === "General" && (
+                <form className={styles.settingsForm} onSubmit={saveRole}>
+                  <p className={styles.muted}>{selected.projects} assigned projects</p>
+                  <label>
+                    <span>Account role</span>
+                    <select value={roleDraft ?? selected.role} onChange={(event) => {
+                      setRoleDraft(event.target.value === "Admin" ? "Admin" : "User");
+                      setMessage("");
+                    }}>
+                      <option>User</option><option>Admin</option>
+                    </select>
+                  </label>
+                  <div className={styles.actions}>
+                    <Button size="xs" type="submit" disabled={!roleDraft || roleDraft === selected.role}>Save role</Button>
+                  </div>
+                </form>
+              )}
               {tab === "Activity" && <p className={styles.record}>Last active: {selected.lastActive}</p>}
               {tab === "Permissions" && (
                 <fieldset className={styles.permissionGroup}>
@@ -247,8 +357,8 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                       <span><input type="checkbox" checked={draft.permissions.includes(name)}
                         disabled={!canEditSelected || (platformOnly && !canManagePlatform)} onChange={(event) => {
                         const enabled = event.target.checked;
-                        setDraft((current) => ({ ...current, permissions: enabled
-                          ? [...current.permissions, name] : current.permissions.filter((item) => item !== name) }));
+                        setDraftChanges({ ...draft, permissions: enabled
+                          ? [...draft.permissions, name] : draft.permissions.filter((item) => item !== name) });
                         setMessage("");
                       }} />{name}</span>
                       <small>{platformOnly && !canManagePlatform ? "Superadmin only" : description}</small>
@@ -261,7 +371,7 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                   <fieldset className={styles.permissionGroup}>
                     <legend>Project Access</legend>
                     <p className={styles.muted}>Select which projects this user can access.</p>
-                    <input type="search" placeholder="Search projects..." aria-label="Search project permissions"
+                    <Input type="search" placeholder="Search projects..." aria-label="Search project permissions"
                       value={projectQuery} onChange={(event) => setProjectQuery(event.target.value)} />
                     {projects.filter((project) => project.toLowerCase().includes(projectQuery.trim().toLowerCase())).map((project) => (
                       <div className={styles.permission} key={project}>
@@ -275,16 +385,26 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
                     ))}
                   </fieldset>
                   {canEditSelected ? <div className={styles.actions}>
-                    <button type="button" onClick={() => { setDraft(accessByEmail[selected.email] ?? emptyAccess); setMessage(""); }}>Cancel</button>
-                    <button type="button" className={styles.primary} onClick={() => {
-                      setAccessByEmail((current) => ({ ...current, [selected.email]: draft }));
+                    <Button size="xs" appearance="outline" type="button" onPress={() => { setDraftChanges(null); setMessage(""); }}>Cancel</Button>
+                    <Button size="xs" type="button" onPress={() => {
+                      const current = readUsers(getSnapshot());
+                      const user = getUsers(current).find(({ email }) => email === selected.email);
+                      if (!user || (!canManagePlatform && user.role !== "User")) {
+                        setMessage("This account’s permissions can only be edited by Superadmin.");
+                        return;
+                      }
+                      if (!saveUsers({ ...current, accessByEmail: { ...current.accessByEmail, [selected.email]: draft } })) {
+                        setMessage("This browser could not save permissions.");
+                        return;
+                      }
+                      setDraftChanges(null);
                       recordAuditActivity({
                         role: managementRole, category: "Users", action: "Permissions saved",
                         target: selected.name, outcome: "Success",
                       });
                       setMessage("Permissions saved in this preview.");
-                    }}>Save Permissions</button>
-                  </div> : <p className={styles.muted}>Administrator accounts can be edited by Superadmin.</p>}
+                    }}>Save Permissions</Button>
+                  </div> : <p className={styles.muted}>Only Superadmin can edit permissions for an Admin account.</p>}
                 </>
               )}
             </>
@@ -296,18 +416,18 @@ export function UserManagement({ role: managementRole = "Admin" }: { role?: Mana
       <dialog ref={inviteDialog} className={styles.dialog} aria-labelledby="add-user-heading">
         <form onSubmit={addUser}>
           <h2 id="add-user-heading">Add User</h2>
-          <label>Name<input name="name" required autoComplete="name" /></label>
-          <label>Email<input name="email" type="email" required autoComplete="email" /></label>
+          <label>Name<Input name="name" required autoComplete="name" /></label>
+          <label>Email<Input name="email" type="email" required autoComplete="email" /></label>
           {canManagePlatform && (
             <label>Role<select name="role"><option>User</option><option>Admin</option></select></label>
           )}
           {inviteError && <p role="alert">{inviteError}</p>}
           <div className={styles.actions}>
-            <button type="button" onClick={() => inviteDialog.current?.close()}>Cancel</button>
-            <button type="submit" className={styles.primary}>Add User</button>
+            <Button size="xs" appearance="outline" type="button" onPress={() => inviteDialog.current?.close()}>Cancel</Button>
+            <Button size="xs" type="submit">Add User</Button>
           </div>
         </form>
       </dialog>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

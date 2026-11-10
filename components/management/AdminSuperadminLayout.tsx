@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/tailgrids/core/input";
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -33,7 +34,7 @@ export function Icon({ name }: { name: string }) {
   );
 }
 
-export function ManagementShell({
+export function AdminSuperadminLayout({
   role,
   active,
   query = "",
@@ -56,9 +57,10 @@ export function ManagementShell({
       <header className={styles.header}>
         <Link className={styles.brand} href={routes.Overview}>NEXUS</Link>
         <div className={styles.headerActions}>
-          <input className={styles.headerSearch} type="search" placeholder="Search users, projects, vendors..."
+          <Input className={styles.headerSearch} type="search" placeholder={routes.Vendors ? "Search users, projects, vendors..." : "Search users, projects..."}
             aria-label={searchLabel} value={query} disabled={!onQueryChange} onChange={(event) => onQueryChange?.(event.target.value)} />
           <Icon name="bell" />
+          <Link className={styles.switchRole} href="/">Switch dashboard</Link>
           <div className={styles.profile}>
             <span className={styles.avatar} aria-hidden="true">JD</span>
             <span><strong>John Doe</strong><small>{role}</small></span>
@@ -68,12 +70,11 @@ export function ManagementShell({
       <nav className={styles.sidebar} aria-label={`${role} management`}>
         {navigation.map((item) => {
           const href = routes[item.name];
-          return href ? (
+          if (!href) return null;
+          return (
             <Link key={item.name} href={href} aria-current={active === item.name ? "page" : undefined}>
               <Icon name={item.icon} />{item.name}
             </Link>
-          ) : (
-            <span key={item.name} aria-disabled="true"><Icon name={item.icon} />{item.name}</span>
           );
         })}
       </nav>

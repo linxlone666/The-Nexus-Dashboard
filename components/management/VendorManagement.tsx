@@ -1,21 +1,24 @@
 "use client";
 
+import { Badge } from "@/components/tailgrids/core/badge";
+import { Button } from "@/components/tailgrids/core/button";
+import { Input } from "@/components/tailgrids/core/input";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { recordAuditActivity } from "./audit-log";
 import { ManagementMetrics } from "./ManagementMetrics";
-import { Icon, ManagementShell } from "./ManagementShell";
+import { Icon, AdminSuperadminLayout } from "./AdminSuperadminLayout";
 import { parseVendorEndpoint, saveVendor, useVendors } from "./vendor-catalog";
 import type { Vendor, VendorStatus } from "./vendor-catalog";
 import styles from "./management.module.css";
 
 const statuses = ["Connected", "Disconnected", "Error"] as const;
-const statusStyles = { Connected: styles.active, Disconnected: styles.inactive, Error: styles.error };
+const statusColors = { Connected: "success", Disconnected: "gray", Error: "error" } as const;
 const tabs = ["Overview", "Credentials", "Data Sources", "Sync & Logs"] as const;
 type Tab = (typeof tabs)[number];
 
-function Status({ value }: { value: VendorStatus }) {
-  return <span className={`${styles.badge} ${statusStyles[value]}`}>{value}</span>;
+function Status({ value, className }: { value: VendorStatus; className?: string }) {
+  return <Badge className={className} color={statusColors[value]}>{value}</Badge>;
 }
 
 export function VendorManagement() {
@@ -107,14 +110,14 @@ export function VendorManagement() {
   }
 
   return (
-    <ManagementShell role="Superadmin" active="Vendors" query={query} onQueryChange={setQuery} searchLabel="Search vendors from the top bar">
+    <AdminSuperadminLayout role="Superadmin" active="Vendors" query={query} onQueryChange={setQuery} searchLabel="Search vendors from the top bar">
       <div className={styles.heading}>
         <div>
           <p>NEXUS / Superadmin / Vendors</p>
           <h1>Vendor Management</h1>
           <div className={styles.muted}>Manage external providers, credential references, and data sources.</div>
         </div>
-        <button type="button" className={styles.primary} onClick={() => openEditor(null)}>+ Add Vendor</button>
+        <Button size="xs" type="button" onPress={() => openEditor(null)}>+ Add Vendor</Button>
       </div>
 
       <div className={styles.columns}>
@@ -123,12 +126,12 @@ export function VendorManagement() {
           <section className={styles.card} aria-labelledby="vendors-heading">
             <h2 id="vendors-heading">Vendors</h2>
             <div className={`${styles.userFilters} ${styles.vendorFilters}`}>
-              <input type="search" aria-label="Search vendors" placeholder="Search vendors..." value={query}
+              <Input type="search" aria-label="Search vendors" placeholder="Search vendors..." value={query}
                 onChange={(event) => setQuery(event.target.value)} />
               <label>Connection status<select value={filter} onChange={(event) => setFilter(event.target.value)}>
                 <option>All</option>{statuses.map((status) => <option key={status}>{status}</option>)}
               </select></label>
-              <button type="button" onClick={() => { setQuery(""); setFilter("All"); }}>Reset</button>
+              <Button size="xs" appearance="outline" type="button" onPress={() => { setQuery(""); setFilter("All"); }}>Reset</Button>
             </div>
             <div className={styles.tableScroll}>
               <table className={`${styles.table} ${styles.userTable}`}>
@@ -164,7 +167,7 @@ export function VendorManagement() {
               <div className={styles.profile}>
                 <span className={styles.avatar}><Icon name="grid" /></span>
                 <div><h3>{selected.name}</h3><p className={styles.muted}>{parseVendorEndpoint(selected.url)?.hostname}</p></div>
-                <Status value={selected.status} />
+                <Status value={selected.status} className="ml-auto" />
               </div>
               <div className={styles.tabs} aria-label="Vendor detail sections">
                 {tabs.map((name) => <button key={name} type="button" aria-pressed={tab === name} onClick={() => setTab(name)}>{name}</button>)}
@@ -176,7 +179,7 @@ export function VendorManagement() {
                 <p>Authentication: {selected.authentication}</p>
                 <p>Credential reference: {selected.reference || "Not set"}</p>
                 <p>Base URL: {selected.url}</p>
-                <div><button type="button" onClick={() => openEditor(selected)}>Edit credentials</button></div>
+                <div><Button size="xs" appearance="outline" type="button" onPress={() => openEditor(selected)}>Edit credentials</Button></div>
               </div>}
               {tab === "Data Sources" && <div className={styles.record}>
                 {selected.sources.length ? (
@@ -191,9 +194,9 @@ export function VendorManagement() {
               <h3>Connection test</h3>
               <p className={styles.muted}>Simulate a check of the saved endpoint and credential reference.</p>
               <div className={styles.vendorTest}>
-                <button type="button" className={styles.primary} onClick={() => testConnection(selected)}>
+                <Button size="xs" type="button" onPress={() => testConnection(selected)}>
                   {selected.status === "Error" ? "Retry demo test" : "Test demo connection"}
-                </button>
+                </Button>
                 <p role="status" className={styles.feedback}>{selected.testMessage}</p>
                 {testError && <p role="alert">{testError}</p>}
               </div>
@@ -205,20 +208,20 @@ export function VendorManagement() {
       <dialog className={styles.dialog} ref={dialog} aria-labelledby="vendor-editor">
         <form key={editorVersion} onSubmit={submit}>
           <h2 id="vendor-editor">{editing ? "Edit vendor" : "Add vendor"}</h2>
-          <label>Vendor name<input name="name" required maxLength={60} defaultValue={editing?.name} /></label>
-          <label>Base URL<input name="endpoint" type="url" required placeholder="https://api.example.com" defaultValue={editing?.url} /></label>
+          <label>Vendor name<Input name="name" required maxLength={60} defaultValue={editing?.name} /></label>
+          <label>Base URL<Input name="endpoint" type="url" required placeholder="https://api.example.com" defaultValue={editing?.url} /></label>
           <label>Authentication<select name="authentication" defaultValue={editing?.authentication ?? "API key"}>
             <option>API key</option><option>Bearer token</option>
           </select></label>
-          <label>Credential reference<input name="reference" maxLength={100} defaultValue={editing?.reference} /></label>
+          <label>Credential reference<Input name="reference" maxLength={100} defaultValue={editing?.reference} /></label>
           <p className={styles.muted}>Enter a credential name or ID. Keep the actual secret in your credential store.</p>
           {formError && <p role="alert">{formError}</p>}
           <div className={styles.actions}>
-            <button type="button" onClick={() => dialog.current?.close()}>Cancel</button>
-            <button type="submit" className={styles.primary}>{editing ? "Save vendor" : "Add vendor"}</button>
+            <Button size="xs" appearance="outline" type="button" onPress={() => dialog.current?.close()}>Cancel</Button>
+            <Button size="xs" type="submit">{editing ? "Save vendor" : "Add vendor"}</Button>
           </div>
         </form>
       </dialog>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

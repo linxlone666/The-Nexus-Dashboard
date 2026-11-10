@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ManagementMetrics } from "./ManagementMetrics";
-import { ManagementShell, managementRoutes } from "./ManagementShell";
-import type { ManagementRole } from "./ManagementShell";
+import { AdminSuperadminLayout, managementRoutes } from "./AdminSuperadminLayout";
+import type { ManagementRole } from "./AdminSuperadminLayout";
 import { getProjectMetrics, userMetrics } from "./management-data";
 import { useProjects } from "./project-storage";
 import styles from "./management.module.css";
@@ -42,7 +42,7 @@ export function ManagementOverview({ role }: { role: ManagementRole }) {
   );
 
   return (
-    <ManagementShell role={role} active="Overview" query={query} onQueryChange={setQuery} searchLabel="Search management shortcuts">
+    <AdminSuperadminLayout role={role} active="Overview" query={query} onQueryChange={setQuery} searchLabel="Search management shortcuts">
       <div className={styles.heading}>
         <div>
           <p>NEXUS / {role} / Overview</p>
@@ -72,6 +72,6 @@ export function ManagementOverview({ role }: { role: ManagementRole }) {
           <div className={styles.overviewLinks}><Link href={routes[data.destination]}>Review {data.destination.toLowerCase()}</Link></div>
         </section>
       </div>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

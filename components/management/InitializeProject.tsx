@@ -1,12 +1,15 @@
 "use client";
 
+import { Badge } from "@/components/tailgrids/core/badge";
+import { Button } from "@/components/tailgrids/core/button";
+import { Input } from "@/components/tailgrids/core/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { recordAuditActivity } from "./audit-log";
 import { organizations } from "./management-data";
-import { ManagementShell, managementRoutes } from "./ManagementShell";
+import { AdminSuperadminLayout, managementRoutes } from "./AdminSuperadminLayout";
 import { saveProject } from "./project-storage";
 import { parseVendorEndpoint, useVendors } from "./vendor-catalog";
 import type { Vendor, VendorSource } from "./vendor-catalog";
@@ -119,7 +122,7 @@ export function InitializeProject() {
   }
 
   return (
-    <ManagementShell role="Superadmin" active="Projects"
+    <AdminSuperadminLayout role="Superadmin" active="Projects"
       query={vendorQuery} onQueryChange={step === 1 ? setVendorQuery : undefined} searchLabel="Search vendors from the top bar">
       <div className={styles.heading}>
         <div>
@@ -146,8 +149,8 @@ export function InitializeProject() {
               <>
                 <p className={styles.muted}>Basic information for the new project.</p>
                 <div className={wizard.fields}>
-                  <label>Project name<input required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} /></label>
-                  <label>Project key<input required maxLength={64} placeholder="e.g. prj-001" value={key} onChange={(event) => setKey(event.target.value)} /></label>
+                  <label>Project name<Input required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} /></label>
+                  <label>Project key<Input required maxLength={64} placeholder="e.g. prj-001" value={key} onChange={(event) => setKey(event.target.value)} /></label>
                   <label className={wizard.full}>Description <textarea maxLength={500} rows={3} value={description}
                     onChange={(event) => setDescription(event.target.value)} /></label>
                   <label>Organization<select value={organization} onChange={(event) => setOrganization(event.target.value)}>
@@ -170,7 +173,7 @@ export function InitializeProject() {
             {step === 1 && (
               <>
                 <p className={styles.muted}>Choose a connected demo provider with sample data sources.</p>
-                <input type="search" aria-label="Search vendors" placeholder="Search vendors..."
+                <Input type="search" aria-label="Search vendors" placeholder="Search vendors..."
                   value={vendorQuery} onChange={(event) => setVendorQuery(event.target.value)} />
                 <div className={styles.tableScroll}>
                   <table className={styles.table}>
@@ -195,18 +198,18 @@ export function InitializeProject() {
               <>
                 <p className={styles.muted}>Configure the endpoint and test it in demo mode before mapping devices.</p>
                 <div className={wizard.fields}>
-                  <label className={wizard.full}>Base URL<input type="url" required value={baseUrl} onChange={(event) => {
+                  <label className={wizard.full}>Base URL<Input type="url" required value={baseUrl} onChange={(event) => {
                     setBaseUrl(event.target.value); setTested(false);
                   }} /></label>
                   <label>Authentication type<select value={authentication} onChange={(event) => {
                     setAuthentication(event.target.value); setTested(false);
                   }}><option>API key</option><option>Bearer token</option></select></label>
-                  <label>Credential reference<input required maxLength={100} value={credentialReference} onChange={(event) => {
+                  <label>Credential reference<Input required maxLength={100} value={credentialReference} onChange={(event) => {
                     setCredentialReference(event.target.value); setTested(false);
                   }} /></label>
                 </div>
                 <p className={styles.muted}>Use a credential name or ID.</p>
-                <button type="button" onClick={testConnection}>Test demo connection</button>
+                <Button size="xs" appearance="outline" type="button" onPress={testConnection}>Test demo connection</Button>
                 {tested && <p role="status" className={wizard.notice}>Demo connection verified · {mappings.length} sample sources available.</p>}
               </>
             )}
@@ -224,12 +227,12 @@ export function InitializeProject() {
                           <td><select aria-label={`Nexus type for ${mapping.source}`} value={mapping.type} onChange={(event) => {
                             setMappings(mappings.map((item, position) => position === index ? { ...item, type: event.target.value } : item));
                           }}><option value="">Select type</option>{types.map((type) => <option key={type}>{type}</option>)}</select></td>
-                          <td><input required maxLength={100} aria-label={`Display name for ${mapping.source}`} value={mapping.name} onChange={(event) => {
+                          <td><Input required maxLength={100} aria-label={`Display name for ${mapping.source}`} value={mapping.name} onChange={(event) => {
                             setMappings(mappings.map((item, position) => position === index ? { ...item, name: event.target.value } : item));
                           }} /></td>
-                          <td><span className={`${styles.badge} ${mapping.type && mapping.name.trim() ? styles.active : styles.pending}`}>
+                          <td><Badge color={mapping.type && mapping.name.trim() ? "success" : "warning"}>
                             {mapping.type && mapping.name.trim() ? "Mapped" : "Pending"}
-                          </span></td>
+                          </Badge></td>
                         </tr>
                       ))}
                     </tbody>
@@ -244,11 +247,11 @@ export function InitializeProject() {
                 <p className={styles.muted}>Review the configuration before creating the project in this browser.</p>
                 <div className={wizard.review}>
                   <div><h3>Project</h3><p>{name} · {organization} · {environment}</p></div>
-                  <button type="button" onClick={() => goTo(0)}>Edit details</button>
+                  <Button size="xs" appearance="outline" type="button" onPress={() => goTo(0)}>Edit details</Button>
                   <div><h3>Vendor connection</h3><p>{vendor?.name} · Demo connection verified</p></div>
-                  <button type="button" onClick={() => goTo(2)}>Edit API</button>
+                  <Button size="xs" appearance="outline" type="button" onPress={() => goTo(2)}>Edit API</Button>
                   <div><h3>Device mapping</h3><p>{mappings.map((mapping) => mapping.name.trim()).join(" · ")}</p></div>
-                  <button type="button" onClick={() => goTo(3)}>Edit mapping</button>
+                  <Button size="xs" appearance="outline" type="button" onPress={() => goTo(3)}>Edit mapping</Button>
                 </div>
                 <p className={wizard.notice}>Ready to create</p>
               </>
@@ -268,12 +271,12 @@ export function InitializeProject() {
           </aside>
         </div>
         <div className={`${styles.actions} ${wizard.footer}`}>
-          {step === 0 ? <Link href={projectsUrl}>Cancel</Link> : <button type="button" onClick={() => goTo(step - 1)}>Back</button>}
-          <button type="submit" className={styles.primary}>
+          {step === 0 ? <Link href={projectsUrl}>Cancel</Link> : <Button size="xs" appearance="outline" type="button" onPress={() => goTo(step - 1)}>Back</Button>}
+          <Button size="xs" type="submit">
             {step === steps.length - 1 ? "Create project" : `Next: ${steps[step + 1]}`}
-          </button>
+          </Button>
         </div>
       </form>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

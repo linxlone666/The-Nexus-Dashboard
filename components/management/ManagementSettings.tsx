@@ -1,10 +1,11 @@
 "use client";
 
+import { Button } from "@/components/tailgrids/core/button";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { recordAuditActivity } from "./audit-log";
-import { ManagementShell } from "./ManagementShell";
-import type { ManagementRole } from "./ManagementShell";
+import { AdminSuperadminLayout } from "./AdminSuperadminLayout";
+import type { ManagementRole } from "./AdminSuperadminLayout";
 import {
   auditTimeZones, defaultPreferences, saveManagementPreferences, useManagementPreferences,
 } from "./management-preferences";
@@ -41,7 +42,7 @@ export function ManagementSettings({ role }: { role: ManagementRole }) {
   }
 
   return (
-    <ManagementShell role={role} active="Settings" searchLabel="Search management">
+    <AdminSuperadminLayout role={role} active="Settings" searchLabel="Search management">
       <div className={styles.heading}>
         <div>
           <p>NEXUS / {role} / Settings</p>
@@ -73,8 +74,8 @@ export function ManagementSettings({ role }: { role: ManagementRole }) {
               <span className={styles.muted}>Controls how event times appear in Audit Logs.</span>
             </label>
             <div className={styles.actions}>
-              <button type="button" onClick={() => update(defaultPreferences)}>Restore defaults</button>
-              <button type="submit" className={styles.primary} disabled={!dirty}>Save preferences</button>
+              <Button size="xs" appearance="outline" type="button" onPress={() => update(defaultPreferences)}>Restore defaults</Button>
+              <Button size="xs" type="submit" disabled={!dirty}>Save preferences</Button>
             </div>
             {message && <p className={styles.feedback} role="status">{message}</p>}
             {error && <p role="alert">{error}</p>}
@@ -90,6 +91,6 @@ export function ManagementSettings({ role }: { role: ManagementRole }) {
           </dl>
         </aside>
       </div>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

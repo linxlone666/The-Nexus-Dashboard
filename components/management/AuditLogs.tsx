@@ -1,10 +1,13 @@
 "use client";
 
+import { Badge } from "@/components/tailgrids/core/badge";
+import { Button } from "@/components/tailgrids/core/button";
+import { Input } from "@/components/tailgrids/core/input";
 import { useState } from "react";
 import { auditCategories, useAuditLog } from "./audit-log";
 import { ManagementMetrics } from "./ManagementMetrics";
-import { ManagementShell } from "./ManagementShell";
-import type { ManagementRole } from "./ManagementShell";
+import { AdminSuperadminLayout } from "./AdminSuperadminLayout";
+import type { ManagementRole } from "./AdminSuperadminLayout";
 import { auditTimeZones, useManagementPreferences } from "./management-preferences";
 import styles from "./management.module.css";
 
@@ -25,7 +28,7 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
   );
 
   return (
-    <ManagementShell role={role} active="Audit Logs" query={query} onQueryChange={setQuery} searchLabel="Search audit activity from the top bar">
+    <AdminSuperadminLayout role={role} active="Audit Logs" query={query} onQueryChange={setQuery} searchLabel="Search audit activity from the top bar">
       <div className={styles.heading}>
         <div>
           <p>NEXUS / {role} / Audit Logs</p>
@@ -44,7 +47,7 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
         <h2 id="audit-events">Activity history</h2>
         <p className={styles.muted}>Time zone: {auditTimeZones[timeZone]}</p>
         <div className={`${styles.userFilters} ${styles.projectFilters}`}>
-          <input type="search" aria-label="Search audit activity" placeholder="Search actions, targets, or roles..."
+          <Input type="search" aria-label="Search audit activity" placeholder="Search actions, targets, or roles..."
             value={query} onChange={(event) => setQuery(event.target.value)} />
           <label>Category<select value={category} onChange={(event) => setCategory(event.target.value)}>
             <option>All</option>
@@ -53,7 +56,7 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
           <label>Outcome<select value={outcome} onChange={(event) => setOutcome(event.target.value)}>
             <option>All</option><option>Success</option><option>Failed</option>
           </select></label>
-          <button type="button" onClick={() => { setQuery(""); setCategory("All"); setOutcome("All"); }}>Reset</button>
+          <Button size="xs" appearance="outline" type="button" onPress={() => { setQuery(""); setCategory("All"); setOutcome("All"); }}>Reset</Button>
         </div>
         <div className={styles.tableScroll}>
           <table className={`${styles.table} ${styles.userTable}`}>
@@ -66,7 +69,7 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
                   <td><time dateTime={entry.occurredAt}>{timeFormat.format(new Date(entry.occurredAt))}</time></td>
                   <th scope="row">{entry.action}</th>
                   <td>{entry.target}</td><td>{entry.category}</td><td>{entry.role}</td>
-                  <td><span className={`${styles.badge} ${entry.outcome === "Success" ? styles.active : styles.error}`}>{entry.outcome}</span></td>
+                  <td><Badge color={entry.outcome === "Success" ? "success" : "error"}>{entry.outcome}</Badge></td>
                 </tr>
               ))}
               {!visible.length && <tr><td colSpan={6}>{events.length ? "No activity matches your filters." : "No activity recorded yet."}</td></tr>}
@@ -75,6 +78,6 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
         </div>
         <p className={styles.tableSummary}>Showing {visible.length} of {events.length} recorded events</p>
       </section>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

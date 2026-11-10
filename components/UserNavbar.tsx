@@ -1,7 +1,8 @@
 "use client";
 
+import { Input } from "@/components/tailgrids/core/input";
 import { useId, useRef, useState, useSyncExternalStore } from "react";
-import styles from "./Navbar.module.css";
+import styles from "./UserNavbar.module.css";
 
 const sections = [
   { id: "overview", label: "Overview", icon: "grid" },
@@ -20,7 +21,7 @@ function subscribeToLocation(callback: () => void) {
 }
 
 type Section = (typeof sections)[number];
-type NavbarProps = {
+type UserNavbarProps = {
   site: string;
   workspace: string;
   user: { name: string; initials: string };
@@ -35,7 +36,7 @@ function Icon({ name }: { name: string }) {
   );
 }
 
-export function Navbar({ site, workspace, user, alarmCount = 0 }: NavbarProps) {
+export function UserNavbar({ site, workspace, user, alarmCount = 0 }: UserNavbarProps) {
   const drawer = useRef<HTMLDialogElement>(null);
   const search = useRef<HTMLDivElement>(null);
   const drawerId = useId();
@@ -101,7 +102,7 @@ export function Navbar({ site, workspace, user, alarmCount = 0 }: NavbarProps) {
               }
             }}>
               <Icon name="search" />
-              <input
+              <Input
                 type="search"
                 aria-label="Search dashboard sections"
                 placeholder="Search dashboard"

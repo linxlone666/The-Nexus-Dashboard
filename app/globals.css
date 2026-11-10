@@ -80,10 +80,10 @@
   /* ======== Button Color =========*/
 
   /* Primary */
-  --color-button-primary-background: #3758f9;
-  --color-button-primary-hover-background: #2237ee;
+  --color-button-primary-background: #08786d;
+  --color-button-primary-hover-background: #09665e;
   --color-button-primary-text: #ffffff;
-  --color-button-primary-focus-ring: rgba(55, 88, 249, 0.2);
+  --color-button-primary-focus-ring: rgba(8, 120, 109, 0.2);
 
   /* Outline */
   --color-button-outline-background: #ffffff;

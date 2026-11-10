@@ -1,21 +1,24 @@
 "use client";
 
+import { Badge } from "@/components/tailgrids/core/badge";
+import { Button } from "@/components/tailgrids/core/button";
+import { Input } from "@/components/tailgrids/core/input";
 import Link from "next/link";
 import { useState } from "react";
 import { ManagementMetrics } from "./ManagementMetrics";
-import { Icon, ManagementShell, managementRoutes } from "./ManagementShell";
-import type { ManagementRole } from "./ManagementShell";
+import { Icon, AdminSuperadminLayout, managementRoutes } from "./AdminSuperadminLayout";
+import type { ManagementRole } from "./AdminSuperadminLayout";
 import { useProjects } from "./project-storage";
 import { useVendors } from "./vendor-catalog";
 import styles from "./management.module.css";
 
-const statusStyles = {
-  Connected: styles.active,
-  Disconnected: styles.inactive,
-  Error: styles.error,
-  "Vendor unavailable": styles.pending,
-  "Not configured": styles.inactive,
-};
+const statusColors = {
+  Connected: "success",
+  Disconnected: "gray",
+  Error: "error",
+  "Vendor unavailable": "warning",
+  "Not configured": "gray",
+} as const;
 
 export function IntegrationManagement({ role }: { role: ManagementRole }) {
   const projects = useProjects();
@@ -50,7 +53,7 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
   const selected = selectedKey === undefined ? visible[0] : visible.find(({ project }) => project.key === selectedKey);
 
   return (
-    <ManagementShell role={role} active="Integrations" query={query} onQueryChange={setQuery}
+    <AdminSuperadminLayout role={role} active="Integrations" query={query} onQueryChange={setQuery}
       searchLabel="Search integrations from the top bar">
       <div className={styles.heading}>
         <div>
@@ -74,13 +77,13 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
           <section className={styles.card} aria-labelledby="integrations-heading">
             <h2 id="integrations-heading">Project integrations</h2>
             <div className={`${styles.userFilters} ${styles.vendorFilters}`}>
-              <input type="search" aria-label="Search integrations" placeholder="Search projects or vendors..."
+              <Input type="search" aria-label="Search integrations" placeholder="Search projects or vendors..."
                 value={query} onChange={(event) => setQuery(event.target.value)} />
               <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}>
                 <option>All</option>
-                {Object.keys(statusStyles).map((item) => <option key={item}>{item}</option>)}
+                {Object.keys(statusColors).map((item) => <option key={item}>{item}</option>)}
               </select></label>
-              <button type="button" onClick={() => { setQuery(""); setStatus("All"); }}>Reset</button>
+              <Button size="xs" appearance="outline" type="button" onPress={() => { setQuery(""); setStatus("All"); }}>Reset</Button>
             </div>
             <div className={styles.tableScroll}>
               <table className={`${styles.table} ${styles.userTable}`}>
@@ -94,7 +97,7 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
                         aria-pressed={selected?.project.key === entry.project.key}
                         onClick={() => setSelectedKey(entry.project.key)}>{entry.project.name}</button></th>
                       <td>{entry.project.organization}</td><td>{entry.vendorName || "—"}</td><td>{entry.mappings.length}</td>
-                      <td><span className={`${styles.badge} ${statusStyles[entry.status]}`}>{entry.status}</span></td>
+                      <td><Badge color={statusColors[entry.status]}>{entry.status}</Badge></td>
                     </tr>
                   ))}
                   {!visible.length && <tr><td colSpan={5}>No integrations match your filters.</td></tr>}
@@ -116,7 +119,7 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
               <div className={styles.profile}>
                 <span className={styles.avatar}><Icon name="sliders" /></span>
                 <div><h3>{selected.project.name}</h3><p className={styles.muted}>{selected.project.organization}</p></div>
-                <span className={`${styles.badge} ${statusStyles[selected.status]}`}>{selected.status}</span>
+                <Badge className="ml-auto" color={statusColors[selected.status]}>{selected.status}</Badge>
               </div>
               <div className={styles.record}>
                 {selected.vendorName ? <p>Vendor: {selected.vendorName}</p> : <p>This project has no vendor configured.</p>}
@@ -141,6 +144,6 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
           ) : <p className={styles.muted}>Select a project to see its integration details.</p>}
         </aside>
       </div>
-    </ManagementShell>
+    </AdminSuperadminLayout>
   );
 }

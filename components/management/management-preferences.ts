@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { ManagementRole } from "./ManagementShell";
+import type { ManagementRole } from "./AdminSuperadminLayout";
 
 export const auditTimeZones = {
   local: "Browser time zone",

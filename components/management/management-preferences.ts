@@ -1,18 +1,9 @@
 import { useSyncExternalStore } from "react";
 import type { ManagementRole } from "./AdminSuperadminLayout";
 
-export const auditTimeZones = {
-  local: "Browser time zone",
-  UTC: "UTC",
-  "Asia/Bangkok": "Bangkok (UTC+7)",
-} as const;
+import { auditTimeZones, defaultPreferences } from "@/data/settings";
+import type { Preferences } from "@/data/settings";
 
-type Preferences = {
-  density: "standard" | "compact";
-  timeZone: keyof typeof auditTimeZones;
-};
-
-export const defaultPreferences: Preferences = { density: "standard", timeZone: "local" };
 const storagePrefix = "nexus-management-preferences:";
 const changeEvent = "nexus-management-preferences-updated";
 
@@ -37,7 +28,11 @@ function subscribe(listener: () => void) {
 }
 
 export function useManagementPreferences(role: ManagementRole): Preferences {
-  const snapshot = useSyncExternalStore(subscribe, () => getSnapshot(role), () => "");
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    () => getSnapshot(role),
+    () => "",
+  );
   if (!snapshot) return defaultPreferences;
 
   try {
@@ -45,14 +40,20 @@ export function useManagementPreferences(role: ManagementRole): Preferences {
     const timeZone = saved?.timeZone;
     return {
       density: saved?.density === "compact" ? "compact" : "standard",
-      timeZone: timeZone && Object.hasOwn(auditTimeZones, timeZone) ? timeZone : defaultPreferences.timeZone,
+      timeZone:
+        timeZone && Object.hasOwn(auditTimeZones, timeZone)
+          ? timeZone
+          : defaultPreferences.timeZone,
     };
   } catch {
     return defaultPreferences;
   }
 }
 
-export function saveManagementPreferences(role: ManagementRole, preferences: Preferences) {
+export function saveManagementPreferences(
+  role: ManagementRole,
+  preferences: Preferences,
+) {
   try {
     localStorage.setItem(storagePrefix + role, JSON.stringify(preferences));
   } catch {

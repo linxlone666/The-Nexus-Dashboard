@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { projects } from "./management-data";
+import { projects } from "@/data/projects";
 
 const storageKey = "nexus-initialized-projects";
 const storageEvent = "nexus-projects-updated";
@@ -33,10 +33,15 @@ function getSnapshot() {
 function readProjects(snapshot: string): InitializedProject[] {
   try {
     const value: unknown = JSON.parse(snapshot);
-    return Array.isArray(value) ? value.filter((project) =>
-      typeof project?.name === "string" && typeof project?.key === "string" &&
-      typeof project?.organization === "string" && Array.isArray(project?.mappings),
-    ) : [];
+    return Array.isArray(value)
+      ? value.filter(
+          (project) =>
+            typeof project?.name === "string" &&
+            typeof project?.key === "string" &&
+            typeof project?.organization === "string" &&
+            Array.isArray(project?.mappings),
+        )
+      : [];
   } catch {
     return [];
   }

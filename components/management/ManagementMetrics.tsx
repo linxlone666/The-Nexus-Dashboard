@@ -3,7 +3,9 @@ import styles from "./management.module.css";
 export function ManagementMetrics({
   metrics,
 }: {
-  metrics: ReadonlyArray<readonly [label: string, value: number, description: string]>;
+  metrics: ReadonlyArray<
+    readonly [label: string, value: number, description: string]
+  >;
 }) {
   return (
     <dl className={styles.metrics}>

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { ManagementRole } from "./AdminSuperadminLayout";
 
-export const auditCategories = ["Users", "Projects", "Vendors", "Settings"] as const;
+import { auditCategories } from "@/data/audit";
 
 type AuditActivity = {
   role: ManagementRole;
@@ -28,11 +28,16 @@ function getSnapshot() {
 function readEntries(snapshot: string): AuditEntry[] {
   try {
     const parsed: unknown = JSON.parse(snapshot);
-    return Array.isArray(parsed) ? parsed.filter((entry) =>
-      typeof entry?.id === "string" && typeof entry?.action === "string" &&
-      typeof entry?.target === "string" && typeof entry?.occurredAt === "string" &&
-      Number.isFinite(Date.parse(entry.occurredAt)),
-    ) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (entry) =>
+            typeof entry?.id === "string" &&
+            typeof entry?.action === "string" &&
+            typeof entry?.target === "string" &&
+            typeof entry?.occurredAt === "string" &&
+            Number.isFinite(Date.parse(entry.occurredAt)),
+        )
+      : [];
   } catch {
     return [];
   }
@@ -51,12 +56,18 @@ function subscribe(listener: () => void) {
 }
 
 export function useAuditLog() {
-  return readEntries(useSyncExternalStore(subscribe, getSnapshot, () => emptySnapshot));
+  return readEntries(
+    useSyncExternalStore(subscribe, getSnapshot, () => emptySnapshot),
+  );
 }
 
 export function recordAuditActivity(activity: AuditActivity) {
   try {
-    const entry = { ...activity, id: crypto.randomUUID(), occurredAt: new Date().toISOString() };
+    const entry = {
+      ...activity,
+      id: crypto.randomUUID(),
+      occurredAt: new Date().toISOString(),
+    };
     const entries = [entry, ...readEntries(getSnapshot())].slice(0, 200);
     localStorage.setItem(storageKey, JSON.stringify(entries));
   } catch {

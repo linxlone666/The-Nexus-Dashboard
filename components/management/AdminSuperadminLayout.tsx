@@ -12,8 +12,24 @@ const inter = Inter({ subsets: ["latin"], variable: "--management-font" });
 export type ManagementRole = "Admin" | "Superadmin";
 
 export const managementRoutes = {
-  Admin: { Overview: "/admin/overview", Users: "/admin", Projects: "/admin/projects", Vendors: null, Integrations: "/admin/integrations", "Audit Logs": "/admin/audit-logs", Settings: "/admin/settings" },
-  Superadmin: { Overview: "/superadmin/overview", Users: "/superadmin/users", Projects: "/superadmin", Vendors: "/superadmin/vendors", Integrations: "/superadmin/integrations", "Audit Logs": "/superadmin/audit-logs", Settings: "/superadmin/settings" },
+  Admin: {
+    Overview: "/admin/overview",
+    Users: "/admin",
+    Projects: "/admin/projects",
+    Vendors: null,
+    Integrations: "/admin/integrations",
+    "Audit Logs": "/admin/audit-logs",
+    Settings: "/admin/settings",
+  },
+  Superadmin: {
+    Overview: "/superadmin/overview",
+    Users: "/superadmin/users",
+    Projects: "/superadmin",
+    Vendors: "/superadmin/vendors",
+    Integrations: "/superadmin/integrations",
+    "Audit Logs": "/superadmin/audit-logs",
+    Settings: "/superadmin/settings",
+  },
 } as const;
 
 const navigation = [
@@ -55,15 +71,35 @@ export function AdminSuperadminLayout({
   return (
     <div className={`${styles.shell} ${inter.variable}`} data-density={density}>
       <header className={styles.header}>
-        <Link className={styles.brand} href={routes.Overview}>NEXUS</Link>
+        <Link className={styles.brand} href={routes.Overview}>
+          NEXUS
+        </Link>
         <div className={styles.headerActions}>
-          <Input className={styles.headerSearch} type="search" placeholder={routes.Vendors ? "Search users, projects, vendors..." : "Search users, projects..."}
-            aria-label={searchLabel} value={query} disabled={!onQueryChange} onChange={(event) => onQueryChange?.(event.target.value)} />
+          <Input
+            className={styles.headerSearch}
+            type="search"
+            placeholder={
+              routes.Vendors
+                ? "Search users, projects, vendors..."
+                : "Search users, projects..."
+            }
+            aria-label={searchLabel}
+            value={query}
+            disabled={!onQueryChange}
+            onChange={(event) => onQueryChange?.(event.target.value)}
+          />
           <Icon name="bell" />
-          <Link className={styles.switchRole} href="/">Switch dashboard</Link>
+          <Link className={styles.switchRole} href="/">
+            Switch dashboard
+          </Link>
           <div className={styles.profile}>
-            <span className={styles.avatar} aria-hidden="true">JD</span>
-            <span><strong>John Doe</strong><small>{role}</small></span>
+            <span className={styles.avatar} aria-hidden="true">
+              JD
+            </span>
+            <span>
+              <strong>John Doe</strong>
+              <small>{role}</small>
+            </span>
           </div>
         </div>
       </header>
@@ -72,8 +108,13 @@ export function AdminSuperadminLayout({
           const href = routes[item.name];
           if (!href) return null;
           return (
-            <Link key={item.name} href={href} aria-current={active === item.name ? "page" : undefined}>
-              <Icon name={item.icon} />{item.name}
+            <Link
+              key={item.name}
+              href={href}
+              aria-current={active === item.name ? "page" : undefined}
+            >
+              <Icon name={item.icon} />
+              {item.name}
             </Link>
           );
         })}

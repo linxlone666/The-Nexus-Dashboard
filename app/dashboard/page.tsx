@@ -1,20 +1,12 @@
-import { Navbar } from "@/components/Navbar";
+import { SignOutButton } from "@/components/SignOutButton";
+import { sections, dashboardMetrics } from "@/data/dashboard";
+import { UserNavbar } from "@/components/UserNavbar";
 import styles from "./page.module.css";
-
-const sections = [
-  ["activity", "Activity"],
-  ["cctv", "CCTV"],
-  ["alarms", "Alarms"],
-  ["access", "Access"],
-  ["parking", "Parking"],
-  ["my-views", "My views"],
-  ["edit", "Edit dashboard"],
-];
 
 export default function Dashboard() {
   return (
     <div className={styles.dashboard}>
-      <Navbar
+      <UserNavbar
         site="Nexus Headquarters"
         workspace="Control room"
         user={{ name: "Alex", initials: "AL" }}
@@ -22,20 +14,42 @@ export default function Dashboard() {
       />
       <main className={styles.content}>
         <section id="overview" className={styles.overview}>
-          <p className={styles.breadcrumb}>Nexus / My views / Control room</p>
+          <div className={styles.topline}>
+            <p className={styles.breadcrumb}>Nexus / My views / Control room</p>
+            <SignOutButton />
+          </div>
           <h1>Operations overview</h1>
+          <p className={styles.description}>
+            Demo preview of site activity, security, and parking.
+          </p>
           <dl className={styles.metrics}>
-            <div><dt>Active alarms</dt><dd>03</dd></div>
-            <div><dt>People on site</dt><dd>1,284</dd></div>
-            <div><dt>Parking available</dt><dd>64</dd></div>
+            {dashboardMetrics.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
           </dl>
         </section>
-        {sections.map(([id, label]) => (
-          <section key={id} id={id} className={styles.section}>
-            <h2>{label}</h2>
-            <p>This view is not connected yet.</p>
-          </section>
-        ))}
+        <div className={styles.cards}>
+          {sections.map(({ id, label, rows }) => (
+            <section key={id} id={id} className={styles.section}>
+              <h2>{label}</h2>
+              <dl className={styles.records}>
+                {rows.map(([name, detail]) => (
+                  <div key={name}>
+                    <dt>{name}</dt>
+                    <dd>{detail}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ))}
+        </div>
+        <section id="edit" className={styles.section}>
+          <h2>Edit dashboard</h2>
+          <p>Dashboard editing is unavailable in this preview.</p>
+        </section>
       </main>
     </div>
   );

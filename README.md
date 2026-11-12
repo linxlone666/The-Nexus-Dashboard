@@ -10,7 +10,7 @@ This guide explains how to run the frontend, develop separate features, and merg
 - **TailGrids:** configuration and theme styles are included; components can be added as needed.
 - **npm:** use this consistently so everyone shares `package-lock.json`.
 
-The current homepage is empty and the navbar is unfinished. Installing Tailwind or configuring TailGrids does not automatically create a dashboard.
+The homepage opens the styled login. Use the mock User, Admin, or Superadmin account to open its dashboard. See [prototype testing](docs/prototype-testing.md) for accounts and test steps, and the [dashboard walkthrough](PROTOTYPE.md) for management features.
 
 ## 1. First-time setup
 
@@ -48,7 +48,7 @@ app/
   page.tsx            Homepage at /
   globals.css         Tailwind import and shared theme styles
 components/
-  Navbar.tsx          Shared navigation (currently unfinished)
+  UserNavbar.tsx      Navigation for the User dashboard
 public/               Static assets, referenced as /filename.png
 utils/
   cn.ts               Helper for combining Tailwind classes

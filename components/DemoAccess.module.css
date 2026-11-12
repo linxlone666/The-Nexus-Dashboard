@@ -1,0 +1,10 @@
+.loading {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 24px;
+  background: #f2f7f6;
+  color: #163236;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 14px;
+}

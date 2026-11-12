@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/data/credential";
+import { getSafeReturnPath, saveDemoSession } from "@/utils/demo-session";
 import { Input } from "@/components/tailgrids/core/input";
 import { Button } from "@/components/tailgrids/core/button";
 import styles from "./Sign_In.module.css";
@@ -26,8 +27,11 @@ export default function SignIn() {
     const loginEmail = email.includes("@") ? email : `${email}@company.com`;
     try {
       const credential = await login(loginEmail, password);
-      localStorage.setItem("credential", JSON.stringify(credential));
-      const returnPath = localStorage.getItem("returnPath") || "/";
+      saveDemoSession(credential);
+      const returnPath = getSafeReturnPath(
+        credential.role,
+        localStorage.getItem("returnPath"),
+      );
       localStorage.removeItem("returnPath");
       router.replace(returnPath);
       router.refresh();
@@ -38,7 +42,7 @@ export default function SignIn() {
         alert("Password incorrect.");
       } else {
         emailDom.value = "";
-        alert("User not found.");
+        alert(error instanceof Error ? error.message : "Unable to sign in.");
       }
     }
   };

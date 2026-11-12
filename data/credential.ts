@@ -1,43 +1,28 @@
-type User = {
-  email: string;
-  password: string;
-};
-const users: User[] = [
-  {
-    email: "admin@company.com",
-    password: "pass",
-  },
-  {
-    email: "user@company.com",
-    password: "pass",
-  },
-  {
-    email: "manager@company.com",
-    password: "pass",
-  },
-];
+import { mockAccounts } from "./mock-accounts";
+import type { DemoRole } from "./mock-accounts";
 
 export type Credential = {
   token: string;
   email: string;
+  name: string;
+  role: DemoRole;
 };
 
-export const login = async (
+export async function login(
   email: string,
   password: string,
-): Promise<Credential> => {
-  const user = users.find((user) => user.email === email);
+): Promise<Credential> {
+  const account = mockAccounts.find(
+    (account) => account.email === email.trim().toLowerCase(),
+  );
+  if (!account) throw new Error("User not found");
+  if (account.password !== password) throw new Error("Invalid password");
 
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  if (user.password !== password) {
-    throw new Error("Password is required");
-  }
-
+  // Passwords stay in the mock data; only this demo session is saved in the browser.
   return {
     token: crypto.randomUUID(),
-    email: user.email,
+    email: account.email,
+    name: account.name,
+    role: account.role,
   };
-};
+}

@@ -1,3 +1,4 @@
+import { currentUserCan } from "@/utils/user-store";
 import { useSyncExternalStore } from "react";
 import type { ManagementRole } from "./AdminSuperadminLayout";
 
@@ -54,6 +55,7 @@ export function saveManagementPreferences(
   role: ManagementRole,
   preferences: Preferences,
 ) {
+  if (!currentUserCan("Manage Settings")) return false;
   try {
     localStorage.setItem(storagePrefix + role, JSON.stringify(preferences));
   } catch {

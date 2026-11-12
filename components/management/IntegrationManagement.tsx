@@ -12,7 +12,9 @@ import {
   managementRoutes,
 } from "./AdminSuperadminLayout";
 import type { ManagementRole } from "./AdminSuperadminLayout";
-import { useProjects } from "./project-storage";
+import { useAccessibleProjects } from "./project-storage";
+import { useDemoSession } from "@/utils/demo-session";
+import { hasPermission } from "@/utils/permissions";
 import { useVendors } from "./vendor-catalog";
 import styles from "./management.module.css";
 
@@ -25,7 +27,8 @@ const statusColors = {
 } as const;
 
 export function IntegrationManagement({ role }: { role: ManagementRole }) {
-  const projects = useProjects();
+  const projects = useAccessibleProjects();
+  const { credential, access } = useDemoSession();
   const vendors = useVendors();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
@@ -83,9 +86,11 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
             Review the vendors and data sources configured for each project.
           </div>
         </div>
-        <Link className={styles.primary} href={routes.Projects}>
-          View projects
-        </Link>
+        {hasPermission(credential?.role, access, "Access Projects") && (
+          <Link className={styles.primary} href={routes.Projects}>
+            View projects
+          </Link>
+        )}
       </div>
 
       <div className={styles.columns}>
@@ -277,10 +282,14 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
                 )}
               </div>
               <div className={styles.overviewLinks}>
-                {routes.Vendors && selected.vendorName && (
-                  <Link href={routes.Vendors}>Manage vendors</Link>
+                {routes.Vendors &&
+                  hasPermission(credential?.role, access, "Manage Vendors") &&
+                  selected.vendorName && (
+                    <Link href={routes.Vendors}>Manage vendors</Link>
+                  )}
+                {hasPermission(credential?.role, access, "Access Projects") && (
+                  <Link href={routes.Projects}>View projects</Link>
                 )}
-                <Link href={routes.Projects}>View projects</Link>
               </div>
             </>
           ) : (

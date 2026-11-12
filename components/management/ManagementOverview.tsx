@@ -8,19 +8,27 @@ import {
   managementRoutes,
 } from "./AdminSuperadminLayout";
 import type { ManagementRole } from "./AdminSuperadminLayout";
-import { userMetrics } from "@/data/users";
+import { getUserMetrics, useUsers } from "@/utils/user-store";
+import { useDemoSession } from "@/utils/demo-session";
+import { hasPermission, sectionPermissions } from "@/utils/permissions";
 import { overview } from "@/data/overview";
 import { getProjectMetrics } from "./project-metrics";
-import { useProjects } from "./project-storage";
+import { useAccessibleProjects } from "./project-storage";
 import styles from "./management.module.css";
 
 export function ManagementOverview({ role }: { role: ManagementRole }) {
   const [query, setQuery] = useState("");
-  const projects = useProjects();
+  const projects = useAccessibleProjects();
+  const { users } = useUsers();
+  const { credential, access } = useDemoSession();
   const data = overview[role];
   const routes = managementRoutes[role];
-  const links = data.links.filter(([, name, description]) =>
-    `${name} ${description}`.toLowerCase().includes(query.trim().toLowerCase()),
+  const links = data.links.filter(
+    ([section, name, description]) =>
+      hasPermission(credential?.role, access, sectionPermissions[section]) &&
+      `${name} ${description}`
+        .toLowerCase()
+        .includes(query.trim().toLowerCase()),
   );
 
   return (
@@ -39,7 +47,11 @@ export function ManagementOverview({ role }: { role: ManagementRole }) {
         </div>
       </div>
       <ManagementMetrics
-        metrics={role === "Admin" ? userMetrics : getProjectMetrics(projects)}
+        metrics={
+          role === "Admin"
+            ? getUserMetrics(users.filter((user) => user.role !== "Superadmin"))
+            : getProjectMetrics(projects)
+        }
       />
       <div className={styles.columns}>
         <section className={styles.card} aria-labelledby="management-shortcuts">
@@ -60,11 +72,23 @@ export function ManagementOverview({ role }: { role: ManagementRole }) {
         <section className={styles.card} aria-labelledby="needs-attention">
           <h2 id="needs-attention">Needs attention</h2>
           <h3>{data.attention}</h3>
-          <p className={styles.muted}>{data.detail}</p>
+          <p className={styles.muted}>
+            {role === "Admin"
+              ? users.filter((user) => user.status === "Pending").length +
+                " accounts are awaiting activation."
+              : projects.filter((project) => project.status === "Onboarding")
+                  .length + " projects are onboarding."}
+          </p>
           <div className={styles.overviewLinks}>
-            <Link href={routes[data.destination]}>
-              Review {data.destination.toLowerCase()}
-            </Link>
+            {hasPermission(
+              credential?.role,
+              access,
+              sectionPermissions[data.destination],
+            ) && (
+              <Link href={routes[data.destination]}>
+                Review {data.destination.toLowerCase()}
+              </Link>
+            )}
           </div>
         </section>
       </div>

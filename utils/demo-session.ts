@@ -3,92 +3,124 @@
 import { useSyncExternalStore } from "react";
 import type { Credential } from "@/data/credential";
 import type { DemoRole } from "@/data/mock-accounts";
+import { emptyAccess } from "@/data/permissions";
+import type { Access } from "@/data/permissions";
+import {
+  usersStorageKey,
+  usersChangedEvent,
+  readUserChanges,
+  getUsers,
+  getUserAccess,
+} from "./user-store";
+import {
+  getDashboardPath as permissionHome,
+  canAccessDashboardPath as permissionAllowsPath,
+} from "./permissions";
 
 const storageKey = "credential";
 const sessionChanged = "nexus-demo-session-changed";
 
-export function getDashboardPath(role: DemoRole) {
-  const dashboards = {
-    User: "/dashboard",
-    Admin: "/admin/overview",
-    Superadmin: "/superadmin/overview",
-  };
-  return dashboards[role];
+export function getDashboardPath(role: DemoRole, access: Access = emptyAccess) {
+  return permissionHome(role, access);
 }
-
-export function canAccessDashboardPath(role: DemoRole, path: string) {
-  const section = {
-    User: "/dashboard",
-    Admin: "/admin",
-    Superadmin: "/superadmin",
-  }[role];
-  const pathname = path.split(/[?#]/)[0];
-  return pathname === section || pathname.startsWith(section + "/");
+export function canAccessDashboardPath(
+  role: DemoRole,
+  path: string,
+  access: Access = emptyAccess,
+) {
+  return permissionAllowsPath(role, access, path);
 }
-
 export function getSafeReturnPath(
   role: DemoRole,
   requestedPath: string | null,
+  access: Access = emptyAccess,
 ) {
-  if (requestedPath && canAccessDashboardPath(role, requestedPath))
-    return requestedPath;
-  return getDashboardPath(role);
+  return requestedPath && canAccessDashboardPath(role, requestedPath, access)
+    ? requestedPath
+    : getDashboardPath(role, access);
 }
 
 export function readCredential(snapshot: string | null): Credential | null {
   if (!snapshot) return null;
   try {
-    const value: unknown = JSON.parse(snapshot);
-    if (!value || typeof value !== "object") return null;
-    const session = value as Partial<Credential>;
-    const validRole =
-      session.role === "User" ||
-      session.role === "Admin" ||
-      session.role === "Superadmin";
+    const value = JSON.parse(snapshot) as Partial<Credential> | null;
     if (
-      typeof session.token !== "string" ||
-      !session.token ||
-      typeof session.email !== "string" ||
-      typeof session.name !== "string" ||
-      !validRole
+      !value ||
+      typeof value.token !== "string" ||
+      !value.token ||
+      typeof value.email !== "string"
     )
       return null;
-    return session as Credential;
+    return value as Credential;
   } catch {
     return null;
   }
 }
 
-function getSnapshot() {
-  try {
-    return localStorage.getItem(storageKey) ?? "";
-  } catch {
-    return "";
-  }
+export function resolveDemoSession(
+  sessionSnapshot: string,
+  userSnapshot: string,
+) {
+  const stored = readCredential(sessionSnapshot);
+  const changes = readUserChanges(userSnapshot);
+  const user = stored
+    ? getUsers(changes).find(
+        (user) => user.email === stored.email && user.status === "Active",
+      )
+    : undefined;
+  if (!stored || !user) return { credential: null, access: emptyAccess };
+  // Always use the current saved account role and access, never stale session claims.
+  const credential: Credential = {
+    token: stored.token,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+  };
+  return { credential, access: getUserAccess(user.email, changes) };
 }
 
+function getSnapshot() {
+  try {
+    return JSON.stringify([
+      localStorage.getItem(storageKey) ?? "",
+      localStorage.getItem(usersStorageKey) ?? "",
+    ]);
+  } catch {
+    return '["", ""]';
+  }
+}
 function subscribe(listener: () => void) {
   function onStorage(event: StorageEvent) {
-    if (event.key === storageKey || event.key === null) listener();
+    if (
+      event.key === storageKey ||
+      event.key === usersStorageKey ||
+      event.key === null
+    )
+      listener();
   }
   window.addEventListener("storage", onStorage);
   window.addEventListener(sessionChanged, listener);
+  window.addEventListener(usersChangedEvent, listener);
   return () => {
     window.removeEventListener("storage", onStorage);
     window.removeEventListener(sessionChanged, listener);
+    window.removeEventListener(usersChangedEvent, listener);
   };
 }
-
 export function useDemoSession() {
-  // null means the browser has not hydrated yet; an empty string means signed out.
   const snapshot = useSyncExternalStore<string | null>(
     subscribe,
     getSnapshot,
     () => null,
   );
-  return { credential: readCredential(snapshot), isReady: snapshot !== null };
+  const [sessionSnapshot, userSnapshot] = snapshot
+    ? (JSON.parse(snapshot) as [string, string])
+    : ["", ""];
+  return {
+    ...resolveDemoSession(sessionSnapshot, userSnapshot),
+    isReady: snapshot !== null,
+  };
 }
-
 export function saveDemoSession(credential: Credential) {
   try {
     localStorage.setItem(storageKey, JSON.stringify(credential));
@@ -97,7 +129,6 @@ export function saveDemoSession(credential: Credential) {
   }
   window.dispatchEvent(new Event(sessionChanged));
 }
-
 export function signOutDemo() {
   localStorage.removeItem(storageKey);
   localStorage.removeItem("returnPath");

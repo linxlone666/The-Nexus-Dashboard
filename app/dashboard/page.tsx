@@ -1,9 +1,15 @@
+"use client";
+
+import Link from "next/link";
+import { useDemoSession } from "@/utils/demo-session";
+import { hasPermission } from "@/utils/permissions";
 import { SignOutButton } from "@/components/SignOutButton";
 import { sections, dashboardMetrics } from "@/data/dashboard";
 import { UserNavbar } from "@/components/UserNavbar";
 import styles from "./page.module.css";
 
 export default function Dashboard() {
+  const { credential, access } = useDemoSession();
   return (
     <div className={styles.dashboard}>
       <UserNavbar
@@ -16,7 +22,12 @@ export default function Dashboard() {
         <section id="overview" className={styles.overview}>
           <div className={styles.topline}>
             <p className={styles.breadcrumb}>Nexus / My views / Control room</p>
-            <SignOutButton />
+            <div>
+              {hasPermission(credential?.role, access, "Access Projects") && (
+                <Link href="/dashboard/projects">My projects</Link>
+              )}{" "}
+              <SignOutButton />
+            </div>
           </div>
           <h1>Operations overview</h1>
           <p className={styles.description}>

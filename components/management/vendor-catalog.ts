@@ -1,3 +1,4 @@
+import { currentUserCan } from "@/utils/user-store";
 import { useSyncExternalStore } from "react";
 import { sampleVendors } from "@/data/vendors";
 import type { Vendor } from "@/data/vendors";
@@ -50,6 +51,8 @@ export function useVendors() {
 }
 
 export function saveVendor(vendor: Vendor) {
+  if (!currentUserCan("Manage Vendors"))
+    return "You do not have permission to manage vendors.";
   const changes = read(snapshot());
   const duplicate = [...sampleVendors, ...changes].some(
     (entry) =>

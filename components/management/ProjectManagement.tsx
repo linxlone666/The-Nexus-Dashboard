@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectDescriptionEditor } from "@/components/ProjectDescriptionEditor";
 import { Badge } from "@/components/tailgrids/core/badge";
 import { Button } from "@/components/tailgrids/core/button";
 import { Input } from "@/components/tailgrids/core/input";
@@ -10,7 +11,7 @@ import { Icon, AdminSuperadminLayout } from "./AdminSuperadminLayout";
 import type { ManagementRole } from "./AdminSuperadminLayout";
 import { organizations } from "@/data/projects";
 import { getProjectMetrics } from "./project-metrics";
-import { useProjects } from "./project-storage";
+import { useAccessibleProjects } from "./project-storage";
 import styles from "./management.module.css";
 
 export function ProjectManagement({
@@ -18,7 +19,7 @@ export function ProjectManagement({
 }: {
   role?: ManagementRole;
 }) {
-  const projects = useProjects();
+  const projects = useAccessibleProjects();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
   const [organization, setOrganization] = useState("All");
@@ -247,13 +248,16 @@ export function ProjectManagement({
                         Vendor: {selected.vendor} · {selected.mappings.length}{" "}
                         mapped sources
                       </p>
-                      {selected.description && <p>{selected.description}</p>}
                     </>
                   ) : (
                     selected.status === "Onboarding" && (
                       <p>Organization administrator pending.</p>
                     )
                   )}
+                  <ProjectDescriptionEditor
+                    key={selected.key}
+                    project={selected}
+                  />
                 </div>
               ) : (
                 <p className={styles.record}>

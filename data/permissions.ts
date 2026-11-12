@@ -1,29 +1,17 @@
-import { initialUsers } from "./users";
-
 export const permissions = [
-  ["View Dashboard", "Main dashboard"],
-  ["Access Projects", "Assigned projects"],
-  ["Manage Vendors", "Vendor information", true],
-  ["Manage Integrations", "Data integrations", true],
-  ["View Audit Logs", "System logs", true],
-  ["Manage Users", "User accounts", true],
-  ["Manage Settings", "Platform settings", true],
+  ["View Dashboard", "Open the dashboard overview"],
+  ["Access Projects", "Open assigned projects"],
+  ["Manage Vendors", "Superadmin accounts only", true],
+  ["Manage Integrations", "Review integrations for assigned projects", true],
+  ["View Audit Logs", "Review recorded management activity", true],
+  ["Manage Users", "Create users and edit their access", true],
+  ["Manage Settings", "Change management display preferences", true],
 ] as const;
 
-export const permissionProjects = [
-  "Retail Analytics",
-  "Customer Insights",
-  "Sales Dashboard",
-  "Marketing Data",
-];
+export type PermissionName = (typeof permissions)[number][0];
 export type Access = {
   permissions: string[];
   projects: Record<string, string>;
 };
 export const emptyAccess: Access = { permissions: [], projects: {} };
-export const initialAccess: Record<string, Access> = {
-  [initialUsers[0].email]: {
-    permissions: ["View Dashboard", "Access Projects", "Manage Integrations"],
-    projects: { "Retail Analytics": "Editor", "Customer Insights": "Viewer" },
-  },
-};
+export const initialAccess: Record<string, Access> = {};

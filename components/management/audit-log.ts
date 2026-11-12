@@ -1,10 +1,10 @@
 import { useSyncExternalStore } from "react";
-import type { ManagementRole } from "./AdminSuperadminLayout";
+import type { DemoRole } from "@/data/mock-accounts";
 
 import { auditCategories } from "@/data/audit";
 
 type AuditActivity = {
-  role: ManagementRole;
+  role: DemoRole;
   category: (typeof auditCategories)[number];
   action: string;
   target: string;

@@ -4,16 +4,24 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { DemoRole } from "@/data/mock-accounts";
-import { getDashboardPath, useDemoSession } from "@/utils/demo-session";
+import {
+  getDashboardPath,
+  canAccessDashboardPath,
+  useDemoSession,
+} from "@/utils/demo-session";
 import styles from "./DemoAccess.module.css";
 
 type DemoAccessProps = { role: DemoRole; children: ReactNode };
 
 export function DemoAccess({ role, children }: DemoAccessProps) {
-  const { credential, isReady } = useDemoSession();
+  const { credential, access, isReady } = useDemoSession();
   const router = useRouter();
   const pathname = usePathname();
   const sessionRole = credential?.role;
+  const allowed = Boolean(
+    sessionRole === role && canAccessDashboardPath(role, pathname, access),
+  );
+  const home = sessionRole ? getDashboardPath(sessionRole, access) : "/login";
 
   useEffect(() => {
     if (!isReady) return;
@@ -27,12 +35,12 @@ export function DemoAccess({ role, children }: DemoAccessProps) {
         /* The login page can still open if browser storage is unavailable. */
       }
       router.replace("/login");
-    } else if (sessionRole !== role) {
-      router.replace(getDashboardPath(sessionRole));
+    } else if (!allowed) {
+      router.replace(home);
     }
-  }, [isReady, sessionRole, role, pathname, router]);
+  }, [isReady, sessionRole, allowed, home, pathname, router]);
 
-  if (!isReady || sessionRole !== role) {
+  if (!isReady || !allowed) {
     return (
       <div className={styles.loading} role="status">
         Opening your dashboard…

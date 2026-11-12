@@ -3,84 +3,35 @@
 import { Badge } from "@/components/tailgrids/core/badge";
 import { Button } from "@/components/tailgrids/core/button";
 import { Input } from "@/components/tailgrids/core/input";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { recordAuditActivity } from "./audit-log";
 import { ManagementMetrics } from "./ManagementMetrics";
 import { Icon, AdminSuperadminLayout } from "./AdminSuperadminLayout";
 import type { ManagementRole } from "./AdminSuperadminLayout";
-import { initialUsers, userMetrics } from "@/data/users";
+import { initialUsers } from "@/data/users";
 import type { User } from "@/data/users";
-import {
-  permissions,
-  permissionProjects as projects,
-  emptyAccess,
-  initialAccess,
-} from "@/data/permissions";
+import { permissions, emptyAccess } from "@/data/permissions";
 import type { Access } from "@/data/permissions";
 import styles from "./management.module.css";
 
-type SavedUsers = {
-  addedUsers: User[];
-  accessByEmail: Record<string, Access>;
-  rolesByEmail?: Record<string, User["role"]>;
-};
-const storageKey = "nexus-management-users";
-const storageEvent = "nexus-users-updated";
-
-function getSnapshot() {
-  try {
-    return localStorage.getItem(storageKey) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-function readUsers(snapshot: string): SavedUsers {
-  if (snapshot) {
-    try {
-      const saved: SavedUsers | null = JSON.parse(snapshot);
-      if (
-        Array.isArray(saved?.addedUsers) &&
-        saved.accessByEmail &&
-        typeof saved.accessByEmail === "object"
-      )
-        return saved;
-    } catch {
-      // Fall back to the starter records if the saved data cannot be read.
-    }
-  }
-  return { addedUsers: [], accessByEmail: {} };
-}
-
-function getUsers(saved: SavedUsers) {
-  return [...initialUsers, ...saved.addedUsers].map((user) => {
-    const role = saved.rolesByEmail?.[user.email];
-    return role === "User" || role === "Admin" ? { ...user, role } : user;
-  });
-}
-
-function subscribe(listener: () => void) {
-  function onStorage(event: StorageEvent) {
-    if (event.key === storageKey || event.key === null) listener();
-  }
-  window.addEventListener("storage", onStorage);
-  window.addEventListener(storageEvent, listener);
-  return () => {
-    window.removeEventListener("storage", onStorage);
-    window.removeEventListener(storageEvent, listener);
-  };
-}
-
-function saveUsers(saved: SavedUsers) {
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(saved));
-  } catch {
-    return false;
-  }
-  window.dispatchEvent(new Event(storageEvent));
-  return true;
-}
+import {
+  createUser as createAccount,
+  updateUserAccount,
+  updateUserAccess,
+  useUsers,
+  getUserAccess,
+  getUserMetrics,
+  getUsers,
+} from "@/utils/user-store";
+import { useDemoSession } from "@/utils/demo-session";
+import {
+  getProjectLevel,
+  hasPermission,
+  roleSupportsPermission,
+} from "@/utils/permissions";
+import type { ProjectReference } from "@/utils/permissions";
+import { useProjects } from "./project-storage";
 
 const tabs = ["General", "Permissions", "Activity"] as const;
 type UserTab = (typeof tabs)[number];
@@ -114,25 +65,31 @@ export function UserManagement({
   role?: ManagementRole;
 }) {
   const canManagePlatform = managementRole === "Superadmin";
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => "");
-  const saved = readUsers(snapshot);
-  const users = getUsers(saved);
+  const { changes: saved, users: allUsers } = useUsers();
+  const users = canManagePlatform
+    ? allUsers
+    : allUsers.filter((user) => user.role !== "Superadmin");
+  const allProjects = useProjects();
+  const { credential, access: actorAccess } = useDemoSession();
+  const projects = allProjects.filter((project) =>
+    Boolean(getProjectLevel(credential?.role, actorAccess, project)),
+  );
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("All");
   const [status, setStatus] = useState("All");
   const [projectAccess, setProjectAccess] = useState("All");
   const [checked, setChecked] = useState<string[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(
-    initialUsers[0].email,
+    initialUsers[0]?.email ?? null,
   );
   const selected = users.find((user) => user.email === selectedEmail);
   const [roleDraft, setRoleDraft] = useState<User["role"] | null>(null);
+  const [statusDraft, setStatusDraft] = useState<User["status"] | null>(null);
+  const [passwordDraft, setPasswordDraft] = useState("");
   const [tab, setTab] = useState<UserTab>("Permissions");
   const [draftChanges, setDraftChanges] = useState<Access | null>(null);
   const savedAccess = selected
-    ? (saved.accessByEmail[selected.email] ??
-      initialAccess[selected.email] ??
-      emptyAccess)
+    ? getUserAccess(selected.email, saved)
     : emptyAccess;
   const draft = draftChanges ?? savedAccess;
   const [projectQuery, setProjectQuery] = useState("");
@@ -153,13 +110,17 @@ export function UserManagement({
           : user.projects === 0)),
   );
   const canEditSelected =
-    selected && (canManagePlatform || selected.role === "User");
+    selected &&
+    selected.role !== "Superadmin" &&
+    (canManagePlatform || selected.role === "User");
   const allVisibleChecked =
     visible.length > 0 && visible.every((user) => checked.includes(user.email));
 
   function openUser(user: User) {
     setSelectedEmail(user.email);
     setRoleDraft(null);
+    setStatusDraft(null);
+    setPasswordDraft("");
     setDraftChanges(null);
     setTab("Permissions");
     setProjectQuery("");
@@ -168,28 +129,28 @@ export function UserManagement({
 
   function saveRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedEmail || !roleDraft) return;
-
-    const current = readUsers(getSnapshot());
-    const user = getUsers(current).find(({ email }) => email === selectedEmail);
-    if (!user || user.role === roleDraft) return;
-
-    const rolesByEmail = { ...current.rolesByEmail, [user.email]: roleDraft };
-    if (!saveUsers({ ...current, rolesByEmail })) {
-      setMessage("This browser could not save the role.");
+    if (!selected) return;
+    const error = updateUserAccount(selected.email, {
+      role: roleDraft ?? selected.role,
+      status: statusDraft ?? selected.status,
+      password: passwordDraft || undefined,
+    });
+    if (error) {
+      setMessage(error);
       return;
     }
-
     setRoleDraft(null);
+    setStatusDraft(null);
+    setPasswordDraft("");
     setDraftChanges(null);
     recordAuditActivity({
       role: managementRole,
       category: "Users",
-      action: "User role changed",
-      target: user.name,
+      action: "Account updated",
+      target: selected.name,
       outcome: "Success",
     });
-    setMessage("Role updated to " + roleDraft + ".");
+    setMessage("Account saved. Role and status changes apply immediately.");
   }
 
   function addUser(event: FormEvent<HTMLFormElement>) {
@@ -197,38 +158,26 @@ export function UserManagement({
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name")).trim();
     const email = String(data.get("email")).trim().toLowerCase();
-
-    if (!name) {
-      setInviteError("Enter a name.");
-      return;
-    }
-    const current = readUsers(getSnapshot());
-    if (
-      [...initialUsers, ...current.addedUsers].some(
-        (user) => user.email === email,
-      )
-    ) {
-      setInviteError("A user with this email already exists.");
-      return;
-    }
-    const user: User = {
+    const accountRole = canManagePlatform
+      ? (String(data.get("role")) as User["role"])
+      : "User";
+    const error = createAccount({
       name,
       email,
-      role:
-        canManagePlatform && data.get("role") === "Admin" ? "Admin" : "User",
-      projects: 0,
-      status: "Pending",
-      lastActive: "—",
-    };
-    if (!saveUsers({ ...current, addedUsers: [...current.addedUsers, user] })) {
-      setInviteError("This browser could not save the user.");
+      password: String(data.get("password")),
+      role: accountRole,
+    });
+    if (error) {
+      setInviteError(error);
       return;
     }
+    const user = getUsers().find((user) => user.email === email);
+    if (!user) return;
     recordAuditActivity({
       role: managementRole,
       category: "Users",
-      action: "Demo user added",
-      target: user.name,
+      action: "User created",
+      target: name,
       outcome: "Success",
     });
     setQuery("");
@@ -236,9 +185,32 @@ export function UserManagement({
     setStatus("All");
     setProjectAccess("All");
     openUser(user);
-    setMessage(`${name} was added to this preview.`);
+    setMessage(
+      name +
+        " can now sign in. Choose permissions and project access, then Save Permissions.",
+    );
     event.currentTarget.reset();
     inviteDialog.current?.close();
+  }
+
+  function savePermissions() {
+    if (!selected) return;
+    const error = updateUserAccess(selected.email, draft);
+    if (error) {
+      setMessage(error);
+      return;
+    }
+    setDraftChanges(null);
+    recordAuditActivity({
+      role: managementRole,
+      category: "Users",
+      action: "Permissions saved",
+      target: selected.name,
+      outcome: "Success",
+    });
+    setMessage(
+      "Permissions saved. This account’s menus and project access update immediately.",
+    );
   }
 
   function exportUsers() {
@@ -276,11 +248,12 @@ export function UserManagement({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  function setProject(project: string, level: string) {
-    setDraftChanges({
-      ...draft,
-      projects: { ...draft.projects, [project]: level },
-    });
+  function setProject(project: ProjectReference, level: string) {
+    const assignments = { ...draft.projects };
+    delete assignments[project.key];
+    delete assignments[project.name];
+    if (level) assignments[project.key] = level;
+    setDraftChanges({ ...draft, projects: assignments });
     setMessage("");
   }
 
@@ -320,23 +293,14 @@ export function UserManagement({
               inviteDialog.current?.showModal();
             }}
           >
-            + Add User
+            + Create User
           </Button>
         </div>
       </div>
 
       <div className={styles.columns}>
         <div className={styles.userList}>
-          <ManagementMetrics
-            metrics={userMetrics.map(([label, value, description], index) => [
-              label,
-              value +
-                (index === 0 || index === 3
-                  ? users.length - initialUsers.length
-                  : 0),
-              description,
-            ])}
-          />
+          <ManagementMetrics metrics={getUserMetrics(users)} />
 
           <section className={styles.card} aria-labelledby="users-heading">
             <h2 id="users-heading">Users</h2>
@@ -564,23 +528,57 @@ export function UserManagement({
                     <select
                       value={roleDraft ?? selected.role}
                       onChange={(event) => {
-                        setRoleDraft(
-                          event.target.value === "Admin" ? "Admin" : "User",
-                        );
+                        setRoleDraft(event.target.value as User["role"]);
                         setMessage("");
                       }}
                     >
                       <option>User</option>
                       <option>Admin</option>
+                      {canManagePlatform && <option>Superadmin</option>}
                     </select>
                   </label>
+                  <label>
+                    Status
+                    <select
+                      value={statusDraft ?? selected.status}
+                      disabled={!canManagePlatform && selected.role === "Admin"}
+                      onChange={(event) => {
+                        setStatusDraft(event.target.value as User["status"]);
+                        setMessage("");
+                      }}
+                    >
+                      <option>Active</option>
+                      <option>Inactive</option>
+                      <option>Pending</option>
+                    </select>
+                  </label>
+                  <label>
+                    New demo password
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={4}
+                      placeholder="Leave blank to keep the current password"
+                      value={passwordDraft}
+                      disabled={!canManagePlatform && selected.role === "Admin"}
+                      onChange={(event) => setPasswordDraft(event.target.value)}
+                    />
+                  </label>
+                  <p className={styles.muted}>
+                    Active accounts can sign in. Inactive and Pending accounts
+                    cannot.
+                  </p>
                   <div className={styles.actions}>
                     <Button
                       size="xs"
                       type="submit"
-                      disabled={!roleDraft || roleDraft === selected.role}
+                      disabled={
+                        (!roleDraft || roleDraft === selected.role) &&
+                        (!statusDraft || statusDraft === selected.status) &&
+                        !passwordDraft
+                      }
                     >
-                      Save role
+                      Save account
                     </Button>
                   </div>
                 </form>
@@ -602,9 +600,10 @@ export function UserManagement({
                         <span>
                           <input
                             type="checkbox"
-                            checked={draft.permissions.includes(name)}
+                            checked={hasPermission(selected.role, draft, name)}
                             disabled={
                               !canEditSelected ||
+                              !roleSupportsPermission(selected.role, name) ||
                               (platformOnly && !canManagePlatform)
                             }
                             onChange={(event) => {
@@ -623,9 +622,11 @@ export function UserManagement({
                           {name}
                         </span>
                         <small>
-                          {platformOnly && !canManagePlatform
-                            ? "Superadmin only"
-                            : description}
+                          {!roleSupportsPermission(selected.role, name)
+                            ? "Not available for this account role"
+                            : platformOnly && !canManagePlatform
+                              ? "Only Superadmin can grant this permission"
+                              : description}
                         </small>
                       </label>
                     ))}
@@ -642,43 +643,62 @@ export function UserManagement({
                       value={projectQuery}
                       onChange={(event) => setProjectQuery(event.target.value)}
                     />
+                    <p className={styles.muted}>
+                      Enable Access Projects above. Viewer can read; Editor can
+                      also edit the project description.
+                    </p>
                     {projects
                       .filter((project) =>
-                        project
+                        project.name
                           .toLowerCase()
                           .includes(projectQuery.trim().toLowerCase()),
                       )
-                      .map((project) => (
-                        <div className={styles.permission} key={project}>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={Boolean(draft.projects[project])}
-                              disabled={!canEditSelected}
-                              onChange={(event) =>
-                                setProject(
-                                  project,
-                                  event.target.checked ? "Viewer" : "",
-                                )
+                      .map((project) => {
+                        const level =
+                          selected.role === "Superadmin"
+                            ? "Editor"
+                            : (draft.projects[project.key] ??
+                              draft.projects[project.name] ??
+                              "");
+                        const actorLevel = getProjectLevel(
+                          credential?.role,
+                          actorAccess,
+                          project,
+                        );
+                        return (
+                          <div className={styles.permission} key={project.key}>
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={Boolean(level)}
+                                disabled={!canEditSelected || !actorLevel}
+                                onChange={(event) =>
+                                  setProject(
+                                    project,
+                                    event.target.checked ? "Viewer" : "",
+                                  )
+                                }
+                              />
+                              {project.name}
+                            </label>
+                            <select
+                              aria-label={"Access level for " + project.name}
+                              value={level || "Viewer"}
+                              disabled={
+                                !canEditSelected || !level || !actorLevel
                               }
-                            />
-                            {project}
-                          </label>
-                          <select
-                            aria-label={`Access level for ${project}`}
-                            value={draft.projects[project] || "Viewer"}
-                            disabled={
-                              !canEditSelected || !draft.projects[project]
-                            }
-                            onChange={(event) =>
-                              setProject(project, event.target.value)
-                            }
-                          >
-                            <option>Viewer</option>
-                            <option>Editor</option>
-                          </select>
-                        </div>
-                      ))}
+                              onChange={(event) =>
+                                setProject(project, event.target.value)
+                              }
+                            >
+                              <option>Viewer</option>
+                              <option disabled={actorLevel !== "Editor"}>
+                                Editor
+                              </option>
+                            </select>
+                          </div>
+                        );
+                      })}
                   </fieldset>
                   {canEditSelected ? (
                     <div className={styles.actions}>
@@ -693,54 +713,15 @@ export function UserManagement({
                       >
                         Cancel
                       </Button>
-                      <Button
-                        size="xs"
-                        type="button"
-                        onPress={() => {
-                          const current = readUsers(getSnapshot());
-                          const user = getUsers(current).find(
-                            ({ email }) => email === selected.email,
-                          );
-                          if (
-                            !user ||
-                            (!canManagePlatform && user.role !== "User")
-                          ) {
-                            setMessage(
-                              "This account’s permissions can only be edited by Superadmin.",
-                            );
-                            return;
-                          }
-                          if (
-                            !saveUsers({
-                              ...current,
-                              accessByEmail: {
-                                ...current.accessByEmail,
-                                [selected.email]: draft,
-                              },
-                            })
-                          ) {
-                            setMessage(
-                              "This browser could not save permissions.",
-                            );
-                            return;
-                          }
-                          setDraftChanges(null);
-                          recordAuditActivity({
-                            role: managementRole,
-                            category: "Users",
-                            action: "Permissions saved",
-                            target: selected.name,
-                            outcome: "Success",
-                          });
-                          setMessage("Permissions saved in this preview.");
-                        }}
-                      >
+                      <Button size="xs" type="button" onPress={savePermissions}>
                         Save Permissions
                       </Button>
                     </div>
                   ) : (
                     <p className={styles.muted}>
-                      Only Superadmin can edit permissions for an Admin account.
+                      {selected.role === "Superadmin"
+                        ? "Superadmin accounts automatically have full access."
+                        : "Only Superadmin can edit permissions for an Admin account."}
                     </p>
                   )}
                 </>
@@ -761,7 +742,7 @@ export function UserManagement({
         aria-labelledby="add-user-heading"
       >
         <form onSubmit={addUser}>
-          <h2 id="add-user-heading">Add User</h2>
+          <h2 id="add-user-heading">Create User</h2>
           <label>
             Name
             <Input name="name" required autoComplete="name" />
@@ -770,12 +751,27 @@ export function UserManagement({
             Email
             <Input name="email" type="email" required autoComplete="email" />
           </label>
+          <label>
+            Demo password
+            <Input
+              name="password"
+              type="password"
+              required
+              minLength={4}
+              autoComplete="new-password"
+            />
+          </label>
+          <p className={styles.muted}>
+            The account starts Active with dashboard access. Set its other
+            permissions after creating it. Use demo passwords only.
+          </p>
           {canManagePlatform && (
             <label>
               Role
               <select name="role">
                 <option>User</option>
                 <option>Admin</option>
+                {canManagePlatform && <option>Superadmin</option>}
               </select>
             </label>
           )}

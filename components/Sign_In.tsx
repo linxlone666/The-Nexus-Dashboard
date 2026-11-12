@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/data/credential";
+import { getUserAccess } from "@/utils/user-store";
 import { getSafeReturnPath, saveDemoSession } from "@/utils/demo-session";
 import { Input } from "@/components/tailgrids/core/input";
 import { Button } from "@/components/tailgrids/core/button";
@@ -31,6 +32,7 @@ export default function SignIn() {
       const returnPath = getSafeReturnPath(
         credential.role,
         localStorage.getItem("returnPath"),
+        getUserAccess(credential.email),
       );
       localStorage.removeItem("returnPath");
       router.replace(returnPath);

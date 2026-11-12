@@ -1,6 +1,8 @@
 "use client";
 
-import { useDemoSession } from "@/utils/demo-session";
+import { getDashboardPath, useDemoSession } from "@/utils/demo-session";
+import { hasPermission } from "@/utils/permissions";
+import { usePathname, useRouter } from "next/navigation";
 import { Input } from "@/components/tailgrids/core/input";
 import { useId, useRef, useState, useSyncExternalStore } from "react";
 import styles from "./UserNavbar.module.css";
@@ -12,6 +14,7 @@ const sections = [
   { id: "alarms", label: "Alarms", icon: "bell" },
   { id: "access", label: "Access", icon: "door" },
   { id: "parking", label: "Parking", icon: "car" },
+  { id: "projects", label: "My projects", icon: "grid" },
   { id: "my-views", label: "My views", icon: "sliders" },
   { id: "edit", label: "Edit dashboard", icon: "sliders" },
 ] as const;
@@ -43,7 +46,9 @@ export function UserNavbar({
   user,
   alarmCount = 0,
 }: UserNavbarProps) {
-  const { credential } = useDemoSession();
+  const { credential, access } = useDemoSession();
+  const pathname = usePathname();
+  const router = useRouter();
   const profileName = credential?.name ?? user.name;
   const initials = credential
     ? profileName
@@ -58,14 +63,22 @@ export function UserNavbar({
   const drawerId = useId();
   const headingId = useId();
   const [open, setOpen] = useState(false);
-  const active = useSyncExternalStore(
+  const activeHash = useSyncExternalStore(
     subscribeToLocation,
     () => window.location.hash.slice(1) || "overview",
     () => "overview",
   );
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const matches = sections.filter(({ label }) =>
+  const active = pathname === "/dashboard/projects" ? "projects" : activeHash;
+  const availableSections = sections.filter((section) =>
+    hasPermission(
+      credential?.role,
+      access,
+      section.id === "projects" ? "Access Projects" : "View Dashboard",
+    ),
+  );
+  const matches = availableSections.filter(({ label }) =>
     label.toLowerCase().includes(query.trim().toLowerCase()),
   );
 
@@ -75,11 +88,18 @@ export function UserNavbar({
     drawer.current?.close();
   }
 
+  function sectionHref(section: Section) {
+    if (section.id === "projects") return "/dashboard/projects";
+    return pathname === "/dashboard"
+      ? "#" + section.id
+      : "/dashboard#" + section.id;
+  }
+
   function link(section: Section) {
     return (
       <a
         className={section.id === "edit" ? styles.edit : styles.item}
-        href={`#${section.id}`}
+        href={sectionHref(section)}
         aria-current={active === section.id ? "location" : undefined}
         onClick={closeNavigation}
       >
@@ -103,7 +123,9 @@ export function UserNavbar({
         <div className={styles.identity}>
           <a
             className={styles.brand}
-            href="#overview"
+            href={
+              credential ? getDashboardPath(credential.role, access) : "/login"
+            }
             onClick={closeNavigation}
           >
             nexus<span>.</span>
@@ -127,7 +149,7 @@ export function UserNavbar({
               onSubmit={(event) => {
                 event.preventDefault();
                 if (query.trim() && matches[0]) {
-                  window.location.hash = matches[0].id;
+                  router.push(sectionHref(matches[0]));
                   closeNavigation();
                 }
               }}
@@ -206,12 +228,15 @@ export function UserNavbar({
           </div>
           <p className={styles.group}>Monitor</p>
           <ul className={styles.links}>
-            {sections.slice(0, -1).map((section) => (
-              <li key={section.id}>{link(section)}</li>
-            ))}
+            {availableSections
+              .filter((section) => section.id !== "edit")
+              .map((section) => (
+                <li key={section.id}>{link(section)}</li>
+              ))}
           </ul>
           <div className={styles.drawerFooter}>
-            {link(sections[7])}
+            {hasPermission(credential?.role, access, "View Dashboard") &&
+              link(sections[sections.length - 1])}
             <p>Personal dashboard · Live updates</p>
           </div>
         </nav>

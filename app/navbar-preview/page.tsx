@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/Navbar";
+import Navbar from "@/components/Navbar";
 
 const sections = [
   { id: "overview", title: "Overview", description: "2 cameras online · 1 active alarm" },

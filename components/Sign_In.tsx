@@ -1,35 +1,72 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { login } from "@/data/credential";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+  const handleLogin = async () => {
+    const emailDom = document.getElementById("email") as HTMLInputElement;
+    const passwordDom = document.getElementById("password") as HTMLInputElement;
+    const email = emailDom.value.trim();
+    const password = passwordDom.value.trim();
+    if (email === "") {
+      alert("Error: Email is required");
+      return;
+    }
+    if (password === "") {
+      alert("Error: Password is required");
+      return;
+    }
+    const loginEmail = email.includes("@") ? email : `${email}@company.com`;
+    try {
+      const credential = await login(loginEmail, password);
+      localStorage.setItem("credential", JSON.stringify(credential));
+      const returnPath = localStorage.getItem("returnPath") || "/";
+      localStorage.removeItem("returnPath");
+      router.replace(returnPath);
+      router.refresh();
+    } catch (error) {
+      passwordDom.value = "";
+
+      if (error instanceof Error && error.message === "Invalid password") {
+        alert("Password incorrect.");
+      } else {
+        emailDom.value = "";
+        alert("User not found.");
+      }
+    }
+  };
 
   return (
     <main className="grid min-h-screen bg-white font-sans text-[#424242] lg:grid-cols-2">
       {/* กล่อง Benefits */}
       <section className="relative hidden min-h-screen flex-col bg-[#f4f4f4] px-[10%] py-16 lg:flex">
         <p className="text-[22px] font-bold ">NEXUS</p>
-
         <div className="my-auto">
           <h1 className="text-[36px] font-semibold">
             One workspace.
             <br />
             Your entire operation.
           </h1>
-          <p className="mt-5  text-[15px] text-[#676767]">
+          <span className="mt-5  text-[15px] text-[#676767]">
             Monitor your spaces, systems, and safety from a single operations
             dashboard.
-          </p>
-          <p className="text-[13px] text-[#707070] mt-5 flex">
-            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Live cameras and incident response
-          </p>
-          <p className="text-[13px] text-[#707070] mt-5 flex">
-            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Access control and smart alarms
-          </p>
-          <p className="text-[13px] text-[#707070] mt-5 flex">
-            <div className='border border-solid h-3 w-3 mr-2 mt-1'></div>Parking and connected systems
-          </p>
+          </span>
+          <span className="text-[13px] text-[#707070] mt-5 flex">
+            <div className="border border-solid h-3 w-3 mr-2 mt-1"></div>Live
+            cameras and incident response
+          </span>
+          <span className="text-[13px] text-[#707070] mt-5 flex">
+            <div className="border border-solid h-3 w-3 mr-2 mt-1"></div>Access
+            control and smart alarms
+          </span>
+          <span className="text-[13px] text-[#707070] mt-5 flex">
+            <div className="border border-solid h-3 w-3 mr-2 mt-1"></div>Parking
+            and connected systems
+          </span>
         </div>
         <p className="text-[11px] text-[#8a8a8a]">
           Unified operations / The Nexus Dashboard
@@ -46,8 +83,14 @@ export default function SignIn() {
             Enter your work account to continue.
           </p>
 
-          <form className="mt-4 space-y-4">
-            {/* กล่อง Email */}
+          <form
+            className="mt-4 space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleLogin();
+            }}
+          >
+            {/* Email box */}
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold">
                 Work email
@@ -60,7 +103,7 @@ export default function SignIn() {
                 className="h-8 w-full border border-[#cfcfcf] bg-white px-2.5 text-[11px] outline-none transition focus:border-[#555] focus:ring-1 focus:ring-[#555]"
               />
             </div>
-            {/* กล่อง Password */}
+            {/* Password box*/}
             <div>
               <label className="mb-1.5 block text-[11px] font-semibold">
                 Password

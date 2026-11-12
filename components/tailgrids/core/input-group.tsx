@@ -7,7 +7,7 @@ import { Button, ButtonProps } from "./button";
 import { Input, InputProps } from "./input";
 import { TextArea, TextAreaProps } from "./text-area";
 
-export interface InputGroupProps extends ComponentProps<"div"> {}
+export type InputGroupProps = ComponentProps<"div">;
 
 function InputGroup({ className, ...props }: InputGroupProps) {
   return (
@@ -24,7 +24,7 @@ function InputGroup({ className, ...props }: InputGroupProps) {
 }
 InputGroup.displayName = "InputGroup";
 
-export interface InputGroupInputProps extends InputProps {}
+export type InputGroupInputProps = InputProps;
 
 function InputGroupInput({ className, ...props }: InputGroupInputProps) {
   return (
@@ -118,7 +118,7 @@ function InputGroupButton({
 }
 InputGroupButton.displayName = "InputGroupButton";
 
-export interface InputGroupTextareaProps extends TextAreaProps {}
+export type InputGroupTextareaProps = TextAreaProps;
 
 function InputGroupTextarea({ className, ...props }: InputGroupTextareaProps) {
   return (

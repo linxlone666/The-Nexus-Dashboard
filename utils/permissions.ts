@@ -80,7 +80,7 @@ export function canAccessDashboardPath(
   if (pathname !== prefix && !pathname.startsWith(prefix + "/")) return false;
   if (role === "Superadmin") return true;
   if (role === "User") {
-    if (pathname === "/dashboard")
+    if (pathname === "/dashboard" || pathname === "/dashboard/overview")
       return hasPermission(role, access, "View Dashboard");
     return (
       pathname === "/dashboard/projects" &&

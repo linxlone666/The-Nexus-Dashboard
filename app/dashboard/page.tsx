@@ -23,6 +23,7 @@ export default function Dashboard() {
           <div className={styles.topline}>
             <p className={styles.breadcrumb}>Nexus / My views / Control room</p>
             <div>
+              <Link href="/dashboard/overview">Overview preview</Link>{" "}
               {hasPermission(credential?.role, access, "Access Projects") && (
                 <Link href="/dashboard/projects">My projects</Link>
               )}{" "}

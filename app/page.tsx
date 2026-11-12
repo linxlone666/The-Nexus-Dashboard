@@ -1,13 +1,5 @@
-import { Navbar } from "@/components/Navbar";
+import SignIn from "@/components/Sign_In";
 
 export default function Home() {
-  return (
-    <>
-      <Navbar
-        site="Nexus Headquarters"
-        workspace="Control room"
-        user={{ name: "Alex", initials: "AL" }}
-      />
-    </>
-  );
+  return <SignIn />;
 }

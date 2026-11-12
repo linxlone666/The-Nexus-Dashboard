@@ -167,6 +167,7 @@ export function Button({
         }),
         className
       )}
+      data-tailgrids-button=""
       isDisabled={disabled}
       isPending={pending}
       {...props}

@@ -1,16 +1,105 @@
-.dashboard { min-height: 100dvh; background: #f0f6f5; color: #15343a; }
-.content { max-width: 1440px; margin-inline: auto; padding: 20px 32px 90px; }
-.content section { scroll-margin-top: 105px; }
-.overview { min-height: calc(100dvh - 78px); }
-.breadcrumb { color: #49686b; font-size: 11px; text-transform: uppercase; }
-.content h1 { margin: 0 0 30px; font-size: 28px; font-weight: 700; }
-.metrics { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-.metrics > div, .section { padding: 16px; background: #fff; border: 1px solid #dce8e5; border-radius: 9px; }
-.metrics dt, .section p { color: #49686b; font-size: 13px; }
-.metrics dd { font-size: 24px; font-weight: 700; }
-.section { min-height: 160px; margin-block: 12px; }
-.section h2 { font-size: 20px; font-weight: 700; }
+.dashboard {
+  min-height: 100dvh;
+  background: #f0f6f5;
+  color: #15343a;
+}
+.content {
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: 20px 32px 90px;
+}
+.content section {
+  scroll-margin-top: 105px;
+}
+.overview {
+  margin-bottom: 20px;
+}
+.topline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.topline a {
+  color: #08786d;
+  font-size: 13px;
+  text-decoration: underline;
+}
+.description {
+  color: #49686b;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+.breadcrumb {
+  color: #49686b;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.content h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 700;
+}
+.metrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.metrics > div,
+.section {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #dce8e5;
+  border-radius: 9px;
+}
+.metrics dt,
+.section p {
+  color: #49686b;
+  font-size: 13px;
+}
+.metrics dd {
+  font-size: 24px;
+  font-weight: 700;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 285px), 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.records {
+  margin-top: 8px;
+}
+.records > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 0;
+  border-top: 1px solid #e6efed;
+  font-size: 13px;
+}
+.records dd {
+  color: #49686b;
+}
+.section h2 {
+  font-size: 20px;
+  font-weight: 700;
+}
 
 @media (max-width: 540px) {
-  .content { padding-inline: 16px; }
+  .content {
+    padding-inline: 16px;
+  }
+}
+
+.topline button {
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid #dce6e4;
+  border-radius: 5px;
+  background: #fff;
+  color: #08786d;
+  font-size: 12px;
 }

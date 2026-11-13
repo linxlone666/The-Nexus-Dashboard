@@ -59,6 +59,7 @@ function Status({
   );
 }
 
+// Manage accounts and project permissions within the active management role.
 export function UserManagement({
   role: managementRole = "Admin",
 }: {
@@ -97,6 +98,7 @@ export function UserManagement({
   const [inviteError, setInviteError] = useState("");
   const inviteDialog = useRef<HTMLDialogElement>(null);
 
+  // Apply the toolbar and table filters to the role-scoped account list.
   const visible = users.filter(
     (user) =>
       `${user.name} ${user.email}`
@@ -116,6 +118,7 @@ export function UserManagement({
   const allVisibleChecked =
     visible.length > 0 && visible.every((user) => checked.includes(user.email));
 
+  // Clear unsaved edits and feedback when switching the selected account.
   function openUser(user: User) {
     setSelectedEmail(user.email);
     setRoleDraft(null);
@@ -127,6 +130,7 @@ export function UserManagement({
     setMessage("");
   }
 
+  // Save account metadata and an optional demo password as one update.
   function saveRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
@@ -153,6 +157,7 @@ export function UserManagement({
     setMessage("Account saved. Role and status changes apply immediately.");
   }
 
+  // Create the account, then select it so its permissions can be configured.
   function addUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -193,6 +198,7 @@ export function UserManagement({
     inviteDialog.current?.close();
   }
 
+  // Persist the selected user's pending system and project access changes.
   function savePermissions() {
     if (!selected) return;
     const error = updateUserAccess(selected.email, draft);
@@ -213,6 +219,7 @@ export function UserManagement({
     );
   }
 
+  // Export selected accounts (or the current filtered list) as spreadsheet-safe CSV.
   function exportUsers() {
     const rows = checked.length
       ? users.filter((user) => checked.includes(user.email))
@@ -248,6 +255,7 @@ export function UserManagement({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  // Update a project's draft access while removing any legacy name-based entry.
   function setProject(project: ProjectReference, level: string) {
     const assignments = { ...draft.projects };
     delete assignments[project.key];
@@ -257,6 +265,7 @@ export function UserManagement({
     setMessage("");
   }
 
+  // Render the account table, selected-user editor, and account creation dialog.
   return (
     <AdminSuperadminLayout
       role={managementRole}

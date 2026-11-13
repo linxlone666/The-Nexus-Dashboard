@@ -26,6 +26,7 @@ export function ProjectManagement({
   const [selectedKey, setSelectedKey] = useState<string | null>();
   const [tab, setTab] = useState<"General" | "Activity">("General");
 
+  // Filter to projects the session can access, then apply the table controls.
   const visible = projects.filter(
     (project) =>
       `${project.name} ${project.organization}`
@@ -39,11 +40,13 @@ export function ProjectManagement({
       ? visible[0]
       : visible.find((project) => project.key === selectedKey);
 
+  // Selecting a row opens its details and returns the panel to the general tab.
   function openProject(key: string) {
     setSelectedKey(key);
     setTab("General");
   }
 
+  // Show the searchable project table beside the selected record details.
   return (
     <AdminSuperadminLayout
       role={role}

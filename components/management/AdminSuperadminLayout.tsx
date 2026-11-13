@@ -16,6 +16,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--management-font" });
 
 export type ManagementRole = "Admin" | "Superadmin";
 
+// Role-specific destinations; null means that section is not available to Admin.
 export const managementRoutes = {
   Admin: {
     Overview: "/admin/overview",
@@ -47,6 +48,7 @@ const navigation = [
   { name: "Settings", icon: "management-settings" },
 ] as const;
 
+// Render one of the symbols from the shared navigation SVG sprite.
 export function Icon({ name }: { name: string }) {
   return (
     <svg aria-hidden="true" width="16" height="16" className={styles.icon}>
@@ -70,6 +72,7 @@ export function AdminSuperadminLayout({
   searchLabel: string;
   children: ReactNode;
 }) {
+  // Shared management chrome provides role-aware navigation and account controls.
   const { collapsed, toggleSidebar } = useCollapsedSidebar();
   const navigationId = useId();
   const { credential, access } = useDemoSession();
@@ -151,6 +154,7 @@ export function AdminSuperadminLayout({
           className={styles.sidebarLinks}
           aria-label={`${role} management`}
         >
+          {/* Hide unavailable routes and sections the signed-in account cannot access. */}
           {navigation.map((item) => {
             const href = routes[item.name];
             if (

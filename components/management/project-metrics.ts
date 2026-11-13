@@ -1,3 +1,4 @@
+// Summarize project totals, lifecycle status, and distinct organizations.
 export function getProjectMetrics(
   entries: readonly { organization: string; status: string }[],
 ) {

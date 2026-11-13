@@ -23,6 +23,7 @@ export function ManagementOverview({ role }: { role: ManagementRole }) {
   const { credential, access } = useDemoSession();
   const data = overview[role];
   const routes = managementRoutes[role];
+  // Limit shortcuts to permitted sections and the current search phrase.
   const links = data.links.filter(
     ([section, name, description]) =>
       hasPermission(credential?.role, access, sectionPermissions[section]) &&
@@ -31,6 +32,7 @@ export function ManagementOverview({ role }: { role: ManagementRole }) {
         .includes(query.trim().toLowerCase()),
   );
 
+  // Pair role-specific metrics and shortcuts with the matching attention summary.
   return (
     <AdminSuperadminLayout
       role={role}

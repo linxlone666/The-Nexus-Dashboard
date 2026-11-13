@@ -35,6 +35,7 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
   const [selectedKey, setSelectedKey] = useState<string | null>();
   const routes = managementRoutes[role];
 
+  // Resolve each configured project to a current vendor, with legacy name/URL matching.
   const integrations = projects.map((project) => {
     if (!("mappings" in project)) {
       return {
@@ -70,6 +71,7 @@ export function IntegrationManagement({ role }: { role: ManagementRole }) {
       ? visible[0]
       : visible.find(({ project }) => project.key === selectedKey);
 
+  // Present project connection status, source mappings, and permission-aware links.
   return (
     <AdminSuperadminLayout
       role={role}

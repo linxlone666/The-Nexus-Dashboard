@@ -24,6 +24,7 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [outcome, setOutcome] = useState("All");
+  // Admins see only their own role's events; Superadmins can review all activity.
   const events =
     role === "Admin"
       ? activity.filter((entry) => entry.role === "Admin")
@@ -37,6 +38,7 @@ export function AuditLogs({ role }: { role: ManagementRole }) {
       (outcome === "All" || entry.outcome === outcome),
   );
 
+  // Show summary counts and a searchable, filterable history in the chosen time zone.
   return (
     <AdminSuperadminLayout
       role={role}

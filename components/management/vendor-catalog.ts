@@ -6,6 +6,7 @@ import type { Vendor } from "@/data/vendors";
 const key = "nexus-vendor-catalog";
 const changed = "nexus-vendors-updated";
 
+// Read the browser's saved vendor overrides, falling back when storage is unavailable.
 function snapshot() {
   try {
     return localStorage.getItem(key) ?? "[]";
@@ -14,6 +15,7 @@ function snapshot() {
   }
 }
 
+// Discard malformed entries before merging saved records with the sample catalog.
 function read(snapshotValue: string): Vendor[] {
   try {
     const value: unknown = JSON.parse(snapshotValue);
@@ -31,6 +33,7 @@ function read(snapshotValue: string): Vendor[] {
   }
 }
 
+// React to catalog changes from this tab and other browser tabs.
 function subscribe(listener: () => void) {
   function onStorage(event: StorageEvent) {
     if (event.key === key || event.key === null) listener();
@@ -43,6 +46,7 @@ function subscribe(listener: () => void) {
   };
 }
 
+// Apply saved records over the sample catalog by vendor ID.
 export function useVendors() {
   const changes = read(useSyncExternalStore(subscribe, snapshot, () => "[]"));
   const catalog = new Map(sampleVendors.map((vendor) => [vendor.id, vendor]));
@@ -50,6 +54,7 @@ export function useVendors() {
   return [...catalog.values()];
 }
 
+// Validate permissions and uniqueness before saving a vendor override.
 export function saveVendor(vendor: Vendor) {
   if (!currentUserCan("Manage Vendors"))
     return "You do not have permission to manage vendors.";
@@ -75,6 +80,7 @@ export function saveVendor(vendor: Vendor) {
   window.dispatchEvent(new Event(changed));
 }
 
+// Accept only plain HTTP(S) base URLs without embedded credentials or URL parameters.
 export function parseVendorEndpoint(value: string) {
   try {
     const url = new URL(value.trim());

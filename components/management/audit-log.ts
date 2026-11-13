@@ -17,6 +17,7 @@ const storageKey = "nexus-management-audit-log";
 const changeEvent = "nexus-audit-log-updated";
 const emptySnapshot = "[]";
 
+// Read the persisted event list while tolerating browsers where storage is unavailable.
 function getSnapshot() {
   try {
     return localStorage.getItem(storageKey) ?? emptySnapshot;
@@ -25,6 +26,7 @@ function getSnapshot() {
   }
 }
 
+// Ignore malformed records so a partial or old snapshot does not break the log view.
 function readEntries(snapshot: string): AuditEntry[] {
   try {
     const parsed: unknown = JSON.parse(snapshot);
@@ -43,6 +45,7 @@ function readEntries(snapshot: string): AuditEntry[] {
   }
 }
 
+// Subscribe to both cross-tab storage updates and same-tab writes.
 function subscribe(listener: () => void) {
   function onStorage(event: StorageEvent) {
     if (event.key === storageKey || event.key === null) listener();
@@ -55,12 +58,14 @@ function subscribe(listener: () => void) {
   };
 }
 
+// Expose the stored activity as a React external store.
 export function useAuditLog() {
   return readEntries(
     useSyncExternalStore(subscribe, getSnapshot, () => emptySnapshot),
   );
 }
 
+// Add the newest event first and cap browser storage at the latest 200 entries.
 export function recordAuditActivity(activity: AuditActivity) {
   try {
     const entry = {

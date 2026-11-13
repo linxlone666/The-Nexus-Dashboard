@@ -23,12 +23,14 @@ export function ManagementSettings({ role }: { role: ManagementRole }) {
     preferences.density !== saved.density ||
     preferences.timeZone !== saved.timeZone;
 
+  // Merge edits into a draft and clear stale feedback as soon as a setting changes.
   function update(changes: Partial<typeof defaultPreferences>) {
     setDraft((current) => ({ ...current, ...changes }));
     setMessage("");
     setError("");
   }
 
+  // Save only changed values and write an audit event after the save succeeds.
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!dirty) return;
@@ -49,6 +51,7 @@ export function ManagementSettings({ role }: { role: ManagementRole }) {
     setMessage("Preferences saved.");
   }
 
+  // Edit display preferences while keeping the persisted values visible for reference.
   return (
     <AdminSuperadminLayout
       role={role}

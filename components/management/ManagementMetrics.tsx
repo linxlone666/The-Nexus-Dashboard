@@ -1,5 +1,6 @@
 import styles from "./management.module.css";
 
+// Render a consistent set of labeled summary values for management screens.
 export function ManagementMetrics({
   metrics,
 }: {

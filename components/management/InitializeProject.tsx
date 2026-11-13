@@ -23,6 +23,8 @@ import wizard from "./InitializeProject.module.css";
 export function InitializeProject() {
   const router = useRouter();
   const vendors = useVendors();
+
+  // Wizard state: project details, vendor connection, and source mappings.
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
@@ -39,6 +41,8 @@ export function InitializeProject() {
   const [tested, setTested] = useState(false);
   const [mappings, setMappings] = useState<VendorSource[]>([]);
   const [error, setError] = useState("");
+
+  // Shared references and derived values used by the wizard UI.
   const heading = useRef<HTMLHeadingElement>(null);
   const projectsUrl = managementRoutes.Superadmin.Projects;
   const visibleVendors = vendors.filter((item) =>
@@ -48,15 +52,19 @@ export function InitializeProject() {
     (mapping) => mapping.type && mapping.name.trim(),
   ).length;
 
+  // Move focus to the current step heading after each step change.
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
   }, [step]);
 
+  // Step navigation and provider/connection actions.
+  // Reset step-level errors whenever the user moves through the wizard.
   function goTo(next: number) {
     setError("");
     setStep(next);
   }
 
+  // Selecting a provider seeds its connection details and source mappings.
   function selectVendor(next: Vendor) {
     if (vendor?.id === next.id) return;
     setVendor(next);
@@ -68,6 +76,7 @@ export function InitializeProject() {
     setError("");
   }
 
+  // The demo connection check validates the URL and credential reference locally.
   function testConnection() {
     if (!parseVendorEndpoint(baseUrl)) {
       setError(
@@ -83,6 +92,8 @@ export function InitializeProject() {
     setError("");
   }
 
+  // Validate each step before advancing, then persist and audit the completed project.
+  // Form submission is also the final project-creation action.
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (
@@ -154,6 +165,7 @@ export function InitializeProject() {
     router.push(projectsUrl);
   }
 
+  // Render the progress indicator, active step, summary, and navigation controls.
   return (
     <AdminSuperadminLayout
       role="Superadmin"
@@ -192,6 +204,7 @@ export function InitializeProject() {
               {steps[step]}
             </h2>
 
+            {/* Step 1: enter the project's basic information. */}
             {step === 0 && (
               <>
                 <p className={styles.muted}>
@@ -271,6 +284,7 @@ export function InitializeProject() {
               </>
             )}
 
+            {/* Step 2: choose a connected provider with sample sources. */}
             {step === 1 && (
               <>
                 <p className={styles.muted}>
@@ -325,6 +339,7 @@ export function InitializeProject() {
               </>
             )}
 
+            {/* Step 3: configure and locally validate the demo connection. */}
             {step === 2 && (
               <>
                 <p className={styles.muted}>
@@ -388,6 +403,7 @@ export function InitializeProject() {
               </>
             )}
 
+            {/* Step 4: map every provider source to a Nexus type and display name. */}
             {step === 3 && (
               <>
                 <p className={styles.muted}>
@@ -468,6 +484,7 @@ export function InitializeProject() {
               </>
             )}
 
+            {/* Step 5: review the completed configuration before saving. */}
             {step === 4 && (
               <>
                 <p className={styles.muted}>
@@ -528,6 +545,7 @@ export function InitializeProject() {
             )}
           </section>
 
+          {/* Keep the current project choices visible throughout the wizard. */}
           <aside className={styles.card} aria-labelledby="setup-summary">
             <h2 id="setup-summary">Project summary</h2>
             <p className={styles.muted}>
@@ -550,6 +568,8 @@ export function InitializeProject() {
             </dl>
           </aside>
         </div>
+
+        {/* Allow cancellation, backward navigation, or advancing/submitting the wizard. */}
         <div className={`${styles.actions} ${wizard.footer}`}>
           {step === 0 ? (
             <Link href={projectsUrl}>Cancel</Link>

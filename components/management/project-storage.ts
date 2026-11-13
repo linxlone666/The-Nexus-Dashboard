@@ -32,6 +32,7 @@ export type InitializedProject = {
 };
 type ProjectEdit = { description: string; updated: string };
 
+// Read persisted project data with a safe fallback for restricted browser storage.
 function readStored(key: string, fallback: string) {
   try {
     return localStorage.getItem(key) ?? fallback;
@@ -39,6 +40,8 @@ function readStored(key: string, fallback: string) {
     return fallback;
   }
 }
+
+// Validate the minimum fields needed before using records from local storage.
 function readProjects(snapshot: string): InitializedProject[] {
   try {
     const parsed: unknown = JSON.parse(snapshot);
@@ -55,6 +58,8 @@ function readProjects(snapshot: string): InitializedProject[] {
     return [];
   }
 }
+
+// Keep only well-formed description edits keyed by project identifier.
 function readEdits(snapshot: string): Record<string, ProjectEdit> {
   try {
     const parsed = JSON.parse(snapshot);
@@ -74,12 +79,16 @@ function readEdits(snapshot: string): Record<string, ProjectEdit> {
     return {};
   }
 }
+
+// Combine both storage records into one stable external-store snapshot.
 function getSnapshot() {
   return JSON.stringify([
     readStored(storageKey, "[]"),
     readStored(descriptionsKey, "{}"),
   ]);
 }
+
+// Listen for updates from other tabs and writes made by this module.
 function subscribe(listener: () => void) {
   function onStorage(event: StorageEvent) {
     if (
@@ -96,6 +105,8 @@ function subscribe(listener: () => void) {
     window.removeEventListener(storageEvent, listener);
   };
 }
+
+// Combine built-in projects with created projects and apply saved description edits.
 function combineProjects(projectSnapshot: string, editSnapshot: string) {
   const edits = readEdits(editSnapshot);
   return [...readProjects(projectSnapshot), ...projects].map((project) => ({
@@ -108,6 +119,7 @@ function combineProjects(projectSnapshot: string, editSnapshot: string) {
 }
 export type ProjectRecord = ReturnType<typeof combineProjects>[number];
 
+// Share project data with React and expose only records the current session can access.
 export function useProjects() {
   const snapshot = useSyncExternalStore(
     subscribe,
@@ -128,6 +140,7 @@ export function useAccessibleProjects() {
   );
 }
 
+// Save a new project after enforcing role access and unique project keys.
 export function saveProject(project: InitializedProject) {
   if (
     getCurrentUser()?.role !== "Superadmin" ||
@@ -145,6 +158,7 @@ export function saveProject(project: InitializedProject) {
   window.dispatchEvent(new Event(storageEvent));
 }
 
+// Allow editors to update a bounded project description and record the change.
 export function updateProjectDescription(
   projectKey: string,
   description: string,

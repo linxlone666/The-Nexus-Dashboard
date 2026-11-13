@@ -40,6 +40,7 @@ function Status({
   );
 }
 
+// Manage provider records, inspect their status, and edit connection references.
 export function VendorManagement() {
   const vendors = useVendors();
   const [query, setQuery] = useState("");
@@ -79,16 +80,19 @@ export function VendorManagement() {
     ],
   ] as const;
 
+  // Open the add/edit dialog after the requested vendor has been loaded into state.
   useEffect(() => {
     if (editorVersion) dialog.current?.showModal();
   }, [editorVersion]);
 
+  // Start a fresh editor session and clear validation feedback.
   function openEditor(vendor: Vendor | null) {
     setEditing(vendor);
     setEditorVersion((version) => version + 1);
     setFormError("");
   }
 
+  // Validate and save the provider details, preserving status only if its connection is unchanged.
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
@@ -138,6 +142,7 @@ export function VendorManagement() {
     setTestError("");
   }
 
+  // Simulate a demo connection test and store its result for the provider detail view.
   function testConnection(vendor: Vendor) {
     const passed = Boolean(parseVendorEndpoint(vendor.url) && vendor.reference);
     const error = saveVendor({
@@ -157,6 +162,7 @@ export function VendorManagement() {
     setTestError(error ?? "");
   }
 
+  // Show provider search, connection details, and the add/edit form.
   return (
     <AdminSuperadminLayout
       role="Superadmin"

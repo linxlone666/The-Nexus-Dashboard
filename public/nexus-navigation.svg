@@ -9,4 +9,29 @@
 <symbol id="sliders" viewBox="0 0 24 24"><path d="M4 6h4m5 0h7M4 12h9m5 0h2M4 18h2m5 0h9"/><circle cx="10" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></symbol>
 <symbol id="menu" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></symbol>
 <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="management-home" viewBox="0 0 24 24">
+    <path d="m4 10 8-7 8 7v11H4z" />
+  </symbol>
+  <symbol id="management-users" viewBox="0 0 24 24">
+    <circle cx="12" cy="6" r="3" />
+    <path d="M5 21v-3a7 7 0 0 1 14 0v3z" />
+  </symbol>
+  <symbol id="management-projects" viewBox="0 0 24 24">
+    <path d="M4 4h16v16H4z" />
+  </symbol>
+  <symbol id="management-vendors" viewBox="0 0 24 24">
+    <path d="m12 2 10 10-10 10L2 12z" />
+  </symbol>
+  <symbol id="management-integrations" viewBox="0 0 24 24">
+    <path d="M6 18 19 5M8 5h11v11" />
+  </symbol>
+  <symbol id="management-audit" viewBox="0 0 24 24">
+    <path d="M3 3h18v18H3zM3 7h18M3 12h18M3 17h18" />
+  </symbol>
+  <symbol id="management-settings" viewBox="0 0 24 24">
+    <path
+      d="m10 2-.7 3-2 .9L4.7 5 2.5 8.8 4.6 11v2l-2.1 2.2L4.7 19l2.6-.9 2 .9.7 3h4l.7-3 2-.9 2.6.9 2.2-3.8-2.1-2.2v-2l2.1-2.2L19.3 5l-2.6.9-2-.9L14 2z"
+    />
+    <circle cx="12" cy="12" r="3.5" />
+  </symbol>
 </svg>

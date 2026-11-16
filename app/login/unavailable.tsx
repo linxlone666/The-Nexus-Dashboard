@@ -1,20 +1,14 @@
-﻿"use client";
+"use client";
 
-import { Check, ChevronRight } from "@tailgrids/icons";
-import Accept from "./Accept";
-import Unavailable from "./unavailable";
+import { Check, ChevronLeft } from "@tailgrids/icons";
+import Choose from "./Choose";
 import { useState } from "react";
 
-export default function Choose() {
-  const [showAccept, setShowAccept] = useState(false);
-  const [showUna, setShowUna] = useState(false);
-  if (showUna) {
-    return <Unavailable />;
+export default function Unavailable() {
+  const [showChoose, setShowChoose] = useState(false);
+  if (showChoose) {
+    return <Choose />;
   }
-  if (showAccept) {
-    return <Accept />;
-  }
-
   return (
     <main className="grid min-h-screen bg-white font-sans text-[#424242] lg:grid-cols-2">
       {/* กล่อง Benefits */}
@@ -35,10 +29,12 @@ export default function Choose() {
             Live cameras and incident response
           </span>
           <span className="text-[13px] text-[#707070] mt-5 flex">
-            <Check className="mr-1" />CheckAccess control and smart alarms
+            <Check className="mr-1" />
+            CheckAccess control and smart alarms
           </span>
           <span className="text-[13px] text-[#707070] mt-5 flex">
-            <Check className="mr-1" />CheckParking and connected systems
+            <Check className="mr-1" />
+            CheckParking and connected systems
           </span>
         </div>
         <p className="text-[11px] text-[#8a8a8a]">
@@ -47,37 +43,40 @@ export default function Choose() {
       </section>
       {/*  */}
       <section className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-[330px]">
+        <div className="w-full max-w-82.5">
           <p className="text-[9px] font-medium uppercase text-[#858585]">
-            sheared assess
+            SHARED ACCESS
           </p>
-          <h2 className="mt-3 text-[24px] font-semibold">Choose Workspace</h2>
+          <h2 className="mt-3 text-[24px] font-semibold">Access unavailable</h2>
           <p className="mt-3 text-[12px] text-[#858585]">
-            Select a workspace to continue.
+            You don’t have access to this workspace.
           </p>
 
           <div className="mb-3 mt-3">
-            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]"
-            onClick={() => setShowAccept(true)}>
+            <button
+              className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-3.5 py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]"
+              onClick={() => setShowChoose(true)}
+            >
               <h3 className="text-[20px] font-bold leading-6">
-                Nexus Headquarters
+                You don’t have access to this workspace.
               </h3>
               <span className="mt-1 text-[16px] leading-5 text-[#676767]">
-                Operator · Bangkok
+                Ask your site administrator for access or choose another
+                workspace.
               </span>
-              <ChevronRight className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#676767]" />
+              <ChevronLeft className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#676767]" />
             </button>
           </div>
-          <div>
-            <button className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-[14px] py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]"
-            onClick={() => setShowUna(true)}>
-              <h3 className="text-[20px] font-bold leading-6">North Campus</h3>
-              <span className="mt-1 text-[16px] leading-5 text-[#676767]">
-                Viewer · Bangkok
-              </span>
-              <ChevronRight className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#676767]" />
+          <div className="mb-3">
+            <button
+              type="submit"
+              className="mt-3 h-8 w-full bg-[#3e3e3e] text-[10px] font-semibold text-white transition hover:bg-[#222]"
+              onClick={() => setShowChoose(true)}
+            >
+              Choose workspace
             </button>
           </div>
+
           <p className="mt-4 text-[10px] text-[#8a8a8a]">
             Need help? Contact your workspace administrator.
           </p>

@@ -1,8 +1,19 @@
 "use client";
 
-import { Check } from "@tailgrids/icons";
+import { Check, ChevronLeft } from "@tailgrids/icons";
+import { useState } from "react";
+import Choose from "./Choose";
+import Expired from "./Expired";
 
-export default function Reset() {
+export default function Accept() {
+  const [showChoose, setShowChoose] = useState(false);
+  const [showExpired, setShowExpired] = useState(false);
+  if (showChoose) {
+    return <Choose />;
+  }
+  if (showExpired) {
+    return <Expired />;
+  }
   return (
     <main className="grid min-h-screen bg-white font-sans text-[#424242] lg:grid-cols-2">
       {/* กล่อง Benefits */}
@@ -24,11 +35,11 @@ export default function Reset() {
           </span>
           <span className="text-[13px] text-[#707070] mt-5 flex">
             <Check className="mr-1" />
-            Access control and smart alarms
+            CheckAccess control and smart alarms
           </span>
           <span className="text-[13px] text-[#707070] mt-5 flex">
             <Check className="mr-1" />
-            Parking and connected systems
+            CheckParking and connected systems
           </span>
         </div>
         <p className="text-[11px] text-[#8a8a8a]">
@@ -36,37 +47,39 @@ export default function Reset() {
         </p>
       </section>
       <section className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-[330px]">
+        <div className="w-full max-w-82.5">
           <p className="text-[9px] font-medium uppercase text-[#858585]">
-            Auccount
+            Account
           </p>
-          <h2 className="mt-3 text-[24px] font-semibold">Reset password</h2>
+          <h2 className="mt-3 text-[24px] font-semibold">Accept invitation</h2>
           <p className="mt-3 text-[12px] text-[#858585]">
-            Enter your work email to receive a reset link.
+            Review the workspace and accept your invitation.
           </p>
 
-          <form className="mt-4 space-y-4">
-            {/* Email box */}
-            <div>
-              <label className="mb-1.5 block text-[11px] font-semibold">
-                Work email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="name@company.com"
-                className="h-8 w-full border border-[#cfcfcf] bg-white px-2.5 text-[11px] outline-none transition focus:border-[#555] focus:ring-1 focus:ring-[#555]"
-              />
-            </div>
-
+          <div className="mb-3 mt-3">
+            <button
+              className="relative flex w-full flex-col rounded-lg border border-[#d6d6d6] px-3.5 py-3 pr-12 text-left transition-colors hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#555]"
+              onClick={() => setShowChoose(true)}
+            >
+              <h3 className="text-[20px] font-bold leading-6">
+                Nexus Headquarters
+              </h3>
+              <span className="mt-1 text-[16px] leading-5 text-[#676767]">
+                Operator · Bangkok
+              </span>
+              <ChevronLeft className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#676767]" />
+            </button>
+          </div>
+          <div className="mb-3">
             <button
               type="submit"
-              className="h-8 w-full bg-[#3e3e3e] text-[10px] font-semibold text-white transition hover:bg-[#222]"
+              className="mt-3 h-8 w-full bg-[#3e3e3e] text-[10px] font-semibold text-white transition hover:bg-[#222]"
+              onClick={() => setShowExpired(true)}
             >
-              Send reset link
+              Request new link
             </button>
-          </form>
+          </div>
+
           <p className="mt-4 text-[10px] text-[#8a8a8a]">
             Need help? Contact your workspace administrator.
           </p>

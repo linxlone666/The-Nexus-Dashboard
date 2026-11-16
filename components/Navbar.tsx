@@ -69,7 +69,12 @@ export function Navbar({ site, workspace, user, alarmCount = 0 }: NavbarProps) {
         <Icon name={section.icon} />
         {section.label}
         {section.id === "alarms" && alarmCount > 0 && (
-          <span className={styles.badge} aria-label={`${alarmCount} active alarms`}>{alarmCount}</span>
+          <span
+            className={styles.badge}
+            aria-label={`${alarmCount} active alarms`}
+          >
+            {alarmCount}
+          </span>
         )}
       </a>
     );
@@ -79,7 +84,13 @@ export function Navbar({ site, workspace, user, alarmCount = 0 }: NavbarProps) {
     <>
       <header className={styles.header}>
         <div className={styles.identity}>
-          <a className={styles.brand} href="#overview" onClick={closeNavigation}>nexus<span>.</span></a>
+          <a
+            className={styles.brand}
+            href="#overview"
+            onClick={closeNavigation}
+          >
+            nexus<span>.</span>
+          </a>
           <span className={styles.site}>{site}</span>
         </div>
         <div className={styles.account}>
@@ -87,19 +98,23 @@ export function Navbar({ site, workspace, user, alarmCount = 0 }: NavbarProps) {
             className={styles.search}
             ref={search}
             onBlur={(event) => {
-              if (!search.current?.contains(event.relatedTarget)) setSearchOpen(false);
+              if (!search.current?.contains(event.relatedTarget))
+                setSearchOpen(false);
             }}
             onKeyDown={(event) => {
               if (event.key === "Escape") setSearchOpen(false);
             }}
           >
-            <form role="search" onSubmit={(event) => {
-              event.preventDefault();
-              if (query.trim() && matches[0]) {
-                window.location.hash = matches[0].id;
-                closeNavigation();
-              }
-            }}>
+            <form
+              role="search"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (query.trim() && matches[0]) {
+                  window.location.hash = matches[0].id;
+                  closeNavigation();
+                }
+              }}
+            >
               <Icon name="search" />
               <input
                 type="search"
@@ -115,13 +130,20 @@ export function Navbar({ site, workspace, user, alarmCount = 0 }: NavbarProps) {
             </form>
             {searchOpen && query.trim() && (
               <ul className={styles.results} aria-label="Search results">
-                {matches.length ? matches.map((section) => <li key={section.id}>{link(section)}</li>)
-                  : <li className={styles.noResults}>No matching sections</li>}
+                {matches.length ? (
+                  matches.map((section) => (
+                    <li key={section.id}>{link(section)}</li>
+                  ))
+                ) : (
+                  <li className={styles.noResults}>No matching sections</li>
+                )}
               </ul>
             )}
           </div>
           <div className={styles.profile}>
-            <span className={styles.avatar} aria-hidden="true">{user.initials}</span>
+            <span className={styles.avatar} aria-hidden="true">
+              {user.initials}
+            </span>
             <span>{user.name}</span>
           </div>
         </div>
@@ -156,20 +178,32 @@ export function Navbar({ site, workspace, user, alarmCount = 0 }: NavbarProps) {
               <p>{site}</p>
               <h2 id={headingId}>{workspace}</h2>
             </div>
-            <button type="button" autoFocus aria-label="Close navigation" onClick={() => drawer.current?.close()}>
+            <button
+              type="button"
+              autoFocus
+              aria-label="Close navigation"
+              onClick={() => drawer.current?.close()}
+            >
               <Icon name="close" />
             </button>
           </div>
           <p className={styles.group}>Monitor</p>
           <ul className={styles.links}>
-            {sections.slice(0, -1).map((section) => <li key={section.id}>{link(section)}</li>)}
+            {sections.slice(0, -1).map((section) => (
+              <li key={section.id}>{link(section)}</li>
+            ))}
           </ul>
           <div className={styles.drawerFooter}>
             {link(sections[7])}
             <p>Personal dashboard · Live updates</p>
           </div>
         </nav>
-        <button type="button" className={styles.toggle} aria-label="Dismiss navigation" onClick={() => drawer.current?.close()}>
+        <button
+          type="button"
+          className={styles.toggle}
+          aria-label="Dismiss navigation"
+          onClick={() => drawer.current?.close()}
+        >
           <Icon name="close" />
         </button>
       </dialog>

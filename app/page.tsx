@@ -1,4 +1,4 @@
-import SignIn from "@/components/Sign_In";
+import SignIn from "./login/Sign_In";
 
 export default function Home() {
   return <SignIn />;

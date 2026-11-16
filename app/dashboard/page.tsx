@@ -25,9 +25,18 @@ export default function Dashboard() {
           <p className={styles.breadcrumb}>Nexus / My views / Control room</p>
           <h1>Operations overview</h1>
           <dl className={styles.metrics}>
-            <div><dt>Active alarms</dt><dd>03</dd></div>
-            <div><dt>People on site</dt><dd>1,284</dd></div>
-            <div><dt>Parking available</dt><dd>64</dd></div>
+            <div>
+              <dt>Active alarms</dt>
+              <dd>03</dd>
+            </div>
+            <div>
+              <dt>People on site</dt>
+              <dd>1,284</dd>
+            </div>
+            <div>
+              <dt>Parking available</dt>
+              <dd>64</dd>
+            </div>
           </dl>
         </section>
         {sections.map(([id, label]) => (

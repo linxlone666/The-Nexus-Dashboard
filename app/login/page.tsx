@@ -1,11 +1,5 @@
-'use client'
-
-import SignIn from "@/components/Sign_In"
+import SignIn from "./Sign_In";
 
 export default function Page() {
-  return (
-    <>
-      <SignIn />
-    </>
-  )
+  return <SignIn />;
 }

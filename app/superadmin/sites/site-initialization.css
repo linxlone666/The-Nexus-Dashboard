@@ -1,0 +1,97 @@
+.site-initialization-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.superadmin-card-stack {
+  margin-top: 18px;
+}
+
+.site-setup-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(100px, 1fr));
+  overflow-x: auto;
+  margin: 22px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-setup-steps li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  text-align: center;
+}
+
+.site-setup-steps li:not(:last-child)::after {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  width: 100%;
+  height: 1px;
+  background: #dce6e4;
+  content: "";
+}
+
+.site-setup-steps li > span {
+  z-index: 1;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #dce6e4;
+  border-radius: 50%;
+  background: white;
+}
+
+.site-setup-steps [aria-current="step"] {
+  font-weight: 700;
+}
+
+.site-setup-steps [aria-current="step"] > span {
+  background: #08786d;
+  color: white;
+}
+
+.site-setup-steps li:has(~ [aria-current="step"]) > span {
+  background: #e0f0eb;
+  color: #08786d;
+}
+
+.site-initialization form {
+  width: min(100%, 680px);
+}
+
+.site-setup-systems,
+.site-setup-review {
+  display: grid;
+  gap: 10px;
+}
+
+.site-setup-systems {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr));
+}
+
+.site-setup-review dt {
+  font-weight: 700;
+}
+
+.site-setup-review dd {
+  color: #506769;
+  overflow-wrap: anywhere;
+}
+
+.site-setup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.site-setup-error {
+  color: #a52424;
+}

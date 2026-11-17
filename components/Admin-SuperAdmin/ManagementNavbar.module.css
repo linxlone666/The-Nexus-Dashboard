@@ -20,64 +20,6 @@
   line-height: 1.45;
 }
 
-.header {
-  grid-area: header;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 64px;
-  padding: 10px clamp(16px, 1.35vw, 28px);
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-}
-
-.brand {
-  font-size: 25px;
-  font-weight: 750;
-}
-.headerActions,
-.profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.headerActions {
-  color: var(--muted);
-}
-.headerActions .headerSearch[type="search"] {
-  width: clamp(170px, 17vw, 300px);
-}
-.profile small {
-  display: block;
-  color: var(--muted);
-}
-.profile div {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.avatar {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #e9eff0;
-  color: var(--ink);
-  font-weight: 700;
-}
-
-.header .profile {
-  flex: none;
-  white-space: nowrap;
-}
-.header .avatar {
-  width: 36px;
-  height: 36px;
-  font-size: 12px;
-}
 .icon {
   flex: none;
   fill: none;
@@ -138,20 +80,45 @@
   font-size: 12px;
 }
 
-.shell[data-sidebar-collapsed="true"] .sidebarLabel,
-.shell[data-sidebar-collapsed="true"] .sidebarToggleLabel {
+.shell[data-sidebar-collapsed="true"]:not([data-sidebar-hover="true"])
+  .sidebarLabel,
+.shell[data-sidebar-collapsed="true"]:not([data-sidebar-hover="true"])
+  .sidebarToggleLabel {
   display: none;
 }
 
-.shell[data-sidebar-collapsed="true"] .sidebarLinks a,
+.shell[data-sidebar-collapsed="true"]:not([data-sidebar-hover="true"])
+  .sidebarLinks
+  a,
 .shell[data-sidebar-collapsed="true"] .placeholder,
-.shell[data-sidebar-collapsed="true"] .sidebarToggle {
+.shell[data-sidebar-collapsed="true"]:not([data-sidebar-hover="true"])
+  .sidebarToggle {
   justify-content: center;
   padding-inline: 10px;
 }
 
+@media (min-width: 761px) and (any-hover: hover) and (any-pointer: fine) {
+  .sidebar {
+    position: relative;
+    z-index: 2;
+    width: var(--sidebar-width);
+    transition: width 140ms ease;
+  }
+
+  .shell[data-sidebar-hover="true"] .sidebar {
+    width: 216px;
+    box-shadow: 6px 0 16px #16323619;
+  }
+
+  .shell > header {
+    position: relative;
+    z-index: 3;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .shell {
+  .shell,
+  .sidebar {
     transition: none;
   }
 }

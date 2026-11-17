@@ -1,43 +1,35 @@
-type User = {
-  email: string;
-  password: string;
-};
-const users: User[] = [
-  {
-    email: "admin@company.com",
-    password: "pass",
-  },
-  {
-    email: "user@company.com",
-    password: "pass",
-  },
-  {
-    email: "manager@company.com",
-    password: "pass",
-  },
-];
+import { readManagement } from "@/utils/management-store";
 
-export type Credential = {
-  token: string;
-  email: string;
-};
+export type Credential = { token: string; email: string };
 
-export const login = async (
+export async function login(
   email: string,
   password: string,
-): Promise<Credential> => {
-  const user = users.find((user) => user.email === email);
+): Promise<Credential> {
+  const account = readManagement().accounts.find(
+    (item) => item.email === email,
+  );
 
-  if (!user) {
-    throw new Error("User not found");
+  if (!account || !account.active || account.password !== password) {
+    throw new Error(
+      "Email or password is incorrect, or the account is inactive.",
+    );
   }
 
-  if (user.password !== password) {
-    throw new Error("Password is required");
-  }
+  return { token: crypto.randomUUID(), email: account.email };
+}
 
-  return {
-    token: crypto.randomUUID(),
-    email: user.email,
-  };
-};
+export function getDemoProfile(email: string) {
+  const account = readManagement().accounts.find(
+    (item) => item.email === email && item.active,
+  );
+  return (
+    account && {
+      email: account.email,
+      name: account.name,
+      role: account.role,
+      siteIds: account.siteIds,
+      systemsBySite: account.systemsBySite,
+    }
+  );
+}

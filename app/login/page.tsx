@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import SignIn from "./Sign_In";
+
+export const metadata: Metadata = { title: "Sign in" };
 
 export default function Page() {
   return <SignIn />;

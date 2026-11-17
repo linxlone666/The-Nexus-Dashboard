@@ -1,0 +1,127 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useId, useRef, useState } from "react";
+import { signOutDemoSession, useDemoProfile } from "@/utils/demo-session";
+import styles from "./TopBar.module.css";
+
+export function ProfileMenu({
+  name,
+  initials,
+  roleLabel,
+}: {
+  name: string;
+  initials: string;
+  roleLabel: string;
+}) {
+  const profile = useDemoProfile();
+  const router = useRouter();
+  const panelId = useId();
+  const wrapper = useRef<HTMLDivElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
+  const displayName = profile?.name ?? name;
+  const displayInitials = profile
+    ? profile.name
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+    : initials;
+
+  useEffect(() => {
+    if (!open) return;
+
+    function onOutsideClick(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        !wrapper.current?.contains(event.target)
+      )
+        setOpen(false);
+    }
+
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggle.current?.focus();
+      }
+    }
+
+    document.addEventListener("pointerdown", onOutsideClick);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("pointerdown", onOutsideClick);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [open]);
+
+  function signOut() {
+    try {
+      signOutDemoSession();
+      setOpen(false);
+      router.replace("/login");
+    } catch {
+      setError("Could not sign out. Please try again.");
+    }
+  }
+
+  return (
+    <div className={styles.profileMenu} ref={wrapper}>
+      <button
+        type="button"
+        ref={toggle}
+        className={styles.profile}
+        aria-label={"Profile options for " + displayName}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => {
+          setError("");
+          setOpen(!open);
+        }}
+      >
+        <span className={styles.avatar} aria-hidden="true">
+          {displayInitials}
+        </span>
+        <span>
+          <strong>{displayName}</strong>
+          <small>{profile?.role ?? roleLabel}</small>
+        </span>
+        <span aria-hidden="true" className={styles.profileChevron}>
+          ▾
+        </span>
+      </button>
+      <div className={styles.profilePanel} id={panelId} hidden={!open}>
+        {profile ? (
+          <>
+            <Link href="/profile" onClick={() => setOpen(false)}>
+              My profile
+            </Link>
+            {profile.role === "Admin" && (
+              <>
+                <Link href="/admin/users" onClick={() => setOpen(false)}>
+                  Users
+                </Link>
+                <Link href="/admin/audit-logs" onClick={() => setOpen(false)}>
+                  Audit Logs
+                </Link>
+                <Link href="/admin/projects" onClick={() => setOpen(false)}>
+                  Sites
+                </Link>
+              </>
+            )}
+            <button type="button" onClick={signOut}>
+              Sign out
+            </button>
+          </>
+        ) : (
+          <Link href="/login" onClick={() => setOpen(false)}>
+            Sign in
+          </Link>
+        )}
+        {error && <p role="alert">{error}</p>}
+      </div>
+    </div>
+  );
+}

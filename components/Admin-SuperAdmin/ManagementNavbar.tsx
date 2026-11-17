@@ -1,11 +1,13 @@
 "use client";
 
-import { Input } from "@/components/tailgrids/core/input";
+import { TopBar } from "@/components/TopBar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useId } from "react";
 import type { ReactNode } from "react";
-import { useCollapsedSidebar } from "./sidebar-state";
+import { useSidebarNavigation } from "@/utils/sidebar-state";
+import { useDemoProfile } from "@/utils/demo-session";
+import { useSelectedWorkSite } from "@/utils/selected-work-site";
 import styles from "./ManagementNavbar.module.css";
 
 const navigation = [
@@ -13,31 +15,31 @@ const navigation = [
     label: "Overview",
     icon: "management-home",
     Admin: "/admin",
-    Superadmin: null,
+    Superadmin: "/superadmin",
   },
   {
     label: "Users",
     icon: "management-users",
-    Admin: null,
+    Admin: "/admin/users",
     Superadmin: "/superadmin/users",
   },
   {
     label: "Sites",
     icon: "management-projects",
-    Admin: null,
-    Superadmin: null,
+    Admin: "/admin/projects",
+    Superadmin: "/superadmin/sites",
   },
   {
     label: "Audit Logs",
     icon: "management-audit",
-    Admin: null,
-    Superadmin: null,
+    Admin: "/admin/audit-logs",
+    Superadmin: "/superadmin/audit-logs",
   },
   {
     label: "Settings",
     icon: "management-settings",
     Admin: null,
-    Superadmin: null,
+    Superadmin: "/superadmin/settings",
   },
 ];
 
@@ -61,49 +63,41 @@ function Icon({ name }: { name: string }) {
 }
 
 export function ManagementNavbar({ role, children }: ManagementNavbarProps) {
-  const { collapsed, toggleSidebar } = useCollapsedSidebar();
+  const { collapsed, previewing, railProps, toggleProps } =
+    useSidebarNavigation();
+  const profile = useDemoProfile();
+  const site = useSelectedWorkSite();
+  const dashboardHref =
+    site &&
+    profile &&
+    (profile.role === "Superadmin" || profile.siteIds.includes(site.id))
+      ? "/home"
+      : "/login/sites?view=dashboard";
   const pathname = usePathname();
   const navigationId = useId();
-  const home = role === "Admin" ? "/admin" : "/superadmin/users";
+  const home = role === "Admin" ? "/admin" : "/superadmin";
   const menuLabel = collapsed ? "Expand sidebar" : "Collapse sidebar";
 
   return (
-    <div className={styles.shell} data-sidebar-collapsed={collapsed}>
-      <header className={styles.header}>
-        <Link className={styles.brand} href={home}>
-          NEXUS
-        </Link>
-        <div className={styles.headerActions}>
-          <Input
-            className={styles.headerSearch}
-            type="search"
-            aria-label="Search management"
-            placeholder={
-              role === "Superadmin"
-                ? "Search users, projects, vendors..."
-                : "Search users, projects..."
-            }
-            disabled
-          />
-          <Icon name="bell" />
-          <div className={styles.profile}>
-            <span className={styles.avatar} aria-hidden="true">
-              JD
-            </span>
-            <span>
-              <strong>John Doe</strong>
-              <small>{role}</small>
-            </span>
-          </div>
-        </div>
-      </header>
+    <div
+      className={styles.shell}
+      data-sidebar-collapsed={collapsed}
+      data-sidebar-hover={previewing}
+    >
+      <TopBar
+        home={home}
+        name="John Doe"
+        initials="JD"
+        roleLabel={role}
+        searchLabel="Search management"
+        searchPlaceholder={"Search users and sites..."}
+      />
 
-      <aside className={styles.sidebar}>
+      <aside className={styles.sidebar} {...railProps}>
         <button
           className={styles.sidebarToggle}
           type="button"
-          onClick={toggleSidebar}
-          aria-expanded={!collapsed}
+          {...toggleProps}
           aria-controls={navigationId}
           aria-label={menuLabel}
           title={menuLabel}
@@ -116,9 +110,17 @@ export function ManagementNavbar({ role, children }: ManagementNavbarProps) {
           className={styles.sidebarLinks}
           aria-label={role + " management"}
         >
+          {profile?.role === role && (
+            <Link
+              href={dashboardHref}
+              aria-label="Site dashboard"
+              title={collapsed ? "Site dashboard" : undefined}
+            >
+              <Icon name="grid" />
+              <span className={styles.sidebarLabel}>Site dashboard</span>
+            </Link>
+          )}
           {navigation.map((item) => {
-            if (role === "Admin" && item.label === "Vendors") return null;
-
             const href = item[role];
             const content = (
               <>
@@ -127,18 +129,7 @@ export function ManagementNavbar({ role, children }: ManagementNavbarProps) {
               </>
             );
 
-            if (!href) {
-              return (
-                <span
-                  key={item.label}
-                  className={styles.placeholder}
-                  title={collapsed ? item.label : undefined}
-                  aria-label={item.label}
-                >
-                  {content}
-                </span>
-              );
-            }
+            if (!href) return null;
 
             return (
               <Link

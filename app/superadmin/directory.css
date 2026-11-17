@@ -1,0 +1,238 @@
+.directory-page-heading,
+.directory-details-heading,
+.directory-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.directory-page-heading,
+.directory-details-heading {
+  justify-content: space-between;
+}
+
+.directory-page-heading {
+  flex-wrap: wrap;
+}
+
+.directory-breadcrumb,
+.directory-results {
+  color: #506769;
+  font-size: 12px;
+}
+
+.directory-workspace,
+.directory-list,
+.directory-metrics {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.directory-workspace {
+  margin-top: 16px;
+}
+
+.directory-list {
+  align-self: start;
+  align-content: start;
+}
+
+.directory-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+}
+
+.directory-metrics strong {
+  display: block;
+  margin-block: 2px;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.directory-metrics span,
+.directory-metrics small {
+  color: #506769;
+}
+
+.directory-metrics small {
+  font-size: 12px;
+}
+
+.directory-secondary-button {
+  padding: 7px 10px;
+  border: 1px solid #d4e1df;
+  border-radius: 6px;
+  background: white;
+}
+
+.directory-secondary-button:hover {
+  background: #edf6f3;
+}
+
+.directory-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.directory-table :is(th, td) {
+  white-space: nowrap;
+}
+
+.directory-table input[type="checkbox"] {
+  border-radius: 3px;
+  accent-color: #08786d;
+}
+
+.directory-table tr[data-selected] {
+  cursor: pointer;
+}
+
+.directory-table tr[data-selected="false"]:hover {
+  background: #f1f7f5;
+}
+
+.directory-table tr[data-selected="true"] {
+  background: #e7f3ef;
+}
+
+.directory-table tr[data-selected="true"] td:first-child {
+  box-shadow: inset 3px 0 #08786d;
+}
+
+.directory-name-button {
+  font-weight: 700;
+  text-align: left;
+}
+
+.directory-name-button:hover,
+.directory-name-button[aria-current="true"] {
+  color: #08786d;
+  text-decoration: underline;
+}
+
+.directory-role,
+.directory-status,
+.directory-selected-label {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #e9eff0;
+  color: #40575a;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.directory-status[data-active="true"],
+.directory-selected-label {
+  background: #d9eee4;
+  color: #176147;
+}
+
+.directory-selected-label {
+  margin-left: 6px;
+}
+
+.directory-selected-label[aria-hidden="true"] {
+  visibility: hidden;
+}
+
+.directory-more {
+  min-width: 30px;
+  min-height: 28px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.directory-more:hover {
+  background: #dcebe7;
+}
+
+.directory-results {
+  margin-top: 14px;
+}
+
+.directory-details-heading h2 {
+  margin: 0;
+}
+
+.directory-identity {
+  margin-top: 14px;
+  overflow-wrap: anywhere;
+}
+
+.directory-identity .directory-status {
+  margin-left: auto;
+}
+
+.directory-avatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: #e9eff0;
+  font-weight: 750;
+}
+
+.directory-sections {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+  border-bottom: 1px solid #dce6e4;
+}
+
+.directory-sections button {
+  padding: 6px 8px;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+}
+
+.directory-sections button[aria-pressed="true"] {
+  border-color: #08786d;
+  color: #08786d;
+  font-weight: 700;
+}
+
+.directory-fields:not([hidden]) {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 1180px) {
+  .directory-workspace {
+    grid-template-columns: minmax(0, 2.15fr) minmax(290px, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .directory-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.directory-summary-heading {
+  margin-block: 18px 8px;
+  font-weight: 700;
+}
+
+.directory-site-form {
+  margin-top: 16px;
+}
+
+.directory-site-source {
+  display: grid;
+  gap: 8px;
+}
+
+.directory-site-source dt {
+  font-weight: 650;
+}
+
+.directory-site-source dd {
+  color: #506769;
+}

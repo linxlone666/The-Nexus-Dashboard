@@ -1836,3 +1836,10 @@
     flex: none;
   }
 }
+
+.overview-sidebar .mobile-preview-link {
+  flex: none;
+  align-self: center;
+  padding: 8px;
+  white-space: nowrap;
+}

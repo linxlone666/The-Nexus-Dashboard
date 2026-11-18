@@ -350,6 +350,14 @@ function Workspace({
               </p>
             )}
           </div>
+          {mobile && (
+            <Link
+              href="/mobile-ui"
+              className="monitoring-site-link mobile-preview-link"
+            >
+              Mobile UI demo
+            </Link>
+          )}
         </nav>
       </aside>
 

@@ -10,7 +10,7 @@ This guide explains how to run the frontend, develop separate features, and merg
 - **TailGrids:** configuration and theme styles are included; components can be added as needed.
 - **npm:** use this consistently so everyone shares `package-lock.json`.
 
-The current homepage is empty and the navbar is unfinished. Installing Tailwind or configuring TailGrids does not automatically create a dashboard.
+Sign in at / and choose a site to open the workspace at /home. The mobile UI prototype is available at /mobile-ui, with companion screens at /activity, /alarms, and /cctv. Those screens show sample data.
 
 ## 1. First-time setup
 

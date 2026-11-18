@@ -1,83 +1,102 @@
-# แบ่งงานทีม 4 คน — The Nexus Dashboard
+# คู่มือแบ่งงานและอ่านโค้ด The Nexus Dashboard
 
-เอกสารนี้ใช้กับสาขาฐานร่วมกัน feature/dashboard-rebuild รายการ “มีแล้ว” คือสถานะของโค้ดในสาขานี้ ส่วนชื่อคนที่ 2–4 เป็นช่องให้ทีมใส่ชื่อเอง เจ้าของงานในตารางคือคนรับผิดชอบต่อจากนี้
-
-| คน | ส่วนที่รับผิดชอบ | เส้นทางหลัก |
+| คน | รับผิดชอบ | หน้าและส่วนที่ต้องอธิบาย |
 | --- | --- | --- |
-| 1 — คุณ | Admin, การกำหนดสิทธิ์ และหน้าประวัติการแก้ไข | /admin, /admin/users, /admin/projects, /admin/audit-logs |
-| 2 — ______ | Superadmin, วงจรชีวิตไซต์ และตั้งค่าส่วนจัดการ | /superadmin, /superadmin/users, /superadmin/sites, /superadmin/settings |
-| 3 — ______ | Workspace, ตัวแก้ไขแดชบอร์ด และเลย์เอาต์มือถือ | /home ส่วน Workspace |
-| 4 — ______ | เข้าสู่ระบบ เลือกไซต์ โปรไฟล์ ข้อมูล Monitoring และรูปแบบแสดงข้อมูล | /login, /login/sites, /profile, /home ส่วน Monitoring |
+| 1 — คุณ | **Superadmin และ Navbar** | ภาพรวม จัดการบัญชีและไซต์ บันทึกการเปลี่ยนแปลง ตั้งค่า เมนูเดสก์ท็อปและโทรศัพท์ |
+| 2 | **Admin, Login และสิทธิ์** | เข้าสู่ระบบ เลือกไซต์ โปรไฟล์ จัดการสิทธิ์ User และตั้งค่าไซต์ที่ดูแล |
+| 3 | **Workspace, ตัวแก้ไขแดชบอร์ด และไทล์** | สร้างแดชบอร์ด จัดกริด แก้ไทล์ เลือกรูปแบบข้อมูล ตั้งลำดับกล้อง และบันทึก |
+| 4 | **Monitoring, Search และ Mock REST API** | ข้อมูลแต่ละระบบ ผลค้นหา รายละเอียดกล้อง API จำลอง และเนื้อหา Mobile UI demo |
 
-## คนที่ 1 — Admin และสิทธิ์ (คุณ)
+“มีแล้ว” ในคู่มือนี้หมายถึงสิ่งที่โค้ดทำได้ในเดโม ส่วนเจ้าของงานคือผู้รับผิดชอบอธิบาย ทดสอบ และแก้ส่วนนั้นต่อจากนี้
 
-**มีแล้ว** หน้า Users ใช้ตาราง ตัวกรอง และแผงรายละเอียดร่วมกับ Superadmin ฝั่ง Admin จัดการสิทธิ์ของบัญชี User ในไซต์ที่ตัวเองดูแลได้ทั้งรายไซต์และรายระบบ หน้า Sites แก้ชื่อที่แสดงและเขตเวลาได้ หน้า Audit Logs ใช้ค้นหาและกรองรายการย้อนหลังได้ เมนู Site dashboard พากลับไป Workspace ของไซต์ที่เลือกไว้
+## คนที่ 1 — คุณ: Superadmin และ Navbar
 
-| จุดเริ่มอ่าน | หน้าที่ |
+### ภาพรวมและบัญชี
+
+| ฟังก์ชัน | ทำงานอย่างไร |
 | --- | --- |
-| [app/admin/layout.tsx](../app/admin/layout.tsx) | ตรวจบทบาทก่อนแสดงหน้าจัดการ |
-| [UserManagement.tsx](../components/management/UserManagement.tsx) | แสดงตาราง ค้นชื่อหรืออีเมล กรองสิทธิ์ เลือกผู้ใช้ และอ่าน checkbox จากฟอร์มเมื่อกดบันทึก |
-| [management-store.ts](../utils/management-store.ts) | saveStandardUserAccess ตรวจบทบาทของผู้แก้ ตรวจไซต์และระบบ แล้วเขียนสิทธิ์ลงบัญชีเป้าหมาย โดยรักษาสิทธิ์ของไซต์ที่อยู่นอกขอบเขต Admin คนนี้ ส่วน saveSitePreferences อัปเดตชื่อและเขตเวลาของไซต์ |
-| [Audit Logs](../app/superadmin/audit-logs/page.tsx) | หน้า Admin ใช้ตัวเดียวกัน อ่านรายการเปลี่ยนแปลงจาก useManagement แล้วกรองด้วยข้อความและหมวดหมู่ |
+| [SuperadminLayout](../app/superadmin/layout.tsx) | ครอบทุกหน้าใน `/superadmin` เรียก `useDemoProfile()` เพื่อรอผลอ่านเซสชัน จากนั้นแสดงเนื้อหาเมื่อบทบาทเป็น Superadmin และส่งเมนูบทบาทเดียวกันให้ `ManagementNavbar` |
+| [OverviewPage](../app/superadmin/OverviewPage.tsx) | อ่านไซต์ บัญชี และ Audit Logs จาก `useManagement()` คำนวณสรุปไซต์ Active, Onboarding และ integration ที่ตั้ง REST แล้วรอข้อมูล พร้อมลิงก์ไปดูไซต์นั้น |
+| [UserManagement](../components/management/UserManagement.tsx) | หน้า Users ส่ง `manager="Superadmin"` มาให้คอมโพเนนต์ร่วม ค้นชื่อหรืออีเมลและกรองตามบทบาท สถานะ และไซต์ในหน่วยความจำ `siteCount()` นับไซต์ที่ Active ส่วน `openPanel()` เปิดแถวที่เลือกและกลับไปแท็บ General |
+| [บันทึกหรือส่งออกบัญชี](../components/management/UserManagement.tsx) | ฟอร์มอ่านค่าจาก `FormData` แยกไซต์ที่ติ๊กเป็น `siteIds` และระบบที่อนุญาตเป็น `systemsBySite` แล้วเรียก `saveAccount()` ส่วน `exportUsers()` สร้าง CSV จากแถวที่เลือกหรือผลกรองและเปิดดาวน์โหลดผ่าน Blob |
+| [saveAccount](../utils/management-store.ts) | ตรวจชื่อ อีเมล บทบาท อีเมลซ้ำ และการแก้บัญชี Superadmin หลัก แล้วอัปเดตหรือเพิ่มบัญชีใน store ตรวจบทบาทผู้แก้ว่าเป็น Superadmin แล้วเซฟพร้อม Audit Log รหัสผ่านเว้นว่างได้ตอนแก้บัญชีเดิมเพื่อเก็บรหัสเดิม |
 
-**งานต่อ** ทำ Admin Overview ให้มีข้อมูลของไซต์ที่ดูแลและทางลัดไปจัดการสิทธิ์ ปัจจุบัน /admin มีหัวข้อหน้า ส่วนฟังก์ชันจัดการอยู่ในเมนูย่อยแล้ว
+### Sites, Initialize Site และ Audit Logs
 
-**เดโมที่รับผิดชอบ** ให้ผู้ใช้สองคนเข้าไซต์เดียวกัน แต่กำหนด CCTV ให้คนเดียว ตรวจจาก Dashboard, Search และตัวเลือกไทล์ แล้วถอนสิทธิ์ไซต์และเช็กอีกครั้งหลังรีโหลด
+1. **เลือกไซต์** — `SiteDirectory` อ่านไซต์จาก `useManagement()` แล้วกรองชื่อหรือสถานที่ `selectSite()` เก็บ ID ของแถวที่เลือก ส่วน `subscribeHash()` ฟังการเปลี่ยน URL รูปแบบ `#site-…` เพื่อเปิดรายละเอียดจากลิงก์ได้หลังรีโหลด
+2. **เริ่มสร้างไซต์** — `InitializeSite` มีห้าขั้น Details → Vendor → Connection → Data mapping → Review แต่ละขั้นเก็บค่าฟอร์มใน React state และ `goTo()` สลับขั้น จึงกดย้อนกลับแล้วอ่านค่าที่เคยกรอกได้
+3. **ทดสอบการเชื่อมต่อ** — `testConnection()` เรียก `checkMockRest()` เมื่อเลือก Sample แล้วแสดง HTTP status และจำนวน readings หากเลือก Custom REST จะใช้ `validEndpoint()` ตรวจ URL เท่านั้น `resetConnection()` ล้างผลเทสต์และ mapping เมื่อเปลี่ยนค่าที่เกี่ยวข้อง พร้อมเพิ่มเลขคำขอเพื่อทิ้งผลตอบกลับเก่าที่มาช้า
+4. **บันทึกไซต์** — `submit()` ตรวจข้อมูลก่อนเลื่อนไปขั้นต่อไป ที่ Review จะสร้าง UUID แล้วเรียก `saveSite()` ตัว store ตรวจบทบาท Superadmin และชื่อไซต์ซ้ำก่อนบันทึกและเพิ่ม Audit Log จากนั้นเปิดรายละเอียดไซต์ผ่าน URL ไซต์ใหม่ใช้รหัสของตัวเองและถูกนับใต้ Nexus Operations สำหรับ Overview รุ่นเดิม
+5. **ลบไซต์** — `removeSite()` ตรวจผู้ใช้ปัจจุบันและชื่อที่พิมพ์ยืนยัน ลบเฉพาะไซต์ตาม ID และล้าง ID นั้นออกจากสิทธิ์ของบัญชี แล้วเขียน Audit Log ส่วนนับภาพรวมจะเปลี่ยนตามข้อมูลที่อ่านใหม่
+6. **ตั้งค่าและอ่านประวัติ** — `saveSettings()` ตรวจค่า Table density และ Time zone ก่อนบันทึก หน้า Audit Logs ค้นข้อความจาก action และ target กรองหมวด แล้วจัดรูปแบบวันเวลาตาม timezone ที่กำหนด รายการมาจากการเปลี่ยนข้อมูลที่ store บันทึกไว้
 
-## คนที่ 2 — Superadmin และการจัดการไซต์
+ไฟล์ต้นทาง [SiteDirectory](../app/superadmin/sites/SiteDirectory.tsx) · [InitializeSite](../app/superadmin/sites/InitializeSite.tsx) · [management-store](../utils/management-store.ts) · [project-storage](../utils/project-storage.ts) · [Audit Logs](../app/superadmin/audit-logs/page.tsx) · [Settings](../app/superadmin/settings/page.tsx)
 
-**มีแล้ว** ภาพรวมอ่านจำนวนบัญชี ไซต์ สถานะ onboarding และปัญหา integration จากข้อมูลเดโม จัดการบัญชีและสิทธิ์ของทุกบทบาทได้ มีตัวช่วย Initialize Site ห้าขั้นตอน สร้างไซต์แล้วเปิดลิงก์รายละเอียดด้วยรหัสไซต์ การลบต้องพิมพ์ชื่อไซต์ยืนยัน และมี Audit Log ทั้งตอนสร้างและลบ ตั้งค่าความหนาแน่นของตารางและเขตเวลาของรายการย้อนหลังได้
+### Navbar ทั้งเดสก์ท็อปและโทรศัพท์
 
-| จุดเริ่มอ่าน | หน้าที่ |
+| ส่วน | ทำงานอย่างไร |
 | --- | --- |
-| [OverviewPage.tsx](../app/superadmin/OverviewPage.tsx) | คำนวณตัวเลขและสร้างทางลัดไปยังไซต์ที่ต้องตรวจ |
-| [InitializeSite.tsx](../app/superadmin/sites/InitializeSite.tsx) | เก็บรายละเอียดไซต์ เลือกผู้ให้ข้อมูล ตั้งการเชื่อมต่อจำลอง เลือกระบบ แล้วบันทึกจากขั้น Review |
-| [SiteDirectory.tsx](../app/superadmin/sites/SiteDirectory.tsx) | แสดงรายการและรายละเอียด รับรหัสไซต์จาก URL และขอการยืนยันก่อนลบ |
-| [management-store.ts](../utils/management-store.ts) และ [project-storage.ts](../utils/project-storage.ts) | saveSite และ removeSite เขียนรายการไซต์และ Audit Log ส่วน readDemoProjects อ่านยอดเดิม ไซต์ใหม่ถูกนับใต้ Nexus Operations โดยอัตโนมัติ |
-| [settings/page.tsx](../app/superadmin/settings/page.tsx) | บันทึกค่าที่ใช้กับหน้าจัดการผ่าน saveSettings |
+| [ManagementNavbar](../components/Admin-SuperAdmin/ManagementNavbar.tsx) | ใช้รายการเมนูตามบทบาทชุดเดียวกับโปรไฟล์และเมนูโทรศัพท์จาก [managementLinks](../components/management/navigation.ts) ใช้ `usePathname()` ไฮไลต์หน้าปัจจุบัน ลิงก์ Site dashboard พาไป `/home` เมื่อมีไซต์ที่ยังเข้าถึงได้ หรือพาไปเลือกไซต์ |
+| [TopBar](../components/TopBar.tsx) และ [ProfileMenu](../components/ProfileMenu.tsx) | TopBar ประกอบชื่อไซต์ ชื่อแดชบอร์ด ช่องค้นหา และโปรไฟล์ตาม props ที่ได้รับ เมนูโปรไฟล์อ่านบัญชีจากเซสชัน ปิดเมื่อคลิกข้างนอกหรือกด Escape และ `signOut()` ล้างเซสชันแล้วพาไป `/login` |
+| [useSidebarNavigation](../utils/sidebar-state.ts) | `togglePinned()` เปลี่ยนสถานะย่อหรือปักเมนู ค่าเก็บที่ `nexus-sidebar-collapsed` เมื่อเมาส์เข้ารางเดสก์ท็อปที่ย่ออยู่จะเริ่มจับเวลา 500 ms ออกจากรางจะยกเลิกหรือปิดตัวอย่าง กด Escape ปิดแล้วคืนโฟกัสที่ปุ่ม |
+| [เมนูโทรศัพท์ใน Home](../app/home/view.tsx) | เมื่อ `useDashboardDevice()` คืน `mobile` หน้า Home ใช้ปุ่ม ☰ มุมขวาล่าง `mobileMenuOpen` คุมแผง Workspace, Monitoring, Search, โปรไฟล์และเปลี่ยนไซต์ เมื่อเลือก Monitoring เมนูปิดแล้วโฟกัสไปเนื้อหา |
+| [BottomNavigation](../components/mobile-ui/BottomNavigation.tsx) และ [PhonePreview](../components/mobile-ui/PhonePreview.tsx) | ชุดเดโม `/mobile-ui` ใช้ลิงก์ Overview, Activity, CCTV, Alarms และ Site dashboard ปุ่ม ☰ สลับแผงด้วย state และตรวจเส้นทางด้วย `usePathname()` ส่วน PhonePreview รอให้รู้ประเภทอุปกรณ์แล้วแสดงเดโมเฉพาะโทรศัพท์ |
 
-**งานต่อ** ดูแลสถานะ onboarding และข้อความแสดงผลการทดสอบการเชื่อมต่อ ค่า REST ในเดโมเป็นข้อมูลตั้งค่าเท่านั้น
+**ตอนเดโม** สร้างไซต์ด้วย Sample → ทดสอบ API → Mapping → เปิดรายละเอียดหลังรีโหลด → ดู Audit Logs แล้วสลับทดสอบ Sidebar แบบ hover และปุ่ม ☰ แบบโทรศัพท์
 
-**เดโมที่รับผิดชอบ** เพิ่มไซต์จากรายการว่าง เลือกข้อมูลตัวอย่าง เปิดลิงก์เดิมหลังรีโหลด แล้วลบไซต์ทดสอบและตรวจตัวเลข Overview กับ Audit Logs
+## คนที่ 2 — Admin, Login และสิทธิ์
 
-## คนที่ 3 — Workspace และตัวแก้ไขแดชบอร์ด
-
-**มีแล้ว** สร้าง เปลี่ยนชื่อ และลบแดชบอร์ด แก้ไทล์แบบ Auto fill หรือ Free placement ได้ รองรับการลาก ปรับขนาด ตัวอย่างสด ตั้งค่าแหล่งข้อมูล และย้อนการลบไทล์ครั้งล่าสุด กริดตั้งได้ 1–4 คอลัมน์ และจัดเลย์เอาต์เก่าใหม่เมื่ออ่านข้อมูล มือถือเปิดแดชบอร์ดล่าสุดในเบราว์เซอร์เดียวกันแบบดูอย่างเดียว
-
-| จุดเริ่มอ่าน | หน้าที่ |
+| ฟังก์ชัน | ทำงานอย่างไร |
 | --- | --- |
-| [view.tsx](../app/home/view.tsx) | เลือกแดชบอร์ด เปิดโหมดแก้ไข เก็บฉบับร่าง และเรียก Save changes |
-| [DashboardGrid.tsx](../app/home/DashboardGrid.tsx) | จัดการปุ่มเพิ่มไทล์ การลาก กรอบตำแหน่งปลายทาง ปรับขนาด และหน้าต่าง Tile Settings |
-| [dashboard-layout.ts](../app/home/dashboard-layout.ts) | placeTiles คำนวณตำแหน่ง ส่วน moveTile, resizeTile และ updateTile ประมวลผลการแก้ไข normalizeDashboardLayout จัดกริดเก่าให้อยู่ในสี่คอลัมน์ |
-| [saved-dashboards.ts](../app/home/saved-dashboards.ts) และ [dashboard-device.ts](../app/home/dashboard-device.ts) | บันทึกตามอีเมลและรหัสไซต์ เลือกโหมดอุปกรณ์โดยตรวจข้อมูลเบราว์เซอร์ |
+| [handleLogin](../app/login/Sign_In.tsx) และ [login](../data/credential.ts) | อ่านอีเมลและรหัสผ่านจากฟอร์ม ตรวจว่าบัญชี Active และรหัสผ่านตรง ค่อยสุ่มผลสำเร็จ ลิงก์หมดอายุ หรือเข้าไม่ได้ในเดโม เมื่อสำเร็จส่ง Superadmin ไปหน้าจัดการ ส่วน Admin และ User ไปเลือกไซต์ |
+| [เซสชันและโปรไฟล์](../utils/demo-session.ts) | `saveDemoSession()` ล้างไซต์จากเซสชันก่อน เก็บอีเมลและ token เดโมที่คีย์ `credential` และบันทึกเวลาเข้าสู่ระบบ `readDemoProfile()` อ่านบัญชีปัจจุบันจาก store ใหม่ จึงเห็นสิทธิ์และสถานะล่าสุด `signOutDemoSession()` ล้างเซสชันกับไซต์ที่เลือก |
+| [chooseSite](../app/login/sites/page.tsx) | เรียก `availableSites()` จากข้อมูลล่าสุด ตรวจไซต์ Active และสิทธิ์ของบัญชีอีกครั้งก่อนเซฟ `selectWorkSite()` เก็บ ID ที่ `nexus-selected-site` แล้วนำไป Workspace |
+| [AdminLayout](../app/admin/layout.tsx) และ [Users](../app/admin/users/page.tsx) | Layout ตรวจบทบาท Admin หน้า Users ส่ง `manager="Admin"` เข้า UI เดียวกับ Superadmin และจำกัดหน้าจอให้แก้สิทธิ์ของบัญชี User ในไซต์ที่ Admin ดูแล |
+| [saveStandardUserAccess](../utils/management-store.ts) | ตรวจผู้แก้ว่าเป็น Admin และบัญชีเป้าหมายเป็น User ปฏิเสธไซต์นอกขอบเขตและระบบที่ไซต์นั้นไม่ได้ตั้งไว้ บันทึก `siteIds` และ `systemsBySite` โดยเก็บสิทธิ์นอกขอบเขตของ Admin คนนี้ไว้ |
+| [Admin Sites](../app/admin/projects/page.tsx) และ [saveSitePreferences](../utils/management-store.ts) | ใช้หน้า Site Directory ร่วมกัน กรองเฉพาะไซต์ที่ได้รับมอบหมาย แล้วเซฟได้เฉพาะชื่อและ timezone ส่วนสร้างและลบไซต์เป็นงาน Superadmin |
+| [ProfilePage](../app/profile/page.tsx) | แสดงข้อมูลบัญชี บทบาท และรายชื่อไซต์ที่เข้าถึงได้จากเซสชันและ store มีลิงก์กลับไปแดชบอร์ดไซต์หรือเลือกไซต์เมื่อยังไม่มีไซต์ |
 
-**งานต่อ** ดูแลความแม่นของตำแหน่งวางและประสบการณ์แก้ไขกริด ส่งให้คนที่ 4 เมื่อต้องเปลี่ยนวิธีแสดงเนื้อหาภายในไทล์
+**สิทธิ์ไหลไปถึง Home อย่างไร** — `siteIds` กำหนดว่าเข้าไซต์ได้หรือไม่ เมื่ออยู่ในไซต์ที่เข้าได้ Home ใช้ `systemsBySite[siteId]` จำกัดระบบ ถ้าไม่มีรายการ ระบบที่ไซต์เปิดไว้ใช้ได้ตามค่าเริ่มต้น ถ้าเป็นอาร์เรย์ว่างจะไม่มีระบบให้ดู รายการระบบเดียวกันถูกส่งให้ Monitoring, Search และตัวเลือกไทล์
 
-**เดโมที่รับผิดชอบ** เพิ่มไทล์ ย้าย ปรับขนาด เปิด Settings แล้วกด Apply และ Save changes รีโหลดเพื่อยืนยันตำแหน่ง และเปิดในโหมดจำลองมือถือเพื่อดูเลย์เอาต์ที่บันทึกไว้
+**งานต่อและเดโม** — หน้า `/admin` ยังมีเฉพาะหัวข้อ Overview ฟังก์ชันอยู่ในเมนูย่อย ให้เดโมตั้งสิทธิ์ CCTV ต่างกันสำหรับ User สองคนในไซต์เดียวกัน แล้วถอนสิทธิ์ไซต์หนึ่งและรีโหลดเพื่อตรวจผล
 
-## คนที่ 4 — Login, Monitoring และข้อมูลในไทล์
+## คนที่ 3 — Workspace, ตัวแก้ไขแดชบอร์ด และไทล์
 
-**มีแล้ว** เข้าด้วยบัญชีเดโมและเลือกไซต์ตามสิทธิ์ มีหน้าโปรไฟล์และออกจากระบบ Workspace Search ค้นระบบและรายการที่เข้าถึงได้ หน้า Monitoring ใช้ข้อมูลตัวอย่างแยกตามระบบ เช่น กล้องและเหตุการณ์ ส่วนไทล์เลือกตัวชี้วัด กล้อง ตาราง หรือกราฟตามชนิดข้อมูล และลดรายละเอียดตามพื้นที่ที่มี
-
-| จุดเริ่มอ่าน | หน้าที่ |
+| ฟังก์ชัน | ทำงานอย่างไร |
 | --- | --- |
-| [Sign_In.tsx](../app/login/Sign_In.tsx) และ [credential.ts](../data/credential.ts) | handleLogin อ่านฟอร์ม login ตรวจบัญชีเดโม และหน้าเข้าสู่ระบบสุ่มสถานะจำลองหลังตรวจบัญชีผ่าน |
-| [demo-session.ts](../utils/demo-session.ts), [ตัวเลือกไซต์](../app/login/sites/page.tsx) และ [ProfileMenu.tsx](../components/ProfileMenu.tsx) | อ่านเซสชัน บันทึกรหัสไซต์ที่เลือก เปิดโปรไฟล์ และออกจากระบบ |
-| [WorkspaceSearch.tsx](../app/home/WorkspaceSearch.tsx), [MonitoringView.tsx](../app/home/MonitoringView.tsx) และ [CameraMonitoring.tsx](../app/home/CameraMonitoring.tsx) | ค้นข้อมูลในระบบที่ได้รับจาก Home แล้วเปิดหน้า Monitoring ของระบบนั้น |
-| [mock-system-data.ts](../data/mock-system-data.ts) และ [mock-monitoring-records.ts](../data/mock-monitoring-records.ts) | เก็บตัวเลขเดโมตามไซต์ รายการเฝ้าระวัง และข้อมูลกล้อง |
-| [tile-displays.ts](../app/home/tile-displays.ts), [SystemTile.tsx](../app/home/SystemTile.tsx) และ [TileVisualization.tsx](../app/home/TileVisualization.tsx) | tileSources เลือกแหล่งข้อมูลและรูปแบบที่ใช้ได้ SystemTile แสดงค่าหลัก และ TileVisualization แสดงกราฟ กล้อง หรือตาราง |
+| [NexusDashboardPage และ Workspace](../app/home/view.tsx) | ตรวจบัญชีและไซต์ที่เลือก แล้วสร้าง scope จากอีเมลกับ site ID `startDashboard()` เริ่มฉบับร่างว่าง `selectDashboard()` เปิดรายการที่เลือก `saveDashboard()` ตรวจชื่อ กรองไทล์ตามสิทธิ์ แล้วเลือกเพิ่มหรืออัปเดต `removeDashboard()` ขอคำยืนยันก่อนลบ |
+| [DashboardGrid](../app/home/DashboardGrid.tsx) | ปุ่ม Add tile เลือก System → Data source → Display ตัวเลือก Display มาจากแหล่งข้อมูลที่เลือก และ Preview ใช้ตัวเรนเดอร์เดียวกับไทล์จริง `changeGrid()` เปลี่ยนจำนวนแถวและคอลัมน์โดยตรวจว่าจัดวางได้ |
+| [การลากและปรับขนาด](../app/home/DashboardGrid.tsx) | `startDrag()` เก็บพิกัดและขนาดเซลล์ `draftFromPointer()` แปลงระยะลากเป็นจำนวนแถวและคอลัมน์แล้วคำนวณรูปทรงใหม่ กรอบตัวอย่างแสดงตำแหน่งที่วางได้ เมื่อปล่อยเมาส์ `applyLayout()` ใช้ผลกับฉบับร่าง ปุ่มลูกศรทำงานกับด้ามจับที่โฟกัส |
+| [Tile Settings และการลบ](../app/home/DashboardGrid.tsx) | เฟืองเปิด dialog พร้อมสำเนาค่าเดิม เปลี่ยนข้อมูล รูปแบบ หรือขนาด แล้วกด Apply settings เพื่ออัปเดตฉบับร่าง Cancel ทิ้งค่าที่ลองแก้ ปุ่มลบเก็บกริดเดิมไว้ให้ Undo removal จนกว่าจะมีการแก้กริดครั้งถัดไป |
+| [dashboard-layout](../app/home/dashboard-layout.ts) | `placeTiles()` ตรวจตำแหน่งให้พอดี Auto fill เรียงตาม order ส่วน Free placement ใช้พิกัดที่กำหนด `moveTile()`, `resizeTile()` และ `updateTile()` คืนเลย์เอาต์ที่ใช้ได้ `normalizeDashboardLayout()` จัดเลย์เอาต์รุ่นเก่าที่เกินสี่คอลัมน์ใหม่ |
+| [CameraTileOrder](../app/home/CameraTileOrder.tsx) | ใช้กล้องของไซต์เป็นรายการให้เลือก ปุ่มขึ้นลงสลับ ID สองตัว ปุ่มลบเอา ID ออกจากไทล์ ตัวเลือก Add camera คืนกล้องที่เหลือเข้าไป ค่าที่เซฟคือรายการ `cameraIds` ตามลำดับนั้น |
+| [tileSources และตัวเรนเดอร์](../app/home/tile-displays.ts) | `tileSources()` กำหนดรูปแบบตามชนิดข้อมูล เช่น Metric ใช้ Summary หรือ Line, Records ใช้ Table และชุด OHLC ใช้ Candlestick `resolveTileDisplay()` เลือกค่าเริ่มต้นที่รองรับถ้าค่าที่มีอยู่ใช้ไม่ได้ |
+| [SystemTile](../app/home/SystemTile.tsx), [TileVisualization](../app/home/TileVisualization.tsx) และ [CSS](../app/home/overview.css) | SystemTile จัดหัวข้อ ค่าหลัก และทางเข้า Monitoring จากนั้น TileVisualization เรนเดอร์รูปแบบที่เลือก CSS วัดขนาดไทล์และพื้นที่เนื้อหาเพื่อแสดงจำนวนแถว รายละเอียด และขนาดกราฟให้เหมาะ |
+| [saved-dashboards](../app/home/saved-dashboards.ts) | `dashboardScope()` สร้างคีย์จากอีเมลและไซต์ `useSavedDashboards()` อ่าน layout และฟังการเปลี่ยน storage `addDashboard()` กับ `updateDashboard()` เซฟเวลาไว้เพื่อให้โทรศัพท์เปิดรายการล่าสุด |
+| [dashboard-device](../app/home/dashboard-device.ts) และ [DashboardAiBuilder](../app/home/DashboardAiBuilder.tsx) | ตรวจจาก User-Agent ของโทรศัพท์ โหมดนี้อ่าน layout แบบคอลัมน์เดียวและปิดการบันทึกหรือแก้ไข Build with AI เทียบคำสำคัญกับรายการไทล์ที่ได้รับอนุญาตในเดโม |
 
-**งานต่อ** ดูแลให้ข้อมูลที่ค้นเจอ ค่าที่แสดงในไทล์ และรายการใน Monitoring ใช้ชุดเดียวกัน ตรวจหน่วยและสถานะของแต่ละระบบเมื่อเพิ่มข้อมูลตัวอย่าง
+**ตอนเดโม** — เพิ่มกล้องสองตัว สลับลำดับ ย้ายและปรับขนาดไทล์ กด Apply settings แล้ว Save changes รีโหลดเช็กผล แล้วลองเปิดจากโหมดจำลองโทรศัพท์ในเบราว์เซอร์เดียวกัน
 
-**เดโมที่รับผิดชอบ** เข้าสู่ระบบ เลือกไซต์ ค้นกล้องหรือเหตุการณ์ด้วยคีย์บอร์ด เปิดหน้าที่เกี่ยวข้อง และตรวจว่ารายการของระบบที่ถูกถอนสิทธิ์หายไป
+## คนที่ 4 — Monitoring, Search และ Mock REST API
 
-## จุดส่งต่องานระหว่างคน
+| ฟังก์ชัน | ทำงานอย่างไร |
+| --- | --- |
+| [WorkspaceSearch](../app/home/WorkspaceSearch.tsx) | รับรายการระบบที่อนุญาตจาก Home สร้างผลค้นจากชื่อระบบ ชื่อกล้อง เหตุการณ์ และรายการในระบบนั้น กรองตามคำค้น แล้วใช้ `select()` ส่งรหัสระบบให้ `openMonitoring()` รองรับลูกศร Enter และ Escape |
+| [MonitoringView](../app/home/MonitoringView.tsx) | อ่าน dataset สำหรับไซต์และระบบที่เปิด แสดงค่าล่าสุด รายการเหตุการณ์ และตารางย้อนหลัง Finance มีชุดราคา OHLC เพิ่ม ถ้าข้อมูลไซต์ว่างจะแสดงสถานะของข้อมูล |
+| [CameraMonitoring](../app/home/CameraMonitoring.tsx) | `getCameraMonitoring()` คืนกล้องและเหตุการณ์ที่ใช้ camera ID เดียวกัน เมื่อเลือกกล้องจะกรองเหตุการณ์ของ ID นั้น และกด Show all cameras เพื่อคืนรายการทั้งหมด |
+| [mock-system-data](../data/mock-system-data.ts) | `siteDataset()` แปลง mock ตัวเลขตามไซต์เป็น metrics และ readings ตามวันที่ `getManagedSiteSystems()` เลือกระบบที่ไซต์เปิดไว้ `getManagedSiteDataset()` อ่านข้อมูลจากไซต์ตั้งต้นหรือไซต์ Sample ที่ผูกไว้ |
+| [mock-monitoring-records](../data/mock-monitoring-records.ts) | `getMonitoringRecords()` สร้างคอลัมน์และแถวต่างกันตามระบบ `getCameraMonitoring()` คืนชื่อ รหัสและสถานะกล้องพร้อมเหตุการณ์ `getPortfolioPrices()` คืน Open, High, Low, Close ตามวันที่ของ Finance |
+| [Route Handler GET](../app/api/mock/monitoring/route.ts) | รับ `site`, `system`, `scenario` จาก query เลือก dataset แล้วคืน JSON จากไฟล์ใน repo `success` คืนข้อมูลตัวอย่าง, `empty` คืน rows ว่าง, `unavailable` คืน 503, `malformed` คืน 200 พร้อมรูปแบบผิด หากไม่รู้จักไซต์/ระบบจะคืน 404 และ scenario ที่ไม่รองรับจะคืน 400 |
+| [checkMockRest](../utils/mock-rest.ts) | ฝั่งเบราว์เซอร์ใช้ `fetch()` เรียก API เดียวกับแอปจากหน้า Initialize Site มี timeout ตรวจ HTTP status, รหัสไซต์และระบบ, รายการ metric และรูปแบบ readings ก่อนคืนจำนวนแถวให้หน้าทดสอบ |
+| [MobileDashboard](../components/mobile-ui/MobileDashboard.tsx) | เลือกคอมโพเนนต์ Overview, Activity, CCTV หรือ Alarms จากค่า `screen` ของแต่ละ route หน้าชุดนี้ใช้ข้อมูลตัวอย่างในไฟล์ของตัวเอง ส่วน BottomNavigation และเงื่อนไขเข้าจากโทรศัพท์อยู่ในงานคนที่ 1 |
 
-- คนที่ 1 รับเรื่องวิธีเก็บสิทธิ์ใน fields siteIds และ systemsBySite ส่วนคนที่ 2 รับเรื่องการสร้างและลบไซต์ใน store เดียวกัน ให้ทบทวนด้วยกันเมื่อแก้โครงสร้างข้อมูลบัญชีหรือไซต์
-- คนที่ 3 รับผิดชอบ layout และตำแหน่งไทล์ คนที่ 4 รับผิดชอบเนื้อหาและรูปแบบของไทล์ หากเพิ่มระบบใหม่ ให้ทดสอบรายการที่แสดงใน Settings, Dashboard, Search และ Monitoring พร้อมกัน
-- ส่วนจัดการใช้ ManagementNavbar และ TopBar ร่วมกัน ส่วนย่อและขยายเมนูใช้ sidebar-state.ts ร่วมกับ Home ให้คนที่ 1 เป็นผู้รวมการแก้เมนู และให้เจ้าของหน้าที่ได้รับผลช่วยทดสอบ
-- ให้ทุกคนแตกสาขาของตัวเองจาก feature/dashboard-rebuild และส่ง PR กลับมาที่สาขาฐานนี้ หลังแก้ให้รัน npm run lint และลองเส้นทางเดโมของตัวเอง
+**ตอนเดโม** — ค้นชื่อกล้องแล้วกด Enter สลับกล้องใน CCTV เพื่อดูเหตุการณ์เฉพาะเครื่อง จากนั้นเปิด Mock API ผ่านตัวช่วยตั้งค่าไซต์ ทดลองทั้งผลปกติ ข้อมูลว่าง 503 และ schema ผิด
 
-## ข้อจำกัดของเดโม
+## จุดส่งต่องาน
 
-เซสชัน สิทธิ์ ข้อมูลไซต์ Audit Logs และแดชบอร์ดเก็บในเบราว์เซอร์ ระบบจัดการข้อมูลจริงต้องตรวจสิทธิ์ฝั่งเซิร์ฟเวอร์ แดชบอร์ดจึงยังซิงก์ข้ามเครื่องไม่ได้ การเชื่อมต่อ REST เป็นการจำลอง และ Build with AI ใช้คำสำคัญจากข้อความเพื่อเลือกไทล์ รายละเอียดการจัดเก็บอยู่ใน [คู่มือเดโม](browser-demo.md)
+- **1 กับ 2** ใช้ UserManagement, SiteDirectory และ management-store ร่วมกัน คนที่ 1 ดูแลส่วน Superadmin และส่วนประกอบ Navbar คนที่ 2 ตรวจการจำกัดสิทธิ์ของ Admin และข้อมูลที่ Login ใช้
+- **2 กับ 4** คนที่ 2 ดูแลค่าที่บันทึกใน `siteIds` และ `systemsBySite` คนที่ 4 ตรวจว่าระบบที่ถูกถอนไม่โผล่ใน Search หรือ Monitoring
+- **3 กับ 4** คนที่ 3 ดูแลกริด การตั้งค่าไทล์ และหน้าตาของข้อมูลบนไทล์ คนที่ 4 ดูแลแหล่งข้อมูล ข้อมูลจำลอง และความหมายของ metric หรือ record
+- **1 กับ 3** คนที่ 1 ดูแลเมนูและทางเข้า Workspace คนที่ 3 ดูแลการเลือกและการบันทึกแดชบอร์ดใน Workspace
+
+ข้อมูลบัญชี สิทธิ์ ไซต์ Audit Logs และ layout อยู่ใน browser storage ของเดโม การแยกบทบาทจำลองที่ฝั่งหน้าเว็บ การซิงก์ข้ามเครื่องและการใช้ข้อมูลจริงต้องใช้ระบบจัดเก็บร่วมกับการตรวจสิทธิ์ฝั่งเซิร์ฟเวอร์ Mock API ส่ง HTTP จริงจากเบราว์เซอร์ไปยัง Route Handler ของแอป แต่คืนข้อมูลตัวอย่างและใช้กับตัวทดสอบการเชื่อมต่อ ส่วนหน้าไทล์และ Monitoring อ่านชุดข้อมูลตัวอย่างในโปรเจกต์โดยตรง อ่านวิธีทดสอบเพิ่มเติมใน [คู่มือเดโม](browser-demo.md)

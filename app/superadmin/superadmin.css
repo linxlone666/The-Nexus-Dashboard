@@ -1,0 +1,165 @@
+.superadmin-page {
+  padding: clamp(16px, 3vw, 34px);
+}
+
+.superadmin-page h1 {
+  font-size: 30px;
+  font-weight: 750;
+}
+
+.superadmin-page h1 + p,
+.superadmin-muted {
+  color: #506769;
+}
+
+.superadmin-page h2 {
+  margin-bottom: 12px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.superadmin-columns,
+.superadmin-metrics {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.superadmin-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.superadmin-metrics strong {
+  display: block;
+  color: #08786d;
+  font-size: 28px;
+}
+
+.superadmin-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #dce6e4;
+  border-radius: 8px;
+  background: white;
+}
+
+.superadmin-page main > section {
+  margin-top: 18px;
+}
+
+.superadmin-form,
+.superadmin-form label:not(.superadmin-checkbox),
+.superadmin-search {
+  display: grid;
+  gap: 6px;
+}
+
+.superadmin-form {
+  gap: 12px;
+}
+
+.superadmin-form :is(input:not([type="checkbox"]):not([type="radio"]), select),
+.superadmin-search :is(input, select) {
+  min-width: 0;
+  border: 1px solid #dce6e4;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.superadmin-form select,
+.superadmin-search select {
+  padding-right: 28px;
+}
+
+.superadmin-checkbox,
+.superadmin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.superadmin-form fieldset {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #dce6e4;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.superadmin-form legend {
+  padding-inline: 4px;
+  font-weight: 650;
+}
+
+.superadmin-table-scroll {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.superadmin-page table {
+  width: 100%;
+  font-size: 13px;
+  text-align: left;
+}
+
+.superadmin-page :is(th, td) {
+  padding: 10px;
+  border-bottom: 1px solid #e7eeec;
+}
+
+.superadmin-page th {
+  background: #e8f2ef;
+  white-space: nowrap;
+}
+
+.superadmin-page[data-density="compact"] :is(th, td) {
+  padding-block: 5px;
+}
+
+.superadmin-button {
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 6px;
+  background: #08786d;
+  color: white;
+  font-weight: 650;
+}
+
+.superadmin-text-link {
+  color: #08786d;
+  text-decoration: underline;
+}
+
+.superadmin-event-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.superadmin-event-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  border-bottom: 1px solid #e7eeec;
+  padding-block: 5px;
+  overflow-wrap: anywhere;
+}
+
+.superadmin-feedback {
+  margin-top: 10px;
+  color: #506769;
+}
+
+.superadmin-settings {
+  max-width: 520px;
+}
+
+@media (min-width: 960px) {
+  .superadmin-columns {
+    grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+    align-items: start;
+  }
+}

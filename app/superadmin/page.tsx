@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ProjectManagement } from "@/components/management/ProjectManagement";
+import OverviewPage from "./OverviewPage";
 
-export const metadata: Metadata = { title: "Projects | Nexus Superadmin" };
+export const metadata: Metadata = { title: "Superadmin Overview" };
 
-export default function SuperadminPage() {
-  return <ProjectManagement />;
+export default function Page() {
+  return <OverviewPage />;
 }

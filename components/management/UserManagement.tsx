@@ -1,252 +1,150 @@
 "use client";
 
-import { Badge } from "@/components/tailgrids/core/badge";
-import { Button } from "@/components/tailgrids/core/button";
-import { Input } from "@/components/tailgrids/core/input";
-import { useRef, useState } from "react";
-import type { FormEvent } from "react";
-import { recordAuditActivity } from "./audit-log";
-import { ManagementMetrics } from "./ManagementMetrics";
-import { Icon, AdminSuperadminLayout } from "./AdminSuperadminLayout";
-import type { ManagementRole } from "./AdminSuperadminLayout";
-import { initialUsers } from "@/data/users";
-import type { User } from "@/data/users";
-import { permissions, emptyAccess } from "@/data/permissions";
-import type { Access } from "@/data/permissions";
-import styles from "./management.module.css";
-
+import { getManagedSiteSystems } from "@/data/mock-system-data";
+import { useState } from "react";
+import { bootstrapEmail, roles } from "@/data/management";
+import type {
+  DemoAccount,
+  ManagementRole,
+  ManagedSite,
+} from "@/data/management";
+import { useDemoProfile } from "@/utils/demo-session";
 import {
-  createUser as createAccount,
-  updateUserAccount,
-  updateUserAccess,
-  useUsers,
-  getUserAccess,
-  getUserMetrics,
-  getUsers,
-} from "@/utils/user-store";
-import { useDemoSession } from "@/utils/demo-session";
-import {
-  getProjectLevel,
-  hasPermission,
-  roleSupportsPermission,
-} from "@/utils/permissions";
-import type { ProjectReference } from "@/utils/permissions";
-import { useProjects } from "./project-storage";
+  saveAccount,
+  saveStandardUserAccess,
+  useManagement,
+} from "@/utils/management-store";
+import "@/app/superadmin/directory.css";
 
-const tabs = ["General", "Permissions", "Activity"] as const;
-type UserTab = (typeof tabs)[number];
+const sections = ["General", "Permissions", "Activity"] as const;
+type Section = (typeof sections)[number];
 
-function Status({
-  status,
-  className,
-}: {
-  status: User["status"];
-  className?: string;
-}) {
+function siteCount(user: DemoAccount, sites: ManagedSite[]) {
+  return sites.filter(
+    (site) =>
+      site.active &&
+      (user.role === "Superadmin" || user.siteIds.includes(site.id)),
+  ).length;
+}
+
+function Status({ active }: { active: boolean }) {
   return (
-    <Badge
-      className={className}
-      color={
-        status === "Active"
-          ? "success"
-          : status === "Pending"
-            ? "warning"
-            : "gray"
-      }
-    >
-      {status}
-    </Badge>
+    <span className="directory-status" data-active={active}>
+      {active ? "Active" : "Inactive"}
+    </span>
   );
 }
 
-// Manage accounts and project permissions within the active management role.
 export function UserManagement({
-  role: managementRole = "Admin",
+  manager,
 }: {
-  role?: ManagementRole;
+  manager: "Admin" | "Superadmin";
 }) {
-  const canManagePlatform = managementRole === "Superadmin";
-  const { changes: saved, users: allUsers } = useUsers();
-  const users = canManagePlatform
-    ? allUsers
-    : allUsers.filter((user) => user.role !== "Superadmin");
-  const allProjects = useProjects();
-  const { credential, access: actorAccess } = useDemoSession();
-  const projects = allProjects.filter((project) =>
-    Boolean(getProjectLevel(credential?.role, actorAccess, project)),
-  );
+  const admin = manager === "Admin";
+  const profile = useDemoProfile();
+  const {
+    accounts: allAccounts,
+    sites: allSites,
+    audit,
+    settings,
+  } = useManagement();
+  const accounts = admin
+    ? allAccounts.filter((account) => account.role === "User")
+    : allAccounts;
+  const sites = admin
+    ? allSites.filter((site) => profile?.siteIds.includes(site.id))
+    : allSites;
+  const roleOptions = admin ? ["User"] : roles;
   const [query, setQuery] = useState("");
-  const [role, setRole] = useState("All");
-  const [status, setStatus] = useState("All");
-  const [projectAccess, setProjectAccess] = useState("All");
+  const [role, setRole] = useState("");
+  const [status, setStatus] = useState("");
+  const [siteId, setSiteId] = useState("");
+  const [panel, setPanel] = useState<string | null>(
+    admin ? null : bootstrapEmail,
+  );
+  const [section, setSection] = useState<Section>("General");
   const [checked, setChecked] = useState<string[]>([]);
-  const [selectedEmail, setSelectedEmail] = useState<string | null>(
-    initialUsers[0]?.email ?? null,
-  );
-  const selected = users.find((user) => user.email === selectedEmail);
-  const [roleDraft, setRoleDraft] = useState<User["role"] | null>(null);
-  const [statusDraft, setStatusDraft] = useState<User["status"] | null>(null);
-  const [passwordDraft, setPasswordDraft] = useState("");
-  const [tab, setTab] = useState<UserTab>("Permissions");
-  const [draftChanges, setDraftChanges] = useState<Access | null>(null);
-  const savedAccess = selected
-    ? getUserAccess(selected.email, saved)
-    : emptyAccess;
-  const draft = draftChanges ?? savedAccess;
-  const [projectQuery, setProjectQuery] = useState("");
   const [message, setMessage] = useState("");
-  const [inviteError, setInviteError] = useState("");
-  const inviteDialog = useRef<HTMLDialogElement>(null);
-
-  // Apply the toolbar and table filters to the role-scoped account list.
-  const visible = users.filter(
+  const account = accounts.find(({ email }) => email === panel);
+  const activeCount = accounts.filter(({ active }) => active).length;
+  const time = new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: settings.timeZone,
+  });
+  const search = query.trim().toLowerCase();
+  const visible = accounts.filter(
     (user) =>
-      `${user.name} ${user.email}`
-        .toLowerCase()
-        .includes(query.trim().toLowerCase()) &&
-      (role === "All" || user.role === role) &&
-      (status === "All" || user.status === status) &&
-      (projectAccess === "All" ||
-        (projectAccess === "Assigned"
-          ? user.projects > 0
-          : user.projects === 0)),
+      [user.name, user.email].some((value) =>
+        value.toLowerCase().includes(search),
+      ) &&
+      (!role || user.role === role) &&
+      (!status || user.active === (status === "active")) &&
+      (!siteId ||
+        siteCount(
+          user,
+          sites.filter(({ id }) => id === siteId),
+        ) > 0),
   );
-  const canEditSelected =
-    selected &&
-    selected.role !== "Superadmin" &&
-    (canManagePlatform || selected.role === "User");
   const allVisibleChecked =
-    visible.length > 0 && visible.every((user) => checked.includes(user.email));
+    visible.length > 0 && visible.every(({ email }) => checked.includes(email));
+  const metrics = [
+    {
+      label: "Total Users",
+      count: accounts.length,
+      detail: "Registered accounts",
+    },
+    {
+      label: "Active Users",
+      count: activeCount,
+      detail: "Accounts with sign-in access",
+    },
+    {
+      label: "Inactive Users",
+      count: accounts.length - activeCount,
+      detail: "Sign-in disabled",
+    },
+    {
+      label: "Users with Site Access",
+      count: accounts.filter((user) => user.active && siteCount(user, sites))
+        .length,
+      detail: "Assigned to at least one active site",
+    },
+  ];
 
-  // Clear unsaved edits and feedback when switching the selected account.
-  function openUser(user: User) {
-    setSelectedEmail(user.email);
-    setRoleDraft(null);
-    setStatusDraft(null);
-    setPasswordDraft("");
-    setDraftChanges(null);
-    setTab("Permissions");
-    setProjectQuery("");
+  function openPanel(email: string | null) {
+    setPanel(email);
+    setSection("General");
     setMessage("");
   }
 
-  // Save account metadata and an optional demo password as one update.
-  function saveRole(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selected) return;
-    const error = updateUserAccount(selected.email, {
-      role: roleDraft ?? selected.role,
-      status: statusDraft ?? selected.status,
-      password: passwordDraft || undefined,
-    });
-    if (error) {
-      setMessage(error);
-      return;
-    }
-    setRoleDraft(null);
-    setStatusDraft(null);
-    setPasswordDraft("");
-    setDraftChanges(null);
-    recordAuditActivity({
-      role: managementRole,
-      category: "Users",
-      action: "Account updated",
-      target: selected.name,
-      outcome: "Success",
-    });
-    setMessage("Account saved. Role and status changes apply immediately.");
-  }
-
-  // Create the account, then select it so its permissions can be configured.
-  function addUser(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const name = String(data.get("name")).trim();
-    const email = String(data.get("email")).trim().toLowerCase();
-    const accountRole = canManagePlatform
-      ? (String(data.get("role")) as User["role"])
-      : "User";
-    const error = createAccount({
-      name,
-      email,
-      password: String(data.get("password")),
-      role: accountRole,
-    });
-    if (error) {
-      setInviteError(error);
-      return;
-    }
-    const user = getUsers().find((user) => user.email === email);
-    if (!user) return;
-    recordAuditActivity({
-      role: managementRole,
-      category: "Users",
-      action: "User created",
-      target: name,
-      outcome: "Success",
-    });
-    setQuery("");
-    setRole("All");
-    setStatus("All");
-    setProjectAccess("All");
-    openUser(user);
-    setMessage(
-      name +
-        " can now sign in. Choose permissions and project access, then Save Permissions.",
-    );
-    event.currentTarget.reset();
-    inviteDialog.current?.close();
-  }
-
-  // Persist the selected user's pending system and project access changes.
-  function savePermissions() {
-    if (!selected) return;
-    const error = updateUserAccess(selected.email, draft);
-    if (error) {
-      setMessage(error);
-      return;
-    }
-    setDraftChanges(null);
-    recordAuditActivity({
-      role: managementRole,
-      category: "Users",
-      action: "Permissions saved",
-      target: selected.name,
-      outcome: "Success",
-    });
-    setMessage(
-      "Permissions saved. This account’s menus and project access update immediately.",
-    );
-  }
-
-  // Export selected accounts (or the current filtered list) as spreadsheet-safe CSV.
   function exportUsers() {
     const rows = checked.length
-      ? users.filter((user) => checked.includes(user.email))
+      ? accounts.filter(({ email }) => checked.includes(email))
       : visible;
-    const csv = [
-      ["Name", "Email", "Role", "Projects", "Status", "Last active"],
+    const csvField = (value: string | number) => {
+      const text = String(value);
+      const safe =
+        /^[\s]*[=+\-@]/.test(text) || /^[\t\r\n]/.test(text)
+          ? "'" + text
+          : text;
+      return '"' + safe.replaceAll('"', '""') + '"';
+    };
+    const lines = [
+      ["Name", "Email", "Role", "Active sites", "Status", "Last active"],
       ...rows.map((user) => [
         user.name,
         user.email,
         user.role,
-        user.projects,
-        user.status,
-        user.lastActive,
+        siteCount(user, sites),
+        user.active ? "Active" : "Inactive",
+        user.lastSignIn ?? "",
       ]),
-    ]
-      .map((row) =>
-        row
-          .map((value) => {
-            const cell = String(value);
-            const safe = /^[=+\-@\t\r\n]/.test(cell) ? "'" + cell : cell;
-            return '"' + safe.replaceAll('"', '""') + '"';
-          })
-          .join(","),
-      )
-      .join("\r\n");
+    ];
     const url = URL.createObjectURL(
-      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+      new Blob([lines.map((row) => row.map(csvField).join(",")).join("\r\n")], {
+        type: "text/csv;charset=utf-8",
+      }),
     );
     const link = document.createElement("a");
     link.href = url;
@@ -255,254 +153,247 @@ export function UserManagement({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  // Update a project's draft access while removing any legacy name-based entry.
-  function setProject(project: ProjectReference, level: string) {
-    const assignments = { ...draft.projects };
-    delete assignments[project.key];
-    delete assignments[project.name];
-    if (level) assignments[project.key] = level;
-    setDraftChanges({ ...draft, projects: assignments });
-    setMessage("");
-  }
-
-  // Render the account table, selected-user editor, and account creation dialog.
   return (
-    <AdminSuperadminLayout
-      role={managementRole}
-      active="Users"
-      query={query}
-      onQueryChange={setQuery}
-      searchLabel="Search management users"
-    >
-      <div className={styles.heading}>
+    <main className="directory-page">
+      <header className="directory-page-heading">
         <div>
-          <p>NEXUS / {managementRole} / Users</p>
+          <p className="directory-breadcrumb">NEXUS / {manager} / Users</p>
           <h1>User Management</h1>
-          <div className={styles.muted}>
-            {canManagePlatform
-              ? "Manage user accounts, roles, permissions and project access."
-              : "Manage standard users and their access to existing projects."}
+          <p className="superadmin-muted">
+            {admin
+              ? "Manage standard users’ site and monitoring access."
+              : "Manage user accounts, roles, permissions and site access."}
+          </p>
+        </div>
+        <div className="superadmin-actions">
+          <button
+            type="button"
+            className="directory-secondary-button"
+            onClick={exportUsers}
+          >
+            Export users{checked.length ? " (" + checked.length + ")" : ""}
+          </button>
+          {!admin && (
+            <button
+              type="button"
+              className="superadmin-button"
+              onClick={() => openPanel("new")}
+            >
+              + Add User
+            </button>
+          )}
+        </div>
+      </header>
+
+      {message && (
+        <p className="superadmin-feedback" role="status">
+          {message}
+        </p>
+      )}
+
+      <div className="directory-workspace">
+        <div className="directory-list">
+          <div className="directory-metrics">
+            {metrics.map(({ label, count, detail }) => (
+              <div className="superadmin-card" key={label}>
+                <span>{label}</span>
+                <strong>{count}</strong>
+                <small>{detail}</small>
+              </div>
+            ))}
           </div>
-        </div>
-        <div className={styles.actions}>
-          <Button
-            size="xs"
-            appearance="outline"
-            type="button"
-            onPress={exportUsers}
-            disabled={!checked.length && !visible.length}
-          >
-            Export users
-          </Button>
-          <Button
-            size="xs"
-            type="button"
-            onPress={() => {
-              setInviteError("");
-              inviteDialog.current?.showModal();
-            }}
-          >
-            + Create User
-          </Button>
-        </div>
-      </div>
 
-      <div className={styles.columns}>
-        <div className={styles.userList}>
-          <ManagementMetrics metrics={getUserMetrics(users)} />
-
-          <section className={styles.card} aria-labelledby="users-heading">
-            <h2 id="users-heading">Users</h2>
-            <div className={styles.userFilters}>
-              <Input
-                type="search"
-                placeholder="Search users..."
-                aria-label="Search users"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              <label>
+          <section className="superadmin-card" aria-labelledby="users-title">
+            <h2 id="users-title">Users</h2>
+            <div className="directory-filters">
+              <label className="superadmin-search">
+                <span className="sr-only">Search users</span>
+                <input
+                  type="search"
+                  placeholder="Search users…"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </label>
+              <label className="superadmin-search">
                 Role
                 <select
                   value={role}
                   onChange={(event) => setRole(event.target.value)}
                 >
-                  <option>All</option>
-                  <option>User</option>
-                  <option>Admin</option>
+                  <option value="">All</option>
+                  {roleOptions.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
                 </select>
               </label>
-              <label>
+              <label className="superadmin-search">
                 Status
                 <select
                   value={status}
                   onChange={(event) => setStatus(event.target.value)}
                 >
-                  <option>All</option>
-                  <option>Active</option>
-                  <option>Inactive</option>
-                  <option>Pending</option>
+                  <option value="">All</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
                 </select>
               </label>
-              <label>
-                Project Access
+              <label className="superadmin-search">
+                Site Access
                 <select
-                  value={projectAccess}
-                  onChange={(event) => setProjectAccess(event.target.value)}
+                  value={siteId}
+                  onChange={(event) => setSiteId(event.target.value)}
                 >
-                  <option>All</option>
-                  <option>Assigned</option>
-                  <option>Unassigned</option>
+                  <option value="">All</option>
+                  {sites
+                    .filter(({ active }) => active)
+                    .map(({ id, name }) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
                 </select>
               </label>
-              <Button
-                size="xs"
-                appearance="outline"
+              <button
                 type="button"
-                onPress={() => {
+                className="directory-secondary-button"
+                onClick={() => {
                   setQuery("");
-                  setRole("All");
-                  setStatus("All");
-                  setProjectAccess("All");
+                  setRole("");
+                  setStatus("");
+                  setSiteId("");
+                  setChecked([]);
                 }}
               >
                 Reset
-              </Button>
+              </button>
             </div>
-
-            <div className={styles.tableScroll}>
-              <table className={`${styles.table} ${styles.userTable}`}>
+            <div className="superadmin-table-scroll">
+              <table className="directory-table">
                 <thead>
                   <tr>
                     <th scope="col">
                       <input
                         type="checkbox"
-                        aria-label="Select all visible users"
+                        aria-label="Select all matching users"
                         checked={allVisibleChecked}
                         disabled={!visible.length}
-                        onChange={() =>
+                        onChange={() => {
+                          const emails = visible.map(({ email }) => email);
                           setChecked((current) =>
                             allVisibleChecked
                               ? current.filter(
-                                  (email) =>
-                                    !visible.some(
-                                      (user) => user.email === email,
-                                    ),
+                                  (email) => !emails.includes(email),
                                 )
-                              : [
-                                  ...new Set([
-                                    ...current,
-                                    ...visible.map((user) => user.email),
-                                  ]),
-                                ],
-                          )
-                        }
+                              : [...new Set([...current, ...emails])],
+                          );
+                        }}
                       />
                     </th>
-                    {[
-                      "Name",
-                      "Email",
-                      "Role",
-                      "Project Access",
-                      "Status",
-                      "Last Active",
-                      "Actions",
-                    ].map((label) => (
-                      <th key={label} scope="col">
-                        {label}
-                      </th>
-                    ))}
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Site Access</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Last Active</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visible.map((user) => (
-                    <tr key={user.email}>
-                      <td>
+                    <tr
+                      key={user.email}
+                      data-selected={account?.email === user.email}
+                      onClick={() => openPanel(user.email)}
+                    >
+                      <td onClick={(event) => event.stopPropagation()}>
                         <input
                           type="checkbox"
-                          aria-label={`Select ${user.name}`}
+                          aria-label={"Select " + user.name}
                           checked={checked.includes(user.email)}
-                          onChange={(event) =>
-                            setChecked(
-                              event.target.checked
-                                ? [...checked, user.email]
-                                : checked.filter(
+                          onChange={() =>
+                            setChecked((current) =>
+                              current.includes(user.email)
+                                ? current.filter(
                                     (email) => email !== user.email,
-                                  ),
+                                  )
+                                : [...current, user.email],
                             )
                           }
                         />
                       </td>
-                      <th scope="row">
+                      <td>
                         <button
                           type="button"
-                          className={styles.rowButton}
-                          aria-pressed={selected?.email === user.email}
-                          onClick={() => openUser(user)}
+                          className="directory-name-button"
+                          aria-current={
+                            account?.email === user.email ? "true" : undefined
+                          }
                         >
                           {user.name}
                         </button>
-                      </th>
-                      <td>{user.email}</td>
-                      <td>
-                        <Badge color="gray">{user.role}</Badge>
-                      </td>
-                      <td>
-                        {user.projects}{" "}
-                        {user.projects === 1 ? "project" : "projects"}
-                      </td>
-                      <td>
-                        <Status status={user.status} />
-                      </td>
-                      <td>{user.lastActive}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.rowButton}
-                          aria-label={`Details for ${user.name}`}
-                          onClick={() => openUser(user)}
+                        <span
+                          className="directory-selected-label"
+                          aria-hidden={account?.email !== user.email}
                         >
-                          •••
-                        </button>
+                          Selected
+                        </span>
+                      </td>
+                      <td className="superadmin-muted">{user.email}</td>
+                      <td>
+                        <span className="directory-role">{user.role}</span>
+                      </td>
+                      <td>{siteCount(user, sites)} site(s)</td>
+                      <td>
+                        <Status active={user.active} />
+                      </td>
+                      <td>
+                        {user.lastSignIn ? (
+                          <time dateTime={user.lastSignIn}>
+                            {time.format(new Date(user.lastSignIn))}
+                          </time>
+                        ) : (
+                          "Never"
+                        )}
                       </td>
                     </tr>
                   ))}
                   {!visible.length && (
                     <tr>
-                      <td colSpan={8}>No users match your filters.</td>
+                      <td colSpan={7}>No matching accounts.</td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-            <p className={styles.tableSummary}>
-              Showing {visible.length} of {users.length} sample users
+            <p className="directory-results">
+              Showing {visible.length} of {accounts.length} users
             </p>
           </section>
         </div>
 
-        <aside className={styles.card} aria-labelledby="user-details">
-          <div className={styles.detailHeading}>
-            <h2 id="user-details">User Details</h2>
-            {selected && (
+        {panel !== null && (
+          <section
+            className="superadmin-card directory-details"
+            aria-labelledby="user-details-title"
+          >
+            <div className="directory-details-heading">
+              <h2 id="user-details-title">
+                {account ? "User Details" : "Add User"}
+              </h2>
               <button
                 type="button"
-                className={styles.rowButton}
+                className="directory-more"
                 aria-label="Close user details"
-                onClick={() => {
-                  setSelectedEmail(null);
-                  setMessage("");
-                }}
+                onClick={() => openPanel(null)}
               >
-                <Icon name="close" />
+                ×
               </button>
-            )}
-          </div>
-          {selected ? (
-            <>
-              <div className={styles.profile}>
-                <span className={styles.avatar} aria-hidden="true">
-                  {selected.name
+            </div>
+
+            {account && (
+              <div className="directory-identity">
+                <span className="directory-avatar" aria-hidden="true">
+                  {account.name
                     .split(/\s+/)
                     .slice(0, 2)
                     .map((part) => part[0])
@@ -510,296 +401,308 @@ export function UserManagement({
                     .toUpperCase()}
                 </span>
                 <div>
-                  <h3>{selected.name}</h3>
-                  <p className={styles.muted}>{selected.email}</p>
+                  <strong>{account.name}</strong>
+                  <div className="superadmin-muted">{account.email}</div>
                 </div>
-                <Status status={selected.status} className="ml-auto" />
+                <Status active={account.active} />
               </div>
-              <div className={styles.tabs} aria-label="User information">
-                {tabs.map((name) => (
+            )}
+
+            <div
+              className="directory-sections"
+              aria-label="User details sections"
+            >
+              {(account ? sections : (["General", "Permissions"] as const)).map(
+                (item) => (
                   <button
+                    key={item}
                     type="button"
-                    key={name}
-                    aria-pressed={tab === name}
-                    onClick={() => setTab(name)}
+                    aria-pressed={item === section}
+                    onClick={() => {
+                      setSection(item);
+                      setMessage("");
+                    }}
                   >
-                    {name}
+                    {item}
                   </button>
-                ))}
-              </div>
-              {tab === "General" && (
-                <form className={styles.settingsForm} onSubmit={saveRole}>
-                  <p className={styles.muted}>
-                    {selected.projects} assigned projects
-                  </p>
+                ),
+              )}
+            </div>
+
+            <form
+              key={account?.email ?? "new"}
+              noValidate
+              className="superadmin-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const fields = new FormData(event.currentTarget);
+                const value = (key: string) => String(fields.get(key) ?? "");
+                const siteIds = fields.getAll("site").map(String);
+                const systemsBySite = Object.fromEntries(
+                  sites.flatMap((site) => {
+                    if (!siteIds.includes(site.id)) return [];
+                    const configured = getManagedSiteSystems(site);
+                    const selected = configured
+                      .filter((system) =>
+                        fields.getAll("system:" + site.id).includes(system.id),
+                      )
+                      .map((system) => system.id);
+                    return selected.length === configured.length &&
+                      account?.systemsBySite?.[site.id] === undefined
+                      ? []
+                      : [[site.id, selected]];
+                  }),
+                );
+                if (admin && account) {
+                  try {
+                    saveStandardUserAccess(
+                      account.email,
+                      siteIds,
+                      systemsBySite,
+                    );
+                    setMessage("Site and monitoring access saved.");
+                  } catch (error) {
+                    setMessage(
+                      error instanceof Error
+                        ? error.message
+                        : "Could not save access.",
+                    );
+                  }
+                  return;
+                }
+                const input: DemoAccount = {
+                  name: value("name"),
+                  email: value("email"),
+                  role: value("role") as ManagementRole,
+                  password: value("password"),
+                  active: fields.has("active"),
+                  siteIds,
+                  systemsBySite,
+                };
+
+                try {
+                  saveAccount(input, account?.email);
+                  if (!account) setPanel(input.email.trim().toLowerCase());
+                  const password = event.currentTarget.elements.namedItem(
+                    "password",
+                  ) as HTMLInputElement | null;
+                  if (password) password.value = "";
+                  setMessage(account ? "Account updated." : "Account created.");
+                } catch (error) {
+                  if (
+                    !input.name.trim() ||
+                    !input.email.trim() ||
+                    (!account && input.password.length < 4)
+                  )
+                    setSection("General");
+                  setMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not save this account.",
+                  );
+                }
+              }}
+            >
+              <div className="directory-fields" hidden={section !== "General"}>
+                <label>
+                  Name
+                  <input
+                    name="name"
+                    defaultValue={account?.name}
+                    readOnly={admin}
+                    required
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    name="email"
+                    defaultValue={account?.email}
+                    readOnly={Boolean(account)}
+                    required
+                  />
+                </label>
+                {!admin && (
                   <label>
-                    <span>Account role</span>
-                    <select
-                      value={roleDraft ?? selected.role}
-                      onChange={(event) => {
-                        setRoleDraft(event.target.value as User["role"]);
-                        setMessage("");
-                      }}
-                    >
-                      <option>User</option>
-                      <option>Admin</option>
-                      {canManagePlatform && <option>Superadmin</option>}
-                    </select>
-                  </label>
-                  <label>
-                    Status
-                    <select
-                      value={statusDraft ?? selected.status}
-                      disabled={!canManagePlatform && selected.role === "Admin"}
-                      onChange={(event) => {
-                        setStatusDraft(event.target.value as User["status"]);
-                        setMessage("");
-                      }}
-                    >
-                      <option>Active</option>
-                      <option>Inactive</option>
-                      <option>Pending</option>
-                    </select>
-                  </label>
-                  <label>
-                    New demo password
-                    <Input
+                    {account ? "New demo password (optional)" : "Demo password"}
+                    <input
                       type="password"
                       autoComplete="new-password"
+                      name="password"
                       minLength={4}
-                      placeholder="Leave blank to keep the current password"
-                      value={passwordDraft}
-                      disabled={!canManagePlatform && selected.role === "Admin"}
-                      onChange={(event) => setPasswordDraft(event.target.value)}
+                      required={!account}
                     />
                   </label>
-                  <p className={styles.muted}>
-                    Active accounts can sign in. Inactive and Pending accounts
-                    cannot.
+                )}
+                <label className="superadmin-checkbox">
+                  <input
+                    type="checkbox"
+                    name="active"
+                    defaultChecked={account?.active ?? true}
+                    disabled={admin}
+                  />{" "}
+                  Active
+                </label>
+              </div>
+
+              <div
+                className="directory-fields"
+                hidden={section !== "Permissions"}
+              >
+                {!admin && (
+                  <label>
+                    Role
+                    <select name="role" defaultValue={account?.role ?? "User"}>
+                      {roles.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <fieldset>
+                  <legend>Site Access</legend>
+                  <p className="superadmin-muted">
+                    {admin
+                      ? "Only sites assigned to you are listed."
+                      : "Superadmin can access all active sites."}
                   </p>
-                  <div className={styles.actions}>
-                    <Button
-                      size="xs"
-                      type="submit"
-                      disabled={
-                        (!roleDraft || roleDraft === selected.role) &&
-                        (!statusDraft || statusDraft === selected.status) &&
-                        !passwordDraft
-                      }
-                    >
-                      Save account
-                    </Button>
-                  </div>
-                </form>
-              )}
-              {tab === "Activity" && (
-                <p className={styles.record}>
-                  Last active: {selected.lastActive}
-                </p>
-              )}
-              {tab === "Permissions" && (
-                <>
-                  <fieldset className={styles.permissionGroup}>
-                    <legend>System Permissions</legend>
-                    <p className={styles.muted}>
-                      Select what this user can access in the system.
-                    </p>
-                    {permissions.map(([name, description, platformOnly]) => (
-                      <label key={name} className={styles.permission}>
-                        <span>
+                  {sites.map((site) => (
+                    <label key={site.id} className="superadmin-checkbox">
+                      <input
+                        type="checkbox"
+                        name="site"
+                        value={site.id}
+                        defaultChecked={account?.siteIds.includes(site.id)}
+                      />{" "}
+                      {site.name}
+                      {site.active ? "" : " (inactive)"}
+                    </label>
+                  ))}
+                </fieldset>
+                <fieldset>
+                  <legend>Monitoring access</legend>
+                  <p className="superadmin-muted">
+                    Choose which systems the user can see at each assigned site.
+                    A system grant only applies while site access is enabled.
+                  </p>
+                  {sites.map((site) => (
+                    <details key={site.id}>
+                      <summary>{site.name}</summary>
+                      {getManagedSiteSystems(site).map((system) => (
+                        <label className="superadmin-checkbox" key={system.id}>
                           <input
                             type="checkbox"
-                            checked={hasPermission(selected.role, draft, name)}
-                            disabled={
-                              !canEditSelected ||
-                              !roleSupportsPermission(selected.role, name) ||
-                              (platformOnly && !canManagePlatform)
+                            name={"system:" + site.id}
+                            value={system.id}
+                            defaultChecked={
+                              account?.systemsBySite?.[site.id]?.includes(
+                                system.id,
+                              ) ?? true
                             }
-                            onChange={(event) => {
-                              const enabled = event.target.checked;
-                              setDraftChanges({
-                                ...draft,
-                                permissions: enabled
-                                  ? [...draft.permissions, name]
-                                  : draft.permissions.filter(
-                                      (item) => item !== name,
-                                    ),
-                              });
-                              setMessage("");
-                            }}
                           />
-                          {name}
-                        </span>
-                        <small>
-                          {!roleSupportsPermission(selected.role, name)
-                            ? "Not available for this account role"
-                            : platformOnly && !canManagePlatform
-                              ? "Only Superadmin can grant this permission"
-                              : description}
-                        </small>
-                      </label>
-                    ))}
-                  </fieldset>
-                  <fieldset className={styles.permissionGroup}>
-                    <legend>Project Access</legend>
-                    <p className={styles.muted}>
-                      Select which projects this user can access.
-                    </p>
-                    <Input
-                      type="search"
-                      placeholder="Search projects..."
-                      aria-label="Search project permissions"
-                      value={projectQuery}
-                      onChange={(event) => setProjectQuery(event.target.value)}
-                    />
-                    <p className={styles.muted}>
-                      Enable Access Projects above. Viewer can read; Editor can
-                      also edit the project description.
-                    </p>
-                    {projects
-                      .filter((project) =>
-                        project.name
-                          .toLowerCase()
-                          .includes(projectQuery.trim().toLowerCase()),
-                      )
-                      .map((project) => {
-                        const level =
-                          selected.role === "Superadmin"
-                            ? "Editor"
-                            : (draft.projects[project.key] ??
-                              draft.projects[project.name] ??
-                              "");
-                        const actorLevel = getProjectLevel(
-                          credential?.role,
-                          actorAccess,
-                          project,
-                        );
-                        return (
-                          <div className={styles.permission} key={project.key}>
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={Boolean(level)}
-                                disabled={!canEditSelected || !actorLevel}
-                                onChange={(event) =>
-                                  setProject(
-                                    project,
-                                    event.target.checked ? "Viewer" : "",
-                                  )
-                                }
-                              />
-                              {project.name}
-                            </label>
-                            <select
-                              aria-label={"Access level for " + project.name}
-                              value={level || "Viewer"}
-                              disabled={
-                                !canEditSelected || !level || !actorLevel
-                              }
-                              onChange={(event) =>
-                                setProject(project, event.target.value)
-                              }
-                            >
-                              <option>Viewer</option>
-                              <option disabled={actorLevel !== "Editor"}>
-                                Editor
-                              </option>
-                            </select>
-                          </div>
-                        );
-                      })}
-                  </fieldset>
-                  {canEditSelected ? (
-                    <div className={styles.actions}>
-                      <Button
-                        size="xs"
-                        appearance="outline"
-                        type="button"
-                        onPress={() => {
-                          setDraftChanges(null);
-                          setMessage("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button size="xs" type="button" onPress={savePermissions}>
-                        Save Permissions
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className={styles.muted}>
-                      {selected.role === "Superadmin"
-                        ? "Superadmin accounts automatically have full access."
-                        : "Only Superadmin can edit permissions for an Admin account."}
-                    </p>
-                  )}
-                </>
-              )}
-            </>
-          ) : (
-            <p className={styles.muted}>Select a user to see their details.</p>
-          )}
-          <p className={styles.feedback} role="status">
-            {message}
-          </p>
-        </aside>
-      </div>
+                          {system.name}
+                        </label>
+                      ))}
+                    </details>
+                  ))}
+                </fieldset>
+                {account?.email === bootstrapEmail && (
+                  <p className="superadmin-muted">
+                    The built-in Superadmin must stay active.
+                  </p>
+                )}
+              </div>
 
-      <dialog
-        ref={inviteDialog}
-        className={styles.dialog}
-        aria-labelledby="add-user-heading"
-      >
-        <form onSubmit={addUser}>
-          <h2 id="add-user-heading">Create User</h2>
-          <label>
-            Name
-            <Input name="name" required autoComplete="name" />
-          </label>
-          <label>
-            Email
-            <Input name="email" type="email" required autoComplete="email" />
-          </label>
-          <label>
-            Demo password
-            <Input
-              name="password"
-              type="password"
-              required
-              minLength={4}
-              autoComplete="new-password"
-            />
-          </label>
-          <p className={styles.muted}>
-            The account starts Active with dashboard access. Set its other
-            permissions after creating it. Use demo passwords only.
-          </p>
-          {canManagePlatform && (
-            <label>
-              Role
-              <select name="role">
-                <option>User</option>
-                <option>Admin</option>
-                {canManagePlatform && <option>Superadmin</option>}
-              </select>
-            </label>
-          )}
-          {inviteError && <p role="alert">{inviteError}</p>}
-          <div className={styles.actions}>
-            <Button
-              size="xs"
-              appearance="outline"
-              type="button"
-              onPress={() => inviteDialog.current?.close()}
-            >
-              Cancel
-            </Button>
-            <Button size="xs" type="submit">
-              Add User
-            </Button>
-          </div>
-        </form>
-      </dialog>
-    </AdminSuperadminLayout>
+              {section === "Activity" && account && (
+                <div className="directory-fields">
+                  <p>
+                    Last active:{" "}
+                    {account.lastSignIn
+                      ? time.format(new Date(account.lastSignIn))
+                      : "Never signed in"}
+                  </p>
+                  <ul className="superadmin-event-list">
+                    {audit
+                      .filter(
+                        ({ category, target }) =>
+                          category === "Users" && target === account.email,
+                      )
+                      .slice(0, 5)
+                      .map(({ id, action, date }) => (
+                        <li key={id}>
+                          <strong>{action}</strong>
+                          <time dateTime={date}>
+                            {time.format(new Date(date))}
+                          </time>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+
+              {(admin ? section === "Permissions" : section !== "Activity") && (
+                <div className="superadmin-actions">
+                  <button type="submit" className="superadmin-button">
+                    {admin
+                      ? "Save access"
+                      : account
+                        ? "Save changes"
+                        : "Create account"}
+                  </button>
+                  <button
+                    type="button"
+                    className="directory-secondary-button"
+                    onClick={() => openPanel(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </form>
+          </section>
+        )}
+        {panel === null && (
+          <aside
+            className="superadmin-card"
+            aria-labelledby="user-details-title"
+          >
+            <h2 id="user-details-title">User Details</h2>
+            <p className="superadmin-muted">
+              Select a user to view their details and manage their access.
+            </p>
+            <h3 className="directory-summary-heading">
+              Site access at a glance
+            </h3>
+            <ul className="superadmin-event-list">
+              {sites
+                .filter((site) => site.active)
+                .map((site) => (
+                  <li key={site.id}>
+                    <button
+                      type="button"
+                      className="superadmin-text-link"
+                      onClick={() => setSiteId(site.id)}
+                    >
+                      {site.name}
+                    </button>
+                    <span>
+                      {
+                        accounts.filter(
+                          (user) => user.active && siteCount(user, [site]),
+                        ).length
+                      }{" "}
+                      active users
+                    </span>
+                  </li>
+                ))}
+            </ul>
+            {!sites.some((site) => site.active) && (
+              <p className="superadmin-muted">No active sites.</p>
+            )}
+          </aside>
+        )}
+      </div>
+    </main>
   );
 }

@@ -1,8 +1,5 @@
-import type { Metadata } from "next";
-import { ProjectManagement } from "@/components/management/ProjectManagement";
+import { SiteDirectory } from "../../superadmin/sites/SiteDirectory";
 
-export const metadata: Metadata = { title: "Projects | Nexus Admin" };
-
-export default function AdminProjectsPage() {
-  return <ProjectManagement role="Admin" />;
+export default function AdminSitesPage() {
+  return <SiteDirectory admin />;
 }

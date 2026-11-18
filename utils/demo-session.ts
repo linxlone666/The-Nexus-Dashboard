@@ -1,136 +1,84 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { getDemoProfile } from "@/data/credential";
 import type { Credential } from "@/data/credential";
-import type { DemoRole } from "@/data/mock-accounts";
-import { emptyAccess } from "@/data/permissions";
-import type { Access } from "@/data/permissions";
-import {
-  usersStorageKey,
-  usersChangedEvent,
-  readUserChanges,
-  getUsers,
-  getUserAccess,
-} from "./user-store";
-import {
-  getDashboardPath as permissionHome,
-  canAccessDashboardPath as permissionAllowsPath,
-} from "./permissions";
+import { clearWorkSite } from "./selected-work-site";
+import { recordSignIn, subscribeManagement } from "./management-store";
 
 const storageKey = "credential";
-const sessionChanged = "nexus-demo-session-changed";
+const changedEvent = "nexus-credential-changed";
 
-export function getDashboardPath(role: DemoRole, access: Access = emptyAccess) {
-  return permissionHome(role, access);
-}
-export function canAccessDashboardPath(
-  role: DemoRole,
-  path: string,
-  access: Access = emptyAccess,
-) {
-  return permissionAllowsPath(role, access, path);
-}
-export function getSafeReturnPath(
-  role: DemoRole,
-  requestedPath: string | null,
-  access: Access = emptyAccess,
-) {
-  return requestedPath && canAccessDashboardPath(role, requestedPath, access)
-    ? requestedPath
-    : getDashboardPath(role, access);
-}
-
-export function readCredential(snapshot: string | null): Credential | null {
-  if (!snapshot) return null;
+function readStorage() {
   try {
-    const value = JSON.parse(snapshot) as Partial<Credential> | null;
-    if (
-      !value ||
-      typeof value.token !== "string" ||
-      !value.token ||
-      typeof value.email !== "string"
-    )
-      return null;
-    return value as Credential;
+    return localStorage.getItem(storageKey);
   } catch {
     return null;
   }
 }
 
-export function resolveDemoSession(
-  sessionSnapshot: string,
-  userSnapshot: string,
-) {
-  const stored = readCredential(sessionSnapshot);
-  const changes = readUserChanges(userSnapshot);
-  const user = stored
-    ? getUsers(changes).find(
-        (user) => user.email === stored.email && user.status === "Active",
-      )
-    : undefined;
-  if (!stored || !user) return { credential: null, access: emptyAccess };
-  // Always use the current saved account role and access, never stale session claims.
-  const credential: Credential = {
-    token: stored.token,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-  };
-  return { credential, access: getUserAccess(user.email, changes) };
+function profileFromStorage(raw: string | null) {
+  if (!raw) return null;
+
+  try {
+    const credential = JSON.parse(raw);
+    if (
+      typeof credential?.email === "string" &&
+      typeof credential.token === "string" &&
+      credential.token
+    ) {
+      return getDemoProfile(credential.email) ?? null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
-function getSnapshot() {
-  try {
-    return JSON.stringify([
-      localStorage.getItem(storageKey) ?? "",
-      localStorage.getItem(usersStorageKey) ?? "",
-    ]);
-  } catch {
-    return '["", ""]';
-  }
-}
-function subscribe(listener: () => void) {
+function subscribe(callback: () => void) {
   function onStorage(event: StorageEvent) {
-    if (
-      event.key === storageKey ||
-      event.key === usersStorageKey ||
-      event.key === null
-    )
-      listener();
+    if (event.key === storageKey || event.key === null) callback();
   }
+
+  const unsubscribeManagement = subscribeManagement(callback);
   window.addEventListener("storage", onStorage);
-  window.addEventListener(sessionChanged, listener);
-  window.addEventListener(usersChangedEvent, listener);
+  window.addEventListener(changedEvent, callback);
   return () => {
+    unsubscribeManagement();
     window.removeEventListener("storage", onStorage);
-    window.removeEventListener(sessionChanged, listener);
-    window.removeEventListener(usersChangedEvent, listener);
+    window.removeEventListener(changedEvent, callback);
   };
 }
-export function useDemoSession() {
-  const snapshot = useSyncExternalStore<string | null>(
+
+export function readDemoProfile() {
+  return profileFromStorage(readStorage());
+}
+
+export function useDemoProfile() {
+  const snapshot = useSyncExternalStore(
     subscribe,
-    getSnapshot,
-    () => null,
+    readProfileSnapshot,
+    () => undefined,
   );
-  const [sessionSnapshot, userSnapshot] = snapshot
-    ? (JSON.parse(snapshot) as [string, string])
-    : ["", ""];
-  return {
-    ...resolveDemoSession(sessionSnapshot, userSnapshot),
-    isReady: snapshot !== null,
-  };
+  return snapshot === undefined
+    ? undefined
+    : (JSON.parse(snapshot) as ReturnType<typeof readDemoProfile>);
 }
+
+function readProfileSnapshot() {
+  return JSON.stringify(readDemoProfile());
+}
+
 export function saveDemoSession(credential: Credential) {
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(credential));
-  } catch {
-    throw new Error("This browser could not save your demo session.");
-  }
-  window.dispatchEvent(new Event(sessionChanged));
+  clearWorkSite();
+  localStorage.setItem(storageKey, JSON.stringify(credential));
+  recordSignIn(credential.email);
+  window.dispatchEvent(new Event(changedEvent));
 }
-export function signOutDemo() {
+
+export function signOutDemoSession() {
   localStorage.removeItem(storageKey);
-  localStorage.removeItem("returnPath");
-  window.dispatchEvent(new Event(sessionChanged));
+  window.dispatchEvent(new Event(changedEvent));
+  clearWorkSite();
 }

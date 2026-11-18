@@ -1,11 +1,8 @@
-'use client'
+import type { Metadata } from "next";
+import SignIn from "./Sign_In";
 
-import SignIn from "@/components/Sign_In"
+export const metadata: Metadata = { title: "Sign in" };
 
 export default function Page() {
-  return (
-    <>
-      <SignIn />
-    </>
-  )
+  return <SignIn />;
 }

@@ -1,4 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { canAccessSite } from "@/data/management";
+import { readDemoProfile } from "@/utils/demo-session";
+import { readManagement } from "@/utils/management-store";
 import { isMobileDashboard } from "./dashboard-device";
 import { normalizeDashboardLayout } from "./dashboard-layout";
 import type { DashboardLayout } from "./dashboard-layout";
@@ -16,6 +19,19 @@ const starterDashboards: SavedDashboard[] = [
   { id: "my-view", name: "My view" },
   { id: "alarm-response", name: "Alarm response" },
 ];
+
+function canUseDashboardScope(scope: string) {
+  if (!scope) return false;
+  const profile = readDemoProfile();
+  return Boolean(
+    profile &&
+    readManagement().sites.some(
+      (site) =>
+        canAccessSite(site, profile) &&
+        dashboardScope(profile.email, site.id) === scope,
+    ),
+  );
+}
 
 function readSnapshot(scope: string) {
   try {
@@ -71,7 +87,7 @@ export function useSavedDashboards(scope: string) {
     () => null,
   );
   useEffect(() => {
-    if (!scope || isMobileDashboard()) return;
+    if (isMobileDashboard() || !canUseDashboardScope(scope)) return;
     try {
       const legacy = localStorage.getItem(key);
       const ownerKey = key + "-legacy-owner";
@@ -90,7 +106,8 @@ export function useSavedDashboards(scope: string) {
 
 function writeDashboards(scope: string, dashboards: SavedDashboard[]) {
   if (isMobileDashboard()) throw new Error("Mobile dashboards are view-only.");
-  if (!scope) throw new Error("Choose a workspace before saving.");
+  if (!canUseDashboardScope(scope))
+    throw new Error("You no longer have access to this workspace.");
   localStorage.setItem(scope, JSON.stringify(dashboards));
   window.dispatchEvent(new Event(changedEvent));
 }

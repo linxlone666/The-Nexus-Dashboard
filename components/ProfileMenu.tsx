@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { signOutDemoSession, useDemoProfile } from "@/utils/demo-session";
+import { managementLinks } from "@/components/management/navigation";
 import styles from "./TopBar.module.css";
 
 export function ProfileMenu({
@@ -98,19 +99,11 @@ export function ProfileMenu({
             <Link href="/profile" onClick={() => setOpen(false)}>
               My profile
             </Link>
-            {profile.role === "Admin" && (
-              <>
-                <Link href="/admin/users" onClick={() => setOpen(false)}>
-                  Users
-                </Link>
-                <Link href="/admin/audit-logs" onClick={() => setOpen(false)}>
-                  Audit Logs
-                </Link>
-                <Link href="/admin/projects" onClick={() => setOpen(false)}>
-                  Sites
-                </Link>
-              </>
-            )}
+            {managementLinks(profile.role).map(({ href, label }) => (
+              <Link key={href} href={href} onClick={() => setOpen(false)}>
+                {label}
+              </Link>
+            ))}
             <button type="button" onClick={signOut}>
               Sign out
             </button>

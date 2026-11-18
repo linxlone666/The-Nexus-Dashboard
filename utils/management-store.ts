@@ -76,6 +76,16 @@ function save(data: ManagementData, event: Omit<AuditEvent, "id" | "date">) {
 
 export function saveAccount(input: DemoAccount, existingEmail?: string) {
   const data = readManagement();
+  if (activeActor(data)?.role !== "Superadmin")
+    throw new Error("Only Superadmin can create or edit accounts.");
+  writeAccount(data, input, existingEmail);
+}
+
+function writeAccount(
+  data: ManagementData,
+  input: DemoAccount,
+  existingEmail?: string,
+) {
   const account = {
     ...input,
     name: input.name.trim(),
@@ -297,5 +307,5 @@ export function saveStandardUserAccess(
     ...account.siteIds.filter((id) => !managedIds.has(id)),
     ...assigned,
   ];
-  saveAccount({ ...account, siteIds, systemsBySite }, email);
+  writeAccount(data, { ...account, siteIds, systemsBySite }, email);
 }

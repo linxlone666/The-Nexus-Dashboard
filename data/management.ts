@@ -84,13 +84,19 @@ export const initialManagementData: ManagementData = {
   audit: [],
 };
 
+export function canAccessSite(
+  site: ManagedSite,
+  account: Pick<DemoAccount, "role" | "siteIds">,
+) {
+  return (
+    site.active &&
+    (account.role === "Superadmin" || account.siteIds.includes(site.id))
+  );
+}
+
 export function availableSites(
   data: ManagementData,
   account: Pick<DemoAccount, "role" | "siteIds">,
 ) {
-  return data.sites.filter(
-    (site) =>
-      site.active &&
-      (account.role === "Superadmin" || account.siteIds.includes(site.id)),
-  );
+  return data.sites.filter((site) => canAccessSite(site, account));
 }

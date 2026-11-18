@@ -54,6 +54,9 @@ export type AuditEvent = {
   category: "Users" | "Sites" | "Settings";
   action: string;
   target: string;
+  actorEmail?: string;
+  siteIds?: string[];
+  userEmail?: string;
 };
 
 export type ManagementData = {

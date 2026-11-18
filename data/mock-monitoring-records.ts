@@ -1,3 +1,6 @@
+import { demoCheckIns, demoVisits, demoDeals, demoAccessEvents } from "./mock-operation-records";
+import { demoCameraEvents, getCameraState, getIncidentState } from "./mock-security-events";
+import { latestDemoDate, formatDemoDate } from "./demo-dates";
 import { getManagedSiteDataset } from "./mock-system-data";
 import type { SystemId, WorkSiteId } from "./mock-system-data";
 import type { ManagedSite } from "./management";
@@ -43,179 +46,173 @@ function getSampleArea(site: ManagedSite) {
     : undefined;
 }
 
-export function getCameraMonitoring(site: ManagedSite) {
+export function getCameraMonitoring(site: ManagedSite, date: string = latestDemoDate) {
   const area = getSampleArea(site);
-  const latest = getManagedSiteDataset(site, "cctv")?.rows.at(-1);
-  if (!area || !latest) return undefined;
+  const reading = getManagedSiteDataset(site, "cctv")?.rows.find((row) => row.date === date);
+  if (!area || !reading) return undefined;
 
-  const cameras = [
-    { id: area.prefix + "-CAM-01", name: area.entry, status: "Online" },
-    { id: area.prefix + "-CAM-02", name: area.parking, status: "Online" },
-    {
-      id: area.prefix + "-CAM-03",
-      name: "Service entrance",
-      status: "Offline",
-    },
-  ] as const;
-  const events = [
-    {
-      time: "10:46",
-      cameraId: cameras[0].id,
-      name: "Motion detected",
-      status: "Reviewed",
-    },
-    {
-      time: "10:31",
-      cameraId: cameras[2].id,
-      name: "Camera disconnected",
-      status: "Open",
-    },
-    {
-      time: "09:52",
-      cameraId: cameras[1].id,
-      name: "Vehicle entered the lot",
-      status: "Recorded",
-    },
-    {
-      time: "09:20",
-      cameraId: cameras[0].id,
-      name: "Person detected near entrance",
-      status: "Recorded",
-    },
-  ];
+  const names = [area.entry, area.parking, "Service entrance"];
+  const cameras = getCameraState(date).map(({ number, status, footage, changedAt }, index) => ({
+    id: area.prefix + "-CAM-" + number,
+    name: names[index],
+    status,
+    footage: status === "Online" ? footage : null,
+    changedAt,
+  }));
+  const events = demoCameraEvents
+    .filter((event) => event.date === date)
+    .map(({ camera, ...event }) => ({
+      ...event,
+      cameraId: cameras[camera].id,
+    }));
 
-  return { date: latest.date, cameras, events };
+  return { date, cameras, events };
 }
 
-export type MonitoringRecords = {
+type RecordTable = {
   title: string;
   columns: string[];
   rows: (string | number)[][];
 };
 
+export type MonitoringRecords = RecordTable & {
+  date: string;
+  coverage: "complete" | "sample" | "reading";
+};
+
 export function getMonitoringRecords(
   site: ManagedSite,
   systemId: Exclude<SystemId, "cctv">,
+  date: string = latestDemoDate,
 ): MonitoringRecords | undefined {
-  const area = getSampleArea(site);
-  const latest = getManagedSiteDataset(site, systemId)?.rows.at(-1);
-  if (!area || !latest) return undefined;
+  const table = buildRecords(site, systemId, date);
+  if (!table) return undefined;
+  const completeSystems: readonly SystemId[] = ["attendance", "visitors", "crm", "alarms", "access"];
+  const coverage = completeSystems.includes(systemId)
+    ? "complete"
+    : systemId === "projects" ? "sample" : "reading";
+  return {
+    ...table,
+    date,
+    coverage,
+    columns: ["Date", ...table.columns],
+    rows: table.rows.map((row) => [formatDemoDate(date), ...row]),
+  };
+}
 
+function buildRecords(
+  site: ManagedSite,
+  systemId: Exclude<SystemId, "cctv">,
+  date: string,
+): RecordTable | undefined {
+  const area = getSampleArea(site);
+  const reading = getManagedSiteDataset(site, systemId)?.rows.find((row) => row.date === date);
+  if (!area || !reading) return undefined;
   const { prefix, entry, parking, team, project } = area;
-  const values = latest.values;
+  const values = reading.values;
 
   switch (systemId) {
     case "attendance":
       return {
-        title: "Recent check-ins",
-        columns: ["Employee", "Clock-in", "Checkpoint", "Status"],
-        rows: [
-          [prefix + "-EMP-014", "08:03", entry, "On time"],
-          [prefix + "-EMP-027", "08:29", "Staff entrance", "On time"],
-          [prefix + "-EMP-038", "08:47", "Staff entrance", "Late"],
-        ],
+        title: "Daily check-ins",
+        columns: ["Time", "Employee", "Checkpoint", "Status"],
+        rows: demoCheckIns.filter((item) => item.date === date).map(
+          ({ employee, time, checkpoint, status }) => [
+            time, prefix + "-" + employee, checkpoint === "entry" ? entry : checkpoint, status,
+          ],
+        ),
       };
     case "visitors":
       return {
         title: "Visitor register",
-        columns: ["Visitor pass", "Check-in", "Purpose", "Status"],
-        rows: [
-          [prefix + "-V014", "10:32", "Site inspection", "On site"],
-          [prefix + "-V013", "10:14", "Equipment delivery", "On site"],
-          [prefix + "-V009", "09:05", "Maintenance visit", "Checked out"],
-        ],
+        columns: ["Time", "Visitor pass", "Checkpoint", "Purpose", "Status"],
+        rows: demoVisits.filter((item) => item.date === date).map(
+          ({ pass, time, purpose, status }) => [time, prefix + "-" + pass, entry, purpose, status],
+        ),
       };
     case "hr":
       return {
-        title: "Staffing and leave",
-        columns: ["Team", "Item", "Status"],
+        title: "End-of-day staffing",
+        columns: ["Time", "Team", "Measurement", "Value"],
         rows: [
-          [team, "Leave requests", values.onLeave + " on leave"],
-          ["Recruitment", "Open positions", values.openPositions + " open"],
-          ["HR Operations", "Headcount", values.headcount + " staff"],
+          ["23:59", team, "Staff on leave", values.onLeave],
+          ["23:59", "Recruitment", "Open positions", values.openPositions],
+          ["23:59", "HR Operations", "Headcount", values.headcount],
         ],
       };
     case "finance":
       return {
         title: "Daily financial breakdown",
-        columns: ["Line item", "Amount (THB)", "Period"],
+        columns: ["Time", "Site", "Line item", "Amount (THB)", "Period"],
         rows: [
-          ["Revenue", values.revenue, "Daily"],
-          ["Operating cost", values.cost, "Daily"],
-          [
-            "Revenue less operating cost",
-            values.revenue - values.cost,
-            "Daily",
-          ],
-          ["Invested capital", values.capital, "To date"],
+          ["23:59", site.name, "Revenue", values.revenue, "Selected day"],
+          ["23:59", site.name, "Operating cost", values.cost, "Selected day"],
+          ["23:59", site.name, "Revenue less operating cost", values.revenue - values.cost, "Selected day"],
+          ["23:59", site.name, "Invested capital", values.capital, "To date"],
         ],
       };
     case "crm":
       return {
-        title: "Sales pipeline",
-        columns: ["Opportunity", "Account", "Stage"],
-        rows: [
-          [prefix + "-DEAL-023", "Demo Retail Group", "Proposal sent"],
-          [prefix + "-DEAL-017", "Demo Logistics Co.", "Negotiation"],
-          [prefix + "-DEAL-011", "Demo Facilities Ltd.", "Won"],
-        ],
+        title: "End-of-day sales pipeline",
+        columns: ["Last update", "Opportunity", "Account", "Stage"],
+        rows: demoDeals.filter((item) => item.date === date).map(
+          ({ time, id, account, stage }) => [time, prefix + "-" + id, account, stage],
+        ),
       };
     case "alarms":
       return {
-        title: "Incident queue",
-        columns: ["Time", "Incident", "Severity", "Status"],
-        rows: [
-          ["10:31", "Camera disconnected at service entrance", "High", "Open"],
-          ["10:06", "Door held open at " + entry, "Medium", "Acknowledged"],
-          ["09:48", "Motion outside scheduled hours", "Low", "Resolved"],
-        ],
+        title: "End-of-day incident register",
+        columns: ["Incident ID", "Incident", "Device", "Severity", "Status", "Raised at", "Last status change"],
+        rows: getIncidentState(date).sort((a, b) => b.changedAt.localeCompare(a.changedAt)).map(({ id, name, device, severity, status, raisedAt, changedAt }) => [
+          prefix + "-" + id,
+          name,
+          device === "entry" ? entry : device,
+          severity,
+          status,
+          formatDemoDate(raisedAt.slice(0, 10)) + " " + raisedAt.slice(11),
+          formatDemoDate(changedAt.slice(0, 10)) + " " + changedAt.slice(11),
+        ]),
       };
     case "access":
       return {
         title: "Door access events",
         columns: ["Time", "Door", "Credential", "Result"],
-        rows: [
-          ["10:42", entry, prefix + "-B034", "Granted"],
-          ["10:26", "Service entrance", prefix + "-B108", "Denied"],
-          ["10:09", "Staff entrance", prefix + "-B053", "Granted"],
-        ],
+        rows: demoAccessEvents.filter((item) => item.date === date).map(
+          ({ time, door, credential, result }) => [
+            time, door === "entry" ? entry : door, prefix + "-" + credential, result,
+          ],
+        ),
       };
     case "parking":
       return {
-        title: "Parking occupancy",
-        columns: ["Zone", "Peak occupied", "Spaces", "Available at peak"],
-        rows: [
-          [
-            parking,
-            values.peakOccupied,
-            values.capacity,
-            values.capacity - values.peakOccupied,
-          ],
-        ],
+        title: "Daily parking occupancy",
+        columns: ["Time", "Zone", "Peak occupied", "Spaces", "Available at peak", "Vehicle entries"],
+        rows: [[
+          "23:59", parking, values.peakOccupied, values.capacity,
+          values.capacity - values.peakOccupied, values.vehicleEntries,
+        ]],
       };
     case "projects":
       return {
         title: "Project milestones",
-        columns: ["Project", "Milestone", "Status"],
+        columns: ["Time", "Project", "Item", "Value / status"],
         rows: [
-          [project, "Site survey", "Complete"],
-          [
-            project,
-            "Installation and inspection",
-            values.progress + "% complete",
-          ],
-          [project, "Handover and acceptance", "Upcoming"],
+          ["23:59", project, "Site survey", "Complete"],
+          ["23:59", project, "Installation and inspection", values.progress + "% complete"],
+          ["23:59", project, "Open tasks", values.openTasks],
+          ["23:59", project, "Tasks completed on selected day", values.completedTasks],
+          ["23:59", project, "Handover and acceptance", "Upcoming"],
         ],
       };
     case "energy":
       return {
-        title: "Energy balance",
-        columns: ["Measurement", "Value (kWh)"],
+        title: "Daily energy readings",
+        columns: ["Time", "Meter", "Measurement", "Value (kWh)", "Status"],
         rows: [
-          ["Electricity used", values.usage],
-          ["Solar generation", values.solar],
-          ["Daily energy target", values.budget],
-          ["Electricity used vs. target", values.usage - values.budget],
+          ["23:59", prefix + "-MAIN-METER", "Electricity used", values.usage, values.usage > values.budget ? "Above daily target" : "Within daily target"],
+          ["23:59", prefix + "-SOLAR-METER", "Solar generation", values.solar, "Recorded"],
+          ["23:59", prefix + "-MAIN-METER", "Daily energy target", values.budget, "Configured"],
+          ["23:59", prefix + "-MAIN-METER", "Electricity used vs. target", values.usage - values.budget, values.usage > values.budget ? "Above daily target" : "Within daily target"],
         ],
       };
   }

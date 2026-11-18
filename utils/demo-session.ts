@@ -1,5 +1,6 @@
 "use client";
 
+import { demoEnabled } from "./demo-mode";
 import { useSyncExternalStore } from "react";
 import { getDemoProfile } from "@/data/credential";
 import type { Credential } from "@/data/credential";
@@ -11,7 +12,7 @@ const changedEvent = "nexus-credential-changed";
 
 function readStorage() {
   try {
-    return localStorage.getItem(storageKey);
+    return sessionStorage.getItem(storageKey);
   } catch {
     return null;
   }
@@ -52,7 +53,7 @@ function subscribe(callback: () => void) {
 }
 
 export function readDemoProfile() {
-  return profileFromStorage(readStorage());
+  return demoEnabled ? profileFromStorage(readStorage()) : null;
 }
 
 export function useDemoProfile() {
@@ -71,14 +72,15 @@ function readProfileSnapshot() {
 }
 
 export function saveDemoSession(credential: Credential) {
+  if (!demoEnabled) throw new Error("Demo sign-in is disabled.");
   clearWorkSite();
-  localStorage.setItem(storageKey, JSON.stringify(credential));
+  sessionStorage.setItem(storageKey, JSON.stringify(credential));
   recordSignIn(credential.email);
   window.dispatchEvent(new Event(changedEvent));
 }
 
 export function signOutDemoSession() {
-  localStorage.removeItem(storageKey);
+  sessionStorage.removeItem(storageKey);
   window.dispatchEvent(new Event(changedEvent));
   clearWorkSite();
 }

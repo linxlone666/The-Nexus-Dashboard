@@ -11,7 +11,7 @@
 }
 
 .brand {
-  font-size: 25px;
+  font-size: 1.5625rem;
   font-weight: 750;
 }
 .headerActions,
@@ -55,7 +55,7 @@
 .header .avatar {
   width: 36px;
   height: 36px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .icon {
   flex: none;
@@ -86,7 +86,7 @@
   min-width: 0;
   gap: 8px;
   color: var(--muted, #506769);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .siteLink,
@@ -143,7 +143,7 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: 5px;
-  font-size: 14px;
+  font-size: 0.875rem;
   text-align: left;
 }
 
@@ -154,15 +154,73 @@
 .profilePanel p {
   padding: 4px 10px;
   color: #a52424;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
-@media (max-width: 420px) {
-  .profileMenu .profile {
-    gap: 6px;
-  }
 
-  .profileMenu .profile > span:nth-child(2) {
-    display: none;
-  }
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  min-height: var(--nexus-topbar-height, max(64px, 5rem));
+}
+
+.profileIdentity { min-width: 0; max-width: min(28vw, 18rem); line-height: 1.25; }
+.profileNameRow { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.profileNameRow strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--ink, #163236); }
+.profileIdentity small { overflow: hidden; text-overflow: ellipsis; }
+.roleBadge {
+  flex: none;
+  padding: .12rem .42rem;
+  border-radius: 999px;
+  background: #e7efed;
+  color: #314c4f;
+  font-size: .6875rem;
+  font-weight: 650;
+}
+.roleBadge[data-role="Admin"] { background: #dcefea; color: #12594e; }
+.roleBadge[data-role="Superadmin"] { background: #eee7f5; color: #5b377c; }
+.profileChevron, .sitePicker::after {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border: solid #506769;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg) translateY(-2px);
+}
+.profileChevron { flex: none; }
+.profile[aria-expanded="true"] .profileChevron { transform: rotate(225deg) translateY(-1px); }
+.profilePanel { min-width: 11rem; }
+.profilePanel .signOut { border-top: 1px solid #e5eeeb; border-radius: 0 0 5px 5px; color: #8a2828; }
+
+.sitePicker { position: relative; display: inline-flex; min-width: 0; max-width: 100%; }
+.sitePicker::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: .85rem;
+  top: calc(50% - 4px);
+  pointer-events: none;
+}
+.sitePicker select {
+  appearance: none;
+  min-width: 0;
+  max-width: min(46vw, 21rem);
+  padding: .52rem 2rem .52rem .7rem;
+  border: 1px solid #d5e5e0;
+  border-radius: 8px;
+  background: #f3f8f6;
+  color: #163236;
+  font: inherit;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.sitePicker select:hover { background: #e8f2ef; border-color: #a8cec3; }
+.sitePicker select:focus-visible, .profile:focus-visible { outline: 2px solid #08786d; outline-offset: 2px; }
+
+@media (max-width: 680px) {
+  .profileMenu .profile { gap: 6px; }
+  .profileIdentity { max-width: 46vw; }
+  .profileIdentity small { display: none; }
+  .sitePicker select { max-width: 100%; }
 }

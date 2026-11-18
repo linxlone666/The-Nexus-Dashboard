@@ -31,7 +31,7 @@ export default function OverviewPage() {
       href: "#site-onboarding",
     },
     {
-      label: "Integration issues",
+      label: "Awaiting connection",
       value: issues.length,
       href: "#integration-issues",
     },
@@ -91,7 +91,7 @@ export default function OverviewPage() {
         )}
       </section>
       <section className="superadmin-card" id="integration-issues">
-        <h2>Integration issues</h2>
+        <h2>Awaiting connection</h2>
         {issues.length ? (
           <ul className="superadmin-event-list">
             {issues.map((site) => (
@@ -110,7 +110,7 @@ export default function OverviewPage() {
             ))}
           </ul>
         ) : (
-          <p>No integration issues in the demo data.</p>
+          <p>No sites are waiting for an external connection.</p>
         )}
       </section>
       <section className="superadmin-card">

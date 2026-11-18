@@ -65,7 +65,7 @@ export const defaultLayout: DashboardLayout = {
   columns: 4,
   tiles: {
     cameras: { rows: 2, columns: 2 },
-    incidents: { rows: 1, columns: 2 },
+    incidents: { rows: 1, columns: 2, dataKey: "records", display: "table" },
     access: { rows: 1, columns: 2 },
   },
 };

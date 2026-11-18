@@ -53,8 +53,8 @@ export function ManagementNavbar({ role, children }: ManagementNavbarProps) {
     >
       <TopBar
         home={home}
-        name="John Doe"
-        initials="JD"
+        name={profile?.name ?? role}
+        initials=""
         roleLabel={role}
         searchLabel="Search management"
         searchPlaceholder={"Search users and sites..."}

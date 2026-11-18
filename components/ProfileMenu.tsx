@@ -23,6 +23,7 @@ export function ProfileMenu({
   const toggle = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
+  const displayRole = profile?.role ?? roleLabel;
   const displayName = profile?.name ?? name;
   const displayInitials = profile
     ? profile.name
@@ -74,7 +75,7 @@ export function ProfileMenu({
         type="button"
         ref={toggle}
         className={styles.profile}
-        aria-label={"Profile options for " + displayName}
+        aria-label={"Profile options for " + displayName + " · " + displayRole}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => {
@@ -85,13 +86,14 @@ export function ProfileMenu({
         <span className={styles.avatar} aria-hidden="true">
           {displayInitials}
         </span>
-        <span>
-          <strong>{displayName}</strong>
-          <small>{profile?.role ?? roleLabel}</small>
+        <span className={styles.profileIdentity}>
+          <span className={styles.profileNameRow}>
+            <strong title={displayName}>{displayName}</strong>
+            <span className={styles.roleBadge} data-role={displayRole}>{displayRole}</span>
+          </span>
+          {profile && <small title={profile.email}>{profile.email}</small>}
         </span>
-        <span aria-hidden="true" className={styles.profileChevron}>
-          ▾
-        </span>
+        <span aria-hidden="true" className={styles.profileChevron} />
       </button>
       <div className={styles.profilePanel} id={panelId} hidden={!open}>
         {profile ? (
@@ -104,7 +106,7 @@ export function ProfileMenu({
                 {label}
               </Link>
             ))}
-            <button type="button" onClick={signOut}>
+            <button type="button" className={styles.signOut} onClick={signOut}>
               Sign out
             </button>
           </>

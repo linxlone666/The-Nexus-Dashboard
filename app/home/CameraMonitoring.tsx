@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { DemoCameraVideo } from "@/components/DemoCameraVideo";
 import { getCameraMonitoring } from "@/data/mock-monitoring-records";
 import type { ManagedSite } from "@/data/management";
 import { formatSystemDate } from "./SystemTile";
 
-export function CameraMonitoring({ site }: { site: ManagedSite }) {
-  const data = getCameraMonitoring(site);
+export function CameraMonitoring({ site, date }: { site: ManagedSite; date?: string }) {
+  const data = getCameraMonitoring(site, date);
   const [cameraId, setCameraId] = useState<string | null>(null);
   if (!data) return null;
 
@@ -24,39 +25,35 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
         <h2 id="monitoring-cameras-heading">Cameras</h2>
         <div className="monitoring-camera-grid">
           {data.cameras.map((camera) => (
-            <button
-              key={camera.id}
-              type="button"
-              className="monitoring-camera-card"
-              aria-pressed={selected?.id === camera.id}
-              onClick={() =>
-                setCameraId((current) =>
-                  current === camera.id ? null : camera.id,
-                )
-              }
-            >
-              <span
-                className="monitoring-camera-preview"
-                data-offline={camera.status === "Offline"}
+            <article key={camera.id} className="monitoring-camera-card">
+              {camera.footage ? (
+                <DemoCameraVideo
+                  name={camera.name}
+                  footage={camera.footage}
+                  className="monitoring-camera-video"
+                />
+              ) : (
+                <div className="monitoring-camera-preview" data-offline="true">
+                  Feed unavailable
+                </div>
+              )}
+              <button
+                type="button"
+                className="monitoring-camera-caption"
+                aria-label={"Filter events for " + camera.name}
+                aria-pressed={selected?.id === camera.id}
+                onClick={() =>
+                  setCameraId((current) =>
+                    current === camera.id ? null : camera.id,
+                  )
+                }
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <use href="/nexus-navigation.svg#camera" />
-                </svg>
-                <span>
-                  {camera.status === "Offline"
-                    ? "Feed unavailable"
-                    : "Demo camera preview"}
-                </span>
-              </span>
-              <span className="monitoring-camera-caption">
                 <span>
                   <strong>{camera.name}</strong>
                   <small>{camera.id}</small>
+                  {camera.changedAt && (
+                    <small>Last connection change · {formatSystemDate(camera.changedAt.slice(0, 10))} {camera.changedAt.slice(11)}</small>
+                  )}
                 </span>
                 <span
                   className="monitoring-camera-status"
@@ -64,8 +61,8 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
                 >
                   {camera.status}
                 </span>
-              </span>
-            </button>
+              </button>
+            </article>
           ))}
         </div>
       </section>
@@ -90,13 +87,14 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
         </div>
         <p className="monitoring-record-date">
           <time dateTime={data.date}>{formatSystemDate(data.date)}</time> ·
-          Sample events
+          Complete demo event log for selected day
         </p>
         {events.length ? (
           <div className="monitoring-table-scroll">
             <table className="monitoring-records">
               <thead>
                 <tr>
+                  <th scope="col">Date</th>
                   <th scope="col">Time</th>
                   <th scope="col">Camera</th>
                   <th scope="col">Event</th>
@@ -106,6 +104,7 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
               <tbody>
                 {events.map((event) => (
                   <tr key={event.time + event.cameraId}>
+                    <td>{formatSystemDate(event.date)}</td>
                     <td>{event.time}</td>
                     <td>
                       {

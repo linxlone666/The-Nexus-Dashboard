@@ -14,7 +14,7 @@ Sign in at / and choose a site to open the workspace at /home. The mobile UI pro
 
 ## 1. First-time setup
 
-Install Git and Node.js LTS. Use the same Node.js major version across the team. npm comes with Node.js. Check your installation:
+Install Git and Node.js 24 LTS. Use the same Node.js major version across the team. npm comes with Node.js. Check your installation:
 
 ```bash
 git --version
@@ -219,3 +219,21 @@ Share the actual error message with the team. Avoid deleting the lockfile or run
 3. Test in the browser, run lint, and run the production build.
 4. Commit, push your branch, and open a PR.
 5. Get a teammate's review before merging to `main`.
+
+## Vercel Preview
+
+In the connected Vercel project, use the repository root, the Next.js preset,
+and Node.js 24.x. Leave the output directory at the Next.js default. Use
+`npm ci` for installation and `npm run build` for the build.
+
+Set `NEXT_PUBLIC_NEXUS_DEMO=true` in the **Preview** environment for
+`feature/dashboard-rebuild`, then deploy that branch. Next.js reads this
+setting at build time. Keep the variable unset in Vercel Production so demo
+sign-in stays disabled there. For a local production-mode test, set the same
+variable before running `npm run build`, then run `npm run start`.
+
+Open `/login?demo=user` and `/login?demo=admin` in separate tabs on the same
+Preview URL. The account and selected site are stored per tab in
+`sessionStorage`. Demo permissions, audit logs, and layouts use
+`localStorage` and are shared only on the same origin within the same browser
+profile. A second browser profile or device can sign in independently.

@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { getManagedSiteSystems, type SystemId } from "@/data/mock-system-data";
 import { canAccessSite } from "@/data/management";
 import { readDemoProfile } from "@/utils/demo-session";
 import { readManagement } from "@/utils/management-store";
@@ -175,4 +176,30 @@ function readOwnedLegacy(scope: string) {
   } catch {
     return null;
   }
+}
+
+export function useMonitoringLayout(scope: string, system: SystemId) {
+  const snapshot = useSyncExternalStore(subscribe,
+    () => readSnapshot(scope && scope + ":system:" + system), () => null);
+  if (!snapshot) return undefined;
+  try {
+    return normalizeDashboardLayout(JSON.parse(snapshot));
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveMonitoringLayout(siteId: string, system: SystemId, layout: DashboardLayout | null) {
+  const profile = readDemoProfile();
+  const site = readManagement().sites.find((item) => item.id === siteId);
+  if (isMobileDashboard() || !profile || !site || !canAccessSite(site, profile) ||
+    !getManagedSiteSystems(site).some(({ id }) => id === system) ||
+    (profile.role !== "Superadmin" && profile.systemsBySite?.[siteId] &&
+      !profile.systemsBySite[siteId].includes(system))) {
+    throw new Error("You cannot edit this monitoring layout.");
+  }
+  const storageKey = dashboardScope(profile.email, siteId) + ":system:" + system;
+  if (layout) localStorage.setItem(storageKey, JSON.stringify(normalizeDashboardLayout(layout)));
+  else localStorage.removeItem(storageKey);
+  window.dispatchEvent(new Event(changedEvent));
 }

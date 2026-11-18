@@ -1,7 +1,9 @@
 "use client";
 
+import { demoEnabled } from "@/utils/demo-mode";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { needsFirstPassword } from "./DemoEntry";
 import { saveDemoSession } from "@/utils/demo-session";
 import { useRouter } from "next/navigation";
 import { getDemoProfile, login } from "@/data/credential";
@@ -10,6 +12,19 @@ import { Button } from "@/components/tailgrids/core/button";
 import styles from "./Sign_In.module.css";
 
 export default function SignIn() {
+  if (!demoEnabled) {
+    return (
+      <main className="mx-auto max-w-lg p-6">
+        <h1 className="text-2xl font-bold">Nexus Dashboard</h1>
+        <p>Demo sign-in is disabled for this deployment.</p>
+      </main>
+    );
+  }
+
+  return <DemoSignIn />;
+}
+
+function DemoSignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [failure, setFailure] = useState<"expired" | "unavailable" | null>(
     null,
@@ -35,6 +50,11 @@ export default function SignIn() {
     try {
       const loginEmail = email.includes("@") ? email : email + "@company.com";
       const credential = await login(loginEmail, password);
+
+      if (needsFirstPassword(credential.email)) {
+        router.replace("/login?demo=first-login");
+        return;
+      }
 
       // Sample outcomes are only rolled after the demo credentials pass.
       const roll = Math.random();
@@ -163,14 +183,6 @@ export default function SignIn() {
                       {showPassword ? "Hide" : "Show"}
                     </button>
                   </div>
-                </div>
-
-                <div className={styles.formOptions}>
-                  <label className={styles.rememberMe}>
-                    <input type="checkbox" />
-                    Remember me
-                  </label>
-                  <a href="#forgot-password">Forgot password?</a>
                 </div>
 
                 {error && (

@@ -8,7 +8,7 @@ const siteChanged = "nexus-selected-site-changed";
 
 function readSiteId() {
   try {
-    return localStorage.getItem(siteKey);
+    return sessionStorage.getItem(siteKey);
   } catch {
     return null;
   }
@@ -37,11 +37,11 @@ export function useSelectedWorkSite() {
 export function selectWorkSite(id: string) {
   if (!readManagement().sites.some((site) => site.id === id && site.active))
     throw new Error("Unknown work site.");
-  localStorage.setItem(siteKey, id);
+  sessionStorage.setItem(siteKey, id);
   window.dispatchEvent(new Event(siteChanged));
 }
 
 export function clearWorkSite() {
-  localStorage.removeItem(siteKey);
+  sessionStorage.removeItem(siteKey);
   window.dispatchEvent(new Event(siteChanged));
 }

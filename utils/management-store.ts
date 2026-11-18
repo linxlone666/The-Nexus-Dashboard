@@ -67,7 +67,12 @@ export function useManagement() {
 
 function save(data: ManagementData, event: Omit<AuditEvent, "id" | "date">) {
   const audit = [
-    { ...event, id: crypto.randomUUID(), date: new Date().toISOString() },
+    {
+      ...event,
+      actorEmail: activeActor(data)?.email,
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+    },
     ...data.audit,
   ].slice(0, 100);
   localStorage.setItem(storageKey, JSON.stringify({ ...data, audit }));
@@ -128,6 +133,7 @@ function writeAccount(
       data.sites.some((site) => site.id === id),
     ),
   };
+  const actor = activeActor(data);
   const accounts = existing
     ? data.accounts.map((item) => (item.email === existingEmail ? saved : item))
     : [...data.accounts, saved];
@@ -138,13 +144,17 @@ function writeAccount(
       category: "Users",
       action: existing ? "Account updated" : "Account created",
       target: saved.email,
+      userEmail: saved.role === "User" ? saved.email : undefined,
+      siteIds: [...new Set([...(existing?.siteIds ?? []), ...saved.siteIds])].filter(
+        (id) => actor?.role !== "Admin" || actor.siteIds.includes(id),
+      ),
     },
   );
 }
 
 function activeActor(data: ManagementData) {
   try {
-    const session = JSON.parse(localStorage.getItem("credential") ?? "null");
+    const session = JSON.parse(sessionStorage.getItem("credential") ?? "null");
     if (typeof session?.token !== "string" || !session.token) return undefined;
     return data.accounts.find(
       (account) => account.active && account.email === session.email,
@@ -193,6 +203,7 @@ function writeSite(data: ManagementData, input: ManagedSite) {
       category: "Sites",
       action: existing ? "Site updated" : "Site created",
       target: site.name,
+      siteIds: [site.id],
     },
   );
 }
@@ -245,7 +256,7 @@ export function removeSite(siteId: string, confirmation: string) {
   }));
   save(
     { ...data, sites, accounts },
-    { category: "Sites", action: "Site removed", target: site.name },
+    { category: "Sites", action: "Site removed", target: site.name, siteIds: [site.id] },
   );
 }
 

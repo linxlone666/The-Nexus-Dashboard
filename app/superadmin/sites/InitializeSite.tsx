@@ -41,6 +41,7 @@ export function InitializeSite({
   onCreated: (id: string, siteName: string) => void;
 }) {
   const [vendor, setVendor] = useState("");
+  const [testFailed, setTestFailed] = useState(false);
   const [tested, setTested] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState("");
@@ -74,7 +75,7 @@ export function InitializeSite({
     setTested(false);
     setTesting(false);
     setTestMessage("");
-    setSystemIds([]);
+    setTestFailed(false);
     setError("");
   }
 
@@ -86,6 +87,7 @@ export function InitializeSite({
       return;
     }
     setError("");
+    setTestFailed(false);
     setTested(false);
     setTestMessage("");
     if (source === "rest") {
@@ -109,10 +111,12 @@ export function InitializeSite({
       );
       setTested(true);
     } catch (error) {
-      if (requestId === connectionTest.current)
+      if (requestId === connectionTest.current) {
+        setTestFailed(true);
         setError(
           error instanceof Error ? error.message : "Mock API request failed.",
         );
+      }
     } finally {
       if (requestId === connectionTest.current) setTesting(false);
     }
@@ -143,7 +147,7 @@ export function InitializeSite({
       return;
     }
     if (step < steps.length - 1) {
-      goTo(step + 1);
+      goTo(step === 1 && source === "sample" ? 3 : step + 1);
       return;
     }
 
@@ -195,10 +199,11 @@ export function InitializeSite({
           Cancel setup
         </button>
       </header>
-      <ol className="site-setup-steps" aria-label="Site setup progress">
+      <ol className="site-setup-steps" data-connection-step={source === "rest"} aria-label="Site setup progress">
         {steps.map((label, index) => (
-          <li key={label} aria-current={step === index ? "step" : undefined}>
-            <span aria-hidden="true">{index + 1}</span>
+          <li key={label} hidden={index === 2 && source === "sample"} aria-current={step === index ? "step" : undefined}>
+            <span className="sr-only">{index < step ? "Completed: " : index === step ? "Current: " : "Upcoming: "}</span>
+            <span aria-hidden="true">{index + (source === "sample" && index > 2 ? 0 : 1)}</span>
             {label}
           </li>
         ))}
@@ -284,7 +289,7 @@ export function InitializeSite({
             )}
           </fieldset>
         )}
-        {step === 2 &&
+        {(step === 2 || (step === 3 && source === "sample")) &&
           (source === "sample" ? (
             <label>
               Sample site
@@ -322,8 +327,9 @@ export function InitializeSite({
               </p>
             </>
           ))}
-        {step === 2 && (
-          <div className="site-connection-check">
+        {(step === 2 || (step === 3 && source === "sample")) && (
+          <details className="site-connection-check" open={source === "rest"}>
+            <summary>{source === "rest" ? "Connection configuration" : "Optional sample API test"}</summary>
             {source === "sample" && (
               <>
                 <label>
@@ -372,8 +378,9 @@ export function InitializeSite({
                   ? "Test mock API"
                   : "Validate URL"}
             </button>
-            {testMessage && <p role="status">{testMessage}</p>}
-          </div>
+            <p role="status">{testing ? "Testing…" : tested ? (source === "rest" ? "URL validated · awaiting connection" : "Sample API check passed") : testFailed ? "Check failed" : "Not connected"}</p>
+            {testMessage && <p>{testMessage}</p>}
+          </details>
         )}
         {step === 3 && (
           <fieldset>
@@ -409,7 +416,7 @@ export function InitializeSite({
             </div>
             <div>
               <dt>Status</dt>
-              <dd>{active ? "Active" : "Inactive"}</dd>
+              <dd>{active ? "Active" : "Inactive"} · {source === "sample" ? "Ready with sample data" : "Awaiting external connection"}</dd>
             </div>
             <div>
               <dt>Vendor and source</dt>
@@ -441,7 +448,7 @@ export function InitializeSite({
             <button
               type="button"
               className="superadmin-text-link"
-              onClick={() => goTo(step - 1)}
+              onClick={() => goTo(step === 3 && source === "sample" ? 1 : step - 1)}
             >
               Back
             </button>
@@ -449,7 +456,7 @@ export function InitializeSite({
           <button type="submit" className="superadmin-button">
             {step === steps.length - 1
               ? "Create site"
-              : "Next: " + steps[step + 1]}
+              : "Next: " + steps[step === 1 && source === "sample" ? 3 : step + 1]}
           </button>
         </div>
       </form>

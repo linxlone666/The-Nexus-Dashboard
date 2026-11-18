@@ -8,6 +8,7 @@ import {
 } from "./tile-displays";
 import type { TileDisplay } from "./tile-displays";
 
+import { CameraTileOrder } from "./CameraTileOrder";
 import type { ManagedSite } from "@/data/management";
 import { useEffect, useRef, useState } from "react";
 import { DashboardAiBuilder } from "./DashboardAiBuilder";
@@ -90,6 +91,7 @@ export function DashboardGrid({
     display?: TileDisplay,
     preview?: boolean,
     dataKey?: string,
+    cameraIds?: readonly string[],
   ) => ReactNode;
 }) {
   const grid = useRef<HTMLDivElement>(null);
@@ -110,12 +112,12 @@ export function DashboardGrid({
     availableKinds[0] ?? "cameras",
   );
   const [displayToAdd, setDisplayToAdd] = useState<TileDisplay>();
-  const addSystem = tileSystem(kindToAdd);
-  const addSource = resolveTileSource(
-    tileSources(site, addSystem),
-    undefined,
-    displayToAdd,
-  );
+  const [addDataKey, setAddDataKey] = useState<string>();
+  const [addCameraIds, setAddCameraIds] = useState<readonly string[]>();
+  const addSources = tileSources(site, tileSystem(kindToAdd));
+  const addSource = resolveTileSource(addSources, addDataKey);
+  const selectedAddCameras =
+    addSource.key === "cameras" ? addCameraIds : undefined;
   const addDisplay = resolveTileDisplay(addSource, displayToAdd);
   const rowOptions = layout.rows > 8 ? [...gridSizes, layout.rows] : gridSizes;
   const [settings, setSettings] = useState<
@@ -125,6 +127,7 @@ export function DashboardGrid({
         display?: TileDisplay;
         kind: TileKind;
         dataKey?: string;
+        cameraIds?: readonly string[];
       })
     | null
   >(null);
@@ -136,6 +139,8 @@ export function DashboardGrid({
     : undefined;
   const settingsDisplay =
     settingsSource && resolveTileDisplay(settingsSource, settings?.display);
+  const selectedSettingsCameras =
+    settingsSource?.key === "cameras" ? settings?.cameraIds : undefined;
   const showSettings = Boolean(editing && settings);
   useEffect(() => {
     const canvas = grid.current;
@@ -399,14 +404,31 @@ export function DashboardGrid({
           className="dashboard-tile-form"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!availableKinds.includes(kindToAdd)) return;
-            let next = addTile(layout, kindToAdd, addDisplay);
+            if (
+              !availableKinds.includes(kindToAdd) ||
+              selectedAddCameras?.length === 0
+            )
+              return;
+            let next = addTile(
+              layout,
+              kindToAdd,
+              addDisplay,
+              addSource.key,
+              selectedAddCameras,
+            );
             for (let rows = layout.rows + 1; !next && rows <= 8; rows++) {
               const expanded = resizeGrid(layout, {
                 columns: layout.columns,
                 rows,
               });
-              if (expanded) next = addTile(expanded, kindToAdd, addDisplay);
+              if (expanded)
+                next = addTile(
+                  expanded,
+                  kindToAdd,
+                  addDisplay,
+                  addSource.key,
+                  selectedAddCameras,
+                );
             }
             if (!next) {
               setMessage(
@@ -427,11 +449,29 @@ export function DashboardGrid({
               onChange={(event) => {
                 setKindToAdd(event.target.value as TileKind);
                 setDisplayToAdd(undefined);
+                setAddDataKey(undefined);
+                setAddCameraIds(undefined);
               }}
             >
               {availableKinds.map((kind) => (
                 <option key={kind} value={kind}>
                   {tileName(kind)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Data source
+            <select
+              value={addSource.key}
+              onChange={(event) => {
+                setAddDataKey(event.target.value);
+                setDisplayToAdd(undefined);
+              }}
+            >
+              {addSources.map((source) => (
+                <option key={source.key} value={source.key}>
+                  {source.label}
                 </option>
               ))}
             </select>
@@ -444,20 +484,25 @@ export function DashboardGrid({
                 setDisplayToAdd(event.target.value as TileDisplay)
               }
             >
-              {[
-                ...new Set(
-                  tileSources(site, addSystem).flatMap(
-                    (source) => source.displays,
-                  ),
-                ),
-              ].map((display) => (
+              {addSource.displays.map((display) => (
                 <option key={display} value={display}>
                   {tileDisplayNames[display]}
                 </option>
               ))}
             </select>
           </label>
-          <button type="submit" className="overview-save-button">
+          {addSource.key === "cameras" && site && (
+            <CameraTileOrder
+              site={site}
+              selected={addCameraIds}
+              onChange={setAddCameraIds}
+            />
+          )}
+          <button
+            type="submit"
+            className="overview-save-button"
+            disabled={selectedAddCameras?.length === 0}
+          >
             Add
           </button>
           <button
@@ -479,6 +524,7 @@ export function DashboardGrid({
                 addDisplay,
                 true,
                 addSource.key,
+                selectedAddCameras,
               )}
             </div>
           </section>
@@ -507,6 +553,7 @@ export function DashboardGrid({
               aria-label="Tile settings"
               onSubmit={(event) => {
                 event.preventDefault();
+                if (selectedSettingsCameras?.length === 0) return;
                 const title = settings.title.trim();
                 if (!title) {
                   setMessage("Enter a tile title.");
@@ -520,6 +567,7 @@ export function DashboardGrid({
                   settingsDisplay,
                   settings.kind,
                   settingsSource.key,
+                  selectedSettingsCameras,
                 );
                 applyLayout(next);
                 if (next) closeSettings();
@@ -554,6 +602,7 @@ export function DashboardGrid({
                         setSettings({
                           ...settings,
                           kind,
+                          cameraIds: undefined,
                           title:
                             settings.title === tileName(settings.kind)
                               ? tileName(kind)
@@ -596,6 +645,15 @@ export function DashboardGrid({
                     </select>
                   </label>
                 </fieldset>
+                {settingsSource.key === "cameras" && site && (
+                  <CameraTileOrder
+                    site={site}
+                    selected={settings.cameraIds}
+                    onChange={(cameraIds) =>
+                      setSettings({ ...settings, cameraIds })
+                    }
+                  />
+                )}
                 <fieldset>
                   <legend>Display</legend>
                   <label>
@@ -675,7 +733,11 @@ export function DashboardGrid({
                   </p>
                 )}
                 <div className="overview-heading-actions">
-                  <button type="submit" className="overview-save-button">
+                  <button
+                    type="submit"
+                    className="overview-save-button"
+                    disabled={selectedSettingsCameras?.length === 0}
+                  >
                     Apply settings
                   </button>
                   <button
@@ -709,6 +771,7 @@ export function DashboardGrid({
                     settingsDisplay,
                     true,
                     settingsSource.key,
+                    selectedSettingsCameras,
                   )}
                 </div>
               </div>
@@ -765,7 +828,14 @@ export function DashboardGrid({
                   data-dragging={preview?.tile === tile}
                 >
                   <div className="dashboard-grid-tile-content" inert={editing}>
-                    {renderTile(kind, title, size.display, false, size.dataKey)}
+                    {renderTile(
+                      kind,
+                      title,
+                      size.display,
+                      false,
+                      size.dataKey,
+                      size.cameraIds,
+                    )}
                   </div>
                   {editing && (
                     <>
@@ -816,6 +886,7 @@ export function DashboardGrid({
                               display: size.display,
                               kind,
                               dataKey: size.dataKey,
+                              cameraIds: size.cameraIds,
                             });
                             setMessage("");
                           }}

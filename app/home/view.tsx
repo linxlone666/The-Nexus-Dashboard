@@ -583,13 +583,14 @@ function DashboardView({
         site={site}
         editing={showForm}
         onChange={onLayoutChange}
-        renderTile={(kind, title, display, preview, dataKey) => (
+        renderTile={(kind, title, display, preview, dataKey, cameraIds) => (
           <SystemTile
             title={title}
             site={site}
             systemId={tileSystem(kind)}
             display={display}
             dataKey={dataKey}
+            cameraIds={cameraIds}
             onOpen={
               !preview && site && permitted.includes(tileSystem(kind))
                 ? () => onMonitor(tileSystem(kind))

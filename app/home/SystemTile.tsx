@@ -41,6 +41,7 @@ export function SystemTile({
   systemId,
   display,
   dataKey,
+  cameraIds,
   onOpen,
 }: {
   title: string;
@@ -48,6 +49,7 @@ export function SystemTile({
   systemId: SystemId;
   display?: TileDisplay;
   dataKey?: string;
+  cameraIds?: readonly string[];
   onOpen?: () => void;
 }) {
   const dataset = site ? getManagedSiteDataset(site, systemId) : undefined;
@@ -120,6 +122,7 @@ export function SystemTile({
                 metric={primary}
                 display={format}
                 dataKey={source.key}
+                cameraIds={cameraIds}
               />
             )}
           </div>

@@ -64,23 +64,29 @@ export function TileVisualization({
   metric,
   display,
   dataKey,
+  cameraIds,
 }: {
   site: ManagedSite;
   dataset: Dataset;
   metric: Metric;
   display: Exclude<TileDisplay, "summary">;
   dataKey: string;
+  cameraIds?: readonly string[];
 }) {
   if (display === "cameras") {
+    const available = getCameraMonitoring(site)?.cameras ?? [];
     const cameras =
-      getCameraMonitoring(site)?.cameras.filter(
-        (camera) => dataKey === "cameras" || dataKey === "camera:" + camera.id,
-      ) ?? [];
+      dataKey === "cameras"
+        ? (cameraIds?.flatMap((id) =>
+            available.filter((camera) => camera.id === id),
+          ) ?? available)
+        : available.filter((camera) => dataKey === "camera:" + camera.id);
     if (!cameras.length)
       return <p className="system-tile-empty">No cameras available.</p>;
     return (
       <div
         className="tile-camera-previews"
+        data-custom={cameraIds !== undefined}
         aria-label={
           dataKey === "cameras"
             ? "Sample camera feeds from this site"
@@ -92,7 +98,7 @@ export function TileVisualization({
             key={id}
             className="tile-camera-preview"
             data-offline={status === "Offline"}
-            data-extra={index > 0 && status !== "Offline"}
+            data-extra={!cameraIds && index > 0 && status !== "Offline"}
           >
             <svg
               width="18"

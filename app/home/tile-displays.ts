@@ -42,7 +42,7 @@ export function tileSources(
   if (cameras?.cameras.length) {
     sources.push({
       key: "cameras",
-      label: "All cameras",
+      label: "Camera group",
       displays: ["cameras"],
     });
     for (const camera of cameras.cameras) {

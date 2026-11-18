@@ -36,6 +36,7 @@ type DashboardTile = TileSize & {
   title?: string;
   display?: TileDisplay;
   dataKey?: string;
+  cameraIds?: readonly string[];
 };
 export type TilePosition = { column: number; row: number };
 type TilePositions = Record<TileId, TilePosition>;
@@ -329,13 +330,18 @@ export function addTile(
   layout: DashboardLayout,
   kind: TileKind,
   display?: TileDisplay,
+  dataKey?: string,
+  cameraIds?: readonly string[],
 ) {
   const id = crypto.randomUUID();
   const size = minimumSize(kind, layout.columns);
   const next = {
     ...layout,
     order: [...tileOrder(layout), id],
-    tiles: { ...layout.tiles, [id]: { ...size, kind, display } },
+    tiles: {
+      ...layout.tiles,
+      [id]: { ...size, kind, display, dataKey, cameraIds },
+    },
   };
 
   if (!layout.freePositions) return placeTiles(next) ? next : null;
@@ -379,6 +385,7 @@ export function updateTile(
   display?: TileDisplay,
   kind = tileKind(layout, tile),
   dataKey?: string,
+  cameraIds?: readonly string[],
 ) {
   const current = layout.tiles[tile];
   const next = resizeTile(
@@ -396,6 +403,7 @@ export function updateTile(
     title,
     display: display ?? current.display,
     dataKey,
+    cameraIds,
   };
   return next;
 }

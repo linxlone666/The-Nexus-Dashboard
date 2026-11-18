@@ -6,6 +6,8 @@ import { systemCatalog } from "@/data/mock-system-data";
 import type { SystemId, WorkSiteId } from "@/data/mock-system-data";
 import { workSites } from "@/data/work-sites";
 import { saveSite } from "@/utils/management-store";
+import { checkMockRest, mockRestScenarios } from "@/utils/mock-rest";
+import type { MockRestScenario } from "@/utils/mock-rest";
 import "./site-initialization.css";
 
 const steps = [
@@ -40,6 +42,11 @@ export function InitializeSite({
 }) {
   const [vendor, setVendor] = useState("");
   const [tested, setTested] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testMessage, setTestMessage] = useState("");
+  const [testSystem, setTestSystem] = useState<SystemId>("cctv");
+  const [scenario, setScenario] = useState<MockRestScenario>("success");
+  const connectionTest = useRef(0);
   const submitting = useRef(false);
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -63,12 +70,15 @@ export function InitializeSite({
   }
 
   function resetConnection() {
+    connectionTest.current++;
     setTested(false);
+    setTesting(false);
+    setTestMessage("");
     setSystemIds([]);
     setError("");
   }
 
-  function testConnection() {
+  async function testConnection() {
     if (source === "rest" && !validEndpoint(endpoint.trim())) {
       setError(
         "Enter an HTTP or HTTPS URL without credentials, a query string, or a fragment.",
@@ -76,7 +86,36 @@ export function InitializeSite({
       return;
     }
     setError("");
-    setTested(true);
+    setTested(false);
+    setTestMessage("");
+    if (source === "rest") {
+      setTestMessage("URL format validated. No external request was made.");
+      setTested(true);
+      return;
+    }
+    const requestId = ++connectionTest.current;
+    setTesting(true);
+    try {
+      const { rowCount } = await checkMockRest(
+        sampleSiteId,
+        testSystem,
+        scenario,
+      );
+      if (requestId !== connectionTest.current) return;
+      setTestMessage(
+        rowCount
+          ? "HTTP 200 · " + rowCount + " sample readings received."
+          : "HTTP 200 · Connection works. No readings returned.",
+      );
+      setTested(true);
+    } catch (error) {
+      if (requestId === connectionTest.current)
+        setError(
+          error instanceof Error ? error.message : "Mock API request failed.",
+        );
+    } finally {
+      if (requestId === connectionTest.current) setTesting(false);
+    }
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -96,7 +135,7 @@ export function InitializeSite({
       return;
     }
     if (step === 2 && !tested) {
-      setError("Run the simulated connection test first.");
+      setError("Complete the connection check first.");
       return;
     }
     if (step === 3 && !systemIds.length) {
@@ -279,24 +318,61 @@ export function InitializeSite({
                 />
               </label>
               <p className="superadmin-muted">
-                Use a dummy URL. The connection test is simulated.
+                Use a dummy URL. This checks the URL format only.
               </p>
             </>
           ))}
         {step === 2 && (
-          <div>
+          <div className="site-connection-check">
+            {source === "sample" && (
+              <>
+                <label>
+                  Test system
+                  <select
+                    value={testSystem}
+                    onChange={(event) => {
+                      setTestSystem(event.target.value as SystemId);
+                      resetConnection();
+                    }}
+                  >
+                    {systemCatalog.map((system) => (
+                      <option key={system.id} value={system.id}>
+                        {system.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Mock response
+                  <select
+                    value={scenario}
+                    onChange={(event) => {
+                      setScenario(event.target.value as MockRestScenario);
+                      resetConnection();
+                    }}
+                  >
+                    {mockRestScenarios.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            )}
             <button
               type="button"
               className="superadmin-button"
+              disabled={testing}
               onClick={testConnection}
             >
-              Run simulated connection test
+              {testing
+                ? "Checking…"
+                : source === "sample"
+                  ? "Test mock API"
+                  : "Validate URL"}
             </button>
-            {tested && (
-              <p role="status">
-                Simulation passed. No external service was contacted.
-              </p>
-            )}
+            {testMessage && <p role="status">{testMessage}</p>}
           </div>
         )}
         {step === 3 && (

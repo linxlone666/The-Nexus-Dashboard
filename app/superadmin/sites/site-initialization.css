@@ -95,3 +95,18 @@
 .site-setup-error {
   color: #a52424;
 }
+
+.site-connection-check {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #9ed3c6;
+  border-radius: 10px;
+  background: #ecf8f5;
+  color: #104940;
+}
+
+.site-connection-check label {
+  width: 100%;
+}

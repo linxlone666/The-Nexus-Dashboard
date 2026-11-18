@@ -1,3 +1,4 @@
+import { DemoCameraVideo } from "@/components/DemoCameraVideo";
 import {
   getCameraMonitoring,
   getMonitoringRecords,
@@ -93,28 +94,23 @@ export function TileVisualization({
             : "Selected camera feed"
         }
       >
-        {cameras.map(({ id, name, status }, index) => (
+        {cameras.map(({ id, name, status, footage }, index) => (
           <div
             key={id}
             className="tile-camera-preview"
             data-offline={status === "Offline"}
             data-extra={!cameraIds && index > 0 && status !== "Offline"}
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <use href="/nexus-navigation.svg#camera" />
-            </svg>
             <strong title={name}>{name}</strong>
-            <small>
-              {status}
-              <span>{status === "Online" ? " · Demo preview" : ""}</span>
-            </small>
+            {footage ? (
+              <DemoCameraVideo
+                name={name}
+                footage={footage}
+                className="tile-camera-video"
+              />
+            ) : (
+              <small>{status} · Feed unavailable</small>
+            )}
           </div>
         ))}
       </div>

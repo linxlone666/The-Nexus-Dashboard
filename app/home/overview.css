@@ -834,19 +834,19 @@
   text-align: left;
 }
 
-.monitoring-camera-card[aria-pressed="true"] {
+.monitoring-camera-card:has(.monitoring-camera-caption[aria-pressed="true"]) {
   border-color: #08786d;
   box-shadow: 0 0 0 2px #08786d;
 }
 
-.monitoring-camera-card:focus-visible {
+.monitoring-camera-caption:focus-visible {
   outline: 2px solid #08786d;
-  outline-offset: 3px;
+  outline-offset: -3px;
 }
 
 .monitoring-camera-preview {
   display: flex;
-  min-height: 108px;
+  aspect-ratio: 16 / 9;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -860,10 +860,19 @@
   background: #364749;
 }
 
-.monitoring-camera-preview svg {
-  width: 24px;
-  height: 24px;
-  stroke-width: 1.5;
+.monitoring-camera-video,
+.tile-camera-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #163236;
+}
+
+.tile-camera-video {
+  min-width: 0;
+  max-height: 100%;
+  border-radius: 4px;
+  object-fit: contain;
 }
 
 .monitoring-camera-caption,
@@ -876,7 +885,9 @@
 }
 
 .monitoring-camera-caption {
+  width: 100%;
   padding: 10px;
+  text-align: left;
 }
 
 .monitoring-camera-caption small {

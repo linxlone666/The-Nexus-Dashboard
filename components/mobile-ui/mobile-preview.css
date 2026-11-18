@@ -107,7 +107,6 @@
   }
 
   .overview-status i,
-  .camera-live span,
   .systems-card li::before {
     display: inline-block;
     width: 9px;
@@ -250,49 +249,15 @@
     color: #fff;
   }
 
-  .camera-card::before {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      180deg,
-      rgb(9 26 30 / 16%) 0%,
-      transparent 42%,
-      rgb(6 21 24 / 65%) 100%
-    );
-    content: "";
-  }
-
-  .camera-lobby {
-    background-image: url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=85");
-  }
-
-  .camera-parking {
-    background-image: url("https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=900&q=85");
-  }
-
-  .camera-live,
-  .camera-caption {
-    position: relative;
-    z-index: 1;
-  }
-
-  .camera-live {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin: 12px 15px;
-    color: #78ebd3;
-    font-size: 10px;
-  }
-
-  .camera-live span {
-    width: 8px;
-    height: 8px;
-    background: #69dfc4;
+  .mobile-camera-video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #163236;
   }
 
   .camera-caption {
-    padding: 0 16px 15px;
+    padding: 12px 16px 15px;
   }
 
   .camera-caption h3 {

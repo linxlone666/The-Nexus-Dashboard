@@ -2,6 +2,11 @@ import { getManagedSiteDataset } from "./mock-system-data";
 import type { SystemId, WorkSiteId } from "./mock-system-data";
 import type { ManagedSite } from "./management";
 
+export const demoCameraFootage = {
+  entrance: { video: "/cctv/lobby.webm", poster: "/cctv/lobby.jpg" },
+  vehicle: { video: "/cctv/loading-dock.webm", poster: "/cctv/loading-dock.jpg" },
+} as const;
+
 const sampleAreas = {
   headquarters: {
     prefix: "HQ",
@@ -49,12 +54,23 @@ export function getCameraMonitoring(site: ManagedSite) {
   if (!area || !latest) return undefined;
 
   const cameras = [
-    { id: area.prefix + "-CAM-01", name: area.entry, status: "Online" },
-    { id: area.prefix + "-CAM-02", name: area.parking, status: "Online" },
+    {
+      id: area.prefix + "-CAM-01",
+      name: area.entry,
+      status: "Online",
+      footage: demoCameraFootage.entrance,
+    },
+    {
+      id: area.prefix + "-CAM-02",
+      name: area.parking,
+      status: "Online",
+      footage: demoCameraFootage.vehicle,
+    },
     {
       id: area.prefix + "-CAM-03",
       name: "Service entrance",
       status: "Offline",
+      footage: null,
     },
   ] as const;
   const events = [

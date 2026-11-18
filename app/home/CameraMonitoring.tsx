@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DemoCameraVideo } from "@/components/DemoCameraVideo";
 import { getCameraMonitoring } from "@/data/mock-monitoring-records";
 import type { ManagedSite } from "@/data/management";
 import { formatSystemDate } from "./SystemTile";
@@ -24,36 +25,29 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
         <h2 id="monitoring-cameras-heading">Cameras</h2>
         <div className="monitoring-camera-grid">
           {data.cameras.map((camera) => (
-            <button
-              key={camera.id}
-              type="button"
-              className="monitoring-camera-card"
-              aria-pressed={selected?.id === camera.id}
-              onClick={() =>
-                setCameraId((current) =>
-                  current === camera.id ? null : camera.id,
-                )
-              }
-            >
-              <span
-                className="monitoring-camera-preview"
-                data-offline={camera.status === "Offline"}
+            <article key={camera.id} className="monitoring-camera-card">
+              {camera.footage ? (
+                <DemoCameraVideo
+                  name={camera.name}
+                  footage={camera.footage}
+                  className="monitoring-camera-video"
+                />
+              ) : (
+                <div className="monitoring-camera-preview" data-offline="true">
+                  Feed unavailable
+                </div>
+              )}
+              <button
+                type="button"
+                className="monitoring-camera-caption"
+                aria-label={"Filter events for " + camera.name}
+                aria-pressed={selected?.id === camera.id}
+                onClick={() =>
+                  setCameraId((current) =>
+                    current === camera.id ? null : camera.id,
+                  )
+                }
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <use href="/nexus-navigation.svg#camera" />
-                </svg>
-                <span>
-                  {camera.status === "Offline"
-                    ? "Feed unavailable"
-                    : "Demo camera preview"}
-                </span>
-              </span>
-              <span className="monitoring-camera-caption">
                 <span>
                   <strong>{camera.name}</strong>
                   <small>{camera.id}</small>
@@ -64,8 +58,8 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
                 >
                   {camera.status}
                 </span>
-              </span>
-            </button>
+              </button>
+            </article>
           ))}
         </div>
       </section>

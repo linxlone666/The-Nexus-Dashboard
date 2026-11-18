@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { DemoCameraVideo } from "@/components/DemoCameraVideo";
+import { demoCameraFootage } from "@/data/mock-monitoring-records";
 import BottomNavigation from "./BottomNavigation";
 import { PhonePreview } from "./PhonePreview";
 import "./mobile-preview.css";
@@ -44,10 +46,12 @@ function CameraCard({
   view: "lobby" | "parking";
 }) {
   return (
-    <article className={`camera-card camera-${view}`}>
-      <span className="camera-live">
-        <span aria-hidden="true" /> LIVE / 1080P
-      </span>
+    <article className="camera-card">
+      <DemoCameraVideo
+        name={name}
+        footage={demoCameraFootage[view === "lobby" ? "entrance" : "vehicle"]}
+        className="mobile-camera-video"
+      />
       <div className="camera-caption">
         <h3>{name}</h3>
         <p>{location}</p>
@@ -122,7 +126,7 @@ function Overview() {
 
       <section className="camera-section">
         <div className="section-heading">
-          <h2>Live camera views</h2>
+          <h2>Demo camera views</h2>
           <Link href="/cctv">View all ›</Link>
         </div>
         <CameraCard
@@ -223,7 +227,7 @@ function Alarms() {
 function Cctv() {
   return (
     <>
-      <section className="cctv-list" aria-label="Live camera feeds">
+      <section className="cctv-list" aria-label="Simulated camera feeds">
         <CameraCard
           name="Main lobby"
           location="Building A · Ground floor"

@@ -659,20 +659,11 @@
       background: var(--nexus-bg);
       box-shadow: 0 0 35px rgb(24 56 50 / 8%);
     }
-
-    .mobile-app .bottom-nav {
-      position: absolute;
-      right: 20px;
-      width: max-content;
-      max-width: calc(100% - 32px);
-    }
   }
 
-  .mobile-preview-return {
-    display: block;
-    margin-block: 12px;
-    color: var(--nexus-teal);
-    font-size: 12px;
-    font-weight: 700;
+  .mobile-preview-heading {
+    padding-block: 16px 8px;
+    font-size: 24px;
+    font-weight: 750;
   }
 }

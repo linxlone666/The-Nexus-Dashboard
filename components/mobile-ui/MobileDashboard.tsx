@@ -11,30 +11,6 @@ const screens: Record<Screen, { title: string; href: string }> = {
   cctv: { title: "CCTV", href: "/cctv" },
 };
 
-function Header({ screen }: { screen: Screen }) {
-  if (screen === "overview") {
-    return (
-      <header className="overview-header">
-        <div className="location-label">
-          NEXUS / Headquarters <span>▾</span>
-        </div>
-        <Link className="header-action" href="/activity">
-          Search&nbsp;&nbsp; AL
-        </Link>
-      </header>
-    );
-  }
-
-  return (
-    <header className="page-header">
-      <Link href="/mobile-ui" className="back-link">
-        ‹ Overview
-      </Link>
-      <h1>{screens[screen].title}</h1>
-    </header>
-  );
-}
-
 function MetricCard({
   label,
   value,
@@ -267,10 +243,9 @@ export default function MobileDashboard({ screen }: { screen: Screen }) {
   return (
     <main className="mobile-ui-preview">
       <div className={`mobile-app app-${screen}`}>
-        <Link href="/home" className="mobile-preview-return">
-          ← Site dashboard
-        </Link>
-        <Header screen={screen} />
+        {screen !== "overview" && (
+          <h1 className="mobile-preview-heading">{screens[screen].title}</h1>
+        )}
         <div className={`screen-content screen-${screen}`}>
           {screen === "overview" && <Overview />}
           {screen === "activity" && <Activity />}

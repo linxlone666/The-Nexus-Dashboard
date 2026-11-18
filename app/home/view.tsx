@@ -89,6 +89,8 @@ function Workspace({
     useSidebarNavigation();
   const navigationId = useId();
   const main = useRef<HTMLElement>(null);
+  const mobileMenuButton = useRef<HTMLButtonElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const toggleLabel = collapsed ? "Expand sidebar" : "Collapse sidebar";
   const [currentView, setCurrentView] = useState<ViewMode>("edit-dashboard");
   const [dashboardName, setDashboardName] = useState("");
@@ -165,6 +167,7 @@ function Workspace({
 
   function selectDashboard(id: string) {
     setSelectedDashboardId(id);
+    setMobileMenuOpen(false);
     setAddingDashboard(false);
     setEditingDashboard(false);
     setDashboardError("");
@@ -185,6 +188,7 @@ function Workspace({
 
   function openMonitoring(id: SystemId) {
     setCurrentView(id);
+    setMobileMenuOpen(false);
     main.current?.scrollTo(0, 0);
     main.current?.focus({ preventScroll: true });
   }
@@ -196,58 +200,114 @@ function Workspace({
       data-sidebar-collapsed={collapsed}
       data-sidebar-hover={previewing}
     >
-      <TopBar
-        home="/home"
-        workspace={{
-          site: site?.name ?? "Choose site",
-          dashboard: addingDashboard
-            ? dashboardName.trim() || "New dashboard"
-            : (selectedDashboard?.name ?? "Workspace"),
-        }}
-        name={profile?.name ?? "User"}
-        initials={
-          profile?.name
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((part) => part[0])
-            .join("")
-            .toUpperCase() || "U"
-        }
-        roleLabel={profile?.role ?? "User"}
-        search={
-          <WorkspaceSearch
-            site={site}
-            systems={monitoringSystems}
-            onOpen={openMonitoring}
-          />
-        }
-        searchLabel="Search devices and events"
-        searchPlaceholder="Search devices and events"
-      />
+      {!mobile && (
+        <TopBar
+          home="/home"
+          workspace={{
+            site: site?.name ?? "Choose site",
+            dashboard: addingDashboard
+              ? dashboardName.trim() || "New dashboard"
+              : (selectedDashboard?.name ?? "Workspace"),
+          }}
+          name={profile?.name ?? "User"}
+          initials={
+            profile?.name
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((part) => part[0])
+              .join("")
+              .toUpperCase() || "U"
+          }
+          roleLabel={profile?.role ?? "User"}
+          search={
+            <WorkspaceSearch
+              site={site}
+              systems={monitoringSystems}
+              onOpen={openMonitoring}
+            />
+          }
+          searchLabel="Search devices and events"
+          searchPlaceholder="Search devices and events"
+        />
+      )}
 
-      <aside className="overview-sidebar" {...railProps}>
-        <button
-          className="overview-sidebar-toggle"
-          type="button"
-          {...toggleProps}
-          aria-controls={navigationId}
-          aria-label={toggleLabel}
-          title={toggleLabel}
-        >
-          <svg
-            className="overview-nav-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
+      <aside
+        className="overview-sidebar"
+        {...(!mobile && railProps)}
+        onKeyDown={
+          mobile
+            ? (event) => {
+                if (event.key === "Escape" && mobileMenuOpen) {
+                  setMobileMenuOpen(false);
+                  mobileMenuButton.current?.focus();
+                }
+              }
+            : railProps.onKeyDown
+        }
+      >
+        {mobile ? (
+          <button
+            ref={mobileMenuButton}
+            className="mobile-workspace-toggle"
+            type="button"
+            aria-controls={navigationId}
+            aria-expanded={mobileMenuOpen}
+            aria-label={
+              mobileMenuOpen
+                ? "Close mobile navigation"
+                : "Open mobile navigation"
+            }
+            onClick={() => setMobileMenuOpen((open) => !open)}
           >
-            <use href="/nexus-navigation.svg#menu" />
-          </svg>
-          <span className="overview-nav-label">Menu</span>
-        </button>
+            <svg
+              className="overview-nav-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <use href="/nexus-navigation.svg#menu" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            className="overview-sidebar-toggle"
+            type="button"
+            {...toggleProps}
+            aria-controls={navigationId}
+            aria-label={toggleLabel}
+            title={toggleLabel}
+          >
+            <svg
+              className="overview-nav-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <use href="/nexus-navigation.svg#menu" />
+            </svg>
+            <span className="overview-nav-label">Menu</span>
+          </button>
+        )}
         <nav
           id={navigationId}
           className="overview-sidebar-links"
           aria-label="Dashboard views"
+          hidden={mobile && !mobileMenuOpen}
         >
+          {mobile && (
+            <div className="mobile-workspace-account">
+              <strong>{site?.name ?? "Workspace"}</strong>
+              <WorkspaceSearch
+                site={site}
+                systems={monitoringSystems}
+                onOpen={openMonitoring}
+              />
+              <Link href="/login/sites?view=dashboard">Change site</Link>
+              <Link href="/profile">My profile</Link>
+              {profile?.role === "Admin" && <Link href="/admin">Admin</Link>}
+              {profile?.role === "Superadmin" && (
+                <Link href="/superadmin">Superadmin</Link>
+              )}
+            </div>
+          )}
           <div
             className="overview-nav-group"
             role="group"
@@ -342,7 +402,7 @@ function Workspace({
                 </span>
               </button>
             ))}
-            {!monitoringSystems.length && !collapsed && (
+            {!monitoringSystems.length && (mobile || !collapsed) && (
               <p className="monitoring-nav-empty">
                 {site
                   ? "No systems configured"

@@ -12,6 +12,7 @@ const navigationItems = [
   { href: "/activity", label: "Activity", icon: "notebook-pen" },
   { href: "/cctv", label: "CCTV", icon: "cctv" },
   { href: "/alarms", label: "Alarms", icon: "bell-ring" },
+  { href: "/home", label: "Site dashboard", icon: "layout-dashboard" },
 ];
 
 export default function BottomNavigation() {

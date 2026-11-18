@@ -494,3 +494,21 @@
     opacity: 0.7;
   }
 }
+
+html[data-font-size="small"] { font-size: 90%; }
+html[data-font-size="large"] { font-size: 118.75%; }
+
+.nexus-camera-player { position: relative; min-width: 0; min-height: 0; }
+.nexus-camera-player > video { object-fit: contain; max-width: 100%; }
+.nexus-camera-expand {
+  position: absolute; top: 4px; right: 4px; min-width: 30px; min-height: 30px;
+  border-radius: 4px; background: #163236; color: white; font-size: 1rem;
+}
+.nexus-camera-dialog {
+  position: fixed; inset: 0; margin: auto; width: min(92vw, 62rem); max-height: 92dvh;
+  overflow: auto; padding: 1rem; border-radius: 10px; background: #fff; color: #163236;
+}
+.nexus-camera-dialog::backdrop { background: rgb(12 27 30 / 80%); }
+.nexus-camera-dialog > div { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; }
+.nexus-camera-dialog button { padding: .25rem .5rem; border: 1px solid #dce6e4; border-radius: 4px; }
+.nexus-camera-dialog video { display: block; width: 100%; max-height: 72dvh; object-fit: contain; background: #163236; }

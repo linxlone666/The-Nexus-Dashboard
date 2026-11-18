@@ -16,10 +16,32 @@ Mobile displays the most recently saved dashboard for the signed-in account and 
 
 ## ทดสอบ Mock REST API
 
-เปิด Superadmin → Sites → Add Site เลือก Nexus sample data แล้วไปที่ Connection configuration เลือกระบบและผลตอบกลับที่ต้องการ จากนั้นกด Test mock API หน้านี้ส่ง HTTP request ไปยัง API ของแอปจริง โดยปลายทางอ่านเฉพาะข้อมูลตัวอย่างจาก repo
+เปิด Superadmin → Sites → Add Site เลือก Nexus sample data แล้วไปที่ Data mapping เปิด Optional sample API test เลือกระบบและผลตอบกลับที่ต้องการ จากนั้นกด Test mock API หน้านี้ส่ง HTTP request ไปยัง API ของแอปจริง โดยปลายทางอ่านเฉพาะข้อมูลตัวอย่างจาก repo
 
 ตัวอย่างปลายทาง GET /api/mock/monitoring?site=headquarters&system=cctv&scenario=success ค่า scenario ที่ใช้ได้คือ success, empty, unavailable และ malformed แหล่งข้อมูล Custom REST ตรวจรูปแบบ URL เท่านั้น
 
 ## ทดลองบน Vercel
 
-รัน npm ci, npm run lint และ npm run build จากรากของ repo แล้ว import repo เข้า Vercel ด้วย Next.js preset สร้าง Preview Deployment จากสาขาฟีเจอร์ API ตัวอย่างไม่ต้องตั้ง environment variables เพิ่ม บัญชีเดโม สิทธิ์ และแดชบอร์ดยังคงแยกตามเบราว์เซอร์ แต่ละ Preview URL มี browser storage ของตัวเอง ใช้ข้อมูลตัวอย่างสำหรับทดสอบเท่านั้น
+ใช้ Node.js 24.x และรันคำสั่งจากราก repo ที่มี package.json ใน Vercel เลือก Next.js preset และสร้าง Preview Deployment จาก branch feature/dashboard-rebuild
+
+Mock Monitoring API ที่ /api/mock/monitoring ใช้งานได้โดยไม่ต้องตั้ง environment variables เพิ่ม ส่วน Demo Login บน Vercel Preview ต้องตั้ง NEXT_PUBLIC_NEXUS_DEMO=true ใน Preview environment ก่อน build ทุกครั้งที่เปลี่ยนค่านี้ต้อง build ใหม่ เพราะ Next.js ฝังค่า NEXT_PUBLIC_ ลงใน client bundle ระหว่าง build
+
+ใน Production ให้ลบ NEXT_PUBLIC_NEXUS_DEMO หรือกำหนดเป็น false แล้ว build ใหม่ เพื่อปิดทางเข้าบัญชีเดโม
+
+สำหรับการทดสอบ production build ใน PowerShell ให้รัน
+
+```powershell
+npm ci
+npm run lint
+$env:NEXT_PUBLIC_NEXUS_DEMO = "true"
+npm run build
+npm run start
+```
+
+เปิด /login?demo=user และ /login?demo=admin ในสองแท็บบน Preview URL เดียวกัน ระบบเก็บบัญชีและไซต์ที่เลือกใน sessionStorage แยกตามแท็บ รีเฟรชแล้วยังเป็นบัญชีเดิม และ logout ในแท็บหนึ่งไม่เปลี่ยนบัญชีของอีกแท็บ
+
+สิทธิ์ไซต์ Audit Logs และ layout ใช้ localStorage ร่วมกันภายใน origin และ browser profile เดียวกัน การเปลี่ยนสิทธิ์จะแจ้งแท็บอื่นผ่าน storage event แต่ละ Preview URL มี storage ของตัวเอง
+
+สอง browser profiles หรือสองอุปกรณ์เข้าใช้งานพร้อมกันได้ แต่สิทธิ์และ layout ที่บันทึกไว้ในเครื่องหนึ่งยังไม่ซิงก์ไปอีกเครื่อง การใช้ layout จาก desktop บนโทรศัพท์คนละเครื่องต้องเพิ่ม shared persistence ในอนาคต
+
+ระบบนี้ใช้ mock data และตรวจสิทธิ์ใน frontend สำหรับการสาธิต

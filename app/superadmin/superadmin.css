@@ -3,7 +3,7 @@
 }
 
 .superadmin-page h1 {
-  font-size: 30px;
+  font-size: 1.875rem;
   font-weight: 750;
 }
 
@@ -14,7 +14,7 @@
 
 .superadmin-page h2 {
   margin-bottom: 12px;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 700;
 }
 
@@ -32,7 +32,7 @@
 .superadmin-metrics strong {
   display: block;
   color: #08786d;
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .superadmin-card {
@@ -64,7 +64,7 @@
   border: 1px solid #dce6e4;
   border-radius: 6px;
   padding: 6px 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .superadmin-form select,
@@ -100,7 +100,7 @@
 
 .superadmin-page table {
   width: 100%;
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-align: left;
 }
 

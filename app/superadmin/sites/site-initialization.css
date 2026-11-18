@@ -110,3 +110,8 @@
 .site-connection-check label {
   width: 100%;
 }
+
+.site-setup-steps li[hidden] { display: none; }
+.site-setup-steps li > .sr-only { position: absolute; width: 1px; height: 1px; }
+
+.site-setup-steps[data-connection-step="false"] { grid-template-columns: repeat(4, minmax(100px, 1fr)); }

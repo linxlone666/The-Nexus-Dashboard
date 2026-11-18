@@ -22,6 +22,12 @@ function sourceLabel(site: ManagedSite) {
   return getManagedSiteSystems(site).length ? "Sample data" : "No dataset";
 }
 
+function connectionStatus(site: ManagedSite) {
+  if (site.setupStatus === "onboarding" || site.source?.kind === "rest")
+    return "Awaiting connection";
+  return getManagedSiteSystems(site).length ? "Ready" : "No data source";
+}
+
 function SiteStatus({ active }: { active: boolean }) {
   return (
     <span className="directory-status" data-active={active}>
@@ -173,7 +179,10 @@ export function SiteDirectory({ admin = false }: { admin?: boolean }) {
                     <td>
                       <SiteStatus active={item.active} />
                     </td>
-                    <td>{sourceLabel(item)}</td>
+                    <td>
+                      {sourceLabel(item)}
+                      <div className="superadmin-muted">{connectionStatus(item)}</div>
+                    </td>
                   </tr>
                 ))}
                 {!visible.length && (
@@ -301,12 +310,7 @@ export function SiteDirectory({ admin = false }: { admin?: boolean }) {
                   </div>
                   <div>
                     <dt>Setup status</dt>
-                    <dd>
-                      {site.setupStatus === "onboarding" ||
-                      (!site.setupStatus && site.source?.kind === "rest")
-                        ? "Onboarding"
-                        : "Ready"}
-                    </dd>
+                    <dd>{connectionStatus(site)}</dd>
                   </div>
                   <div>
                     <dt>Data source</dt>

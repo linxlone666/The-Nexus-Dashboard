@@ -16,7 +16,7 @@
   transition: grid-template-columns 160ms ease;
   color: var(--ink);
   background: var(--canvas);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.45;
 }
 
@@ -77,7 +77,7 @@
 }
 
 .sidebarToggleLabel {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .shell[data-sidebar-collapsed="true"]:not([data-sidebar-hover="true"])
@@ -184,4 +184,16 @@
   .headerActions .headerSearch[type="search"] {
     display: none;
   }
+}
+
+@media (min-width: 681px) {
+  .shell > header { position: sticky; top: 0; z-index: 5; }
+  .shell > .sidebar {
+    position: sticky;
+    top: var(--nexus-topbar-height, max(64px, 5rem));
+    align-self: start;
+    height: calc(100dvh - var(--nexus-topbar-height, max(64px, 5rem)));
+    overflow-y: auto;
+  }
+  .sidebarLinks a { white-space: normal; }
 }

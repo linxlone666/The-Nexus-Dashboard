@@ -8,6 +8,7 @@ import type {
   ManagementRole,
   ManagedSite,
 } from "@/data/management";
+import { scopedAudit } from "@/utils/scoped-audit";
 import { useDemoProfile } from "@/utils/demo-session";
 import {
   saveAccount,
@@ -60,9 +61,10 @@ export function UserManagement({
   const [status, setStatus] = useState("");
   const [siteId, setSiteId] = useState("");
   const [panel, setPanel] = useState<string | null>(
-    admin ? null : bootstrapEmail,
+    null,
   );
   const [section, setSection] = useState<Section>("General");
+  const [draftSites, setDraftSites] = useState<string[]>([]);
   const [checked, setChecked] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const account = accounts.find(({ email }) => email === panel);
@@ -114,6 +116,7 @@ export function UserManagement({
 
   function openPanel(email: string | null) {
     setPanel(email);
+    setDraftSites(accounts.find((user) => user.email === email)?.siteIds ?? []);
     setSection("General");
     setMessage("");
   }
@@ -573,7 +576,13 @@ export function UserManagement({
                         type="checkbox"
                         name="site"
                         value={site.id}
-                        defaultChecked={account?.siteIds.includes(site.id)}
+                        checked={draftSites.includes(site.id)}
+                        onChange={(event) => {
+                          const enabled = event.currentTarget.checked;
+                          setDraftSites((current) =>
+                            enabled ? [...current, site.id] : current.filter((id) => id !== site.id),
+                          );
+                        }}
                       />{" "}
                       {site.name}
                       {site.active ? "" : " (inactive)"}
@@ -587,7 +596,7 @@ export function UserManagement({
                     A system grant only applies while site access is enabled.
                   </p>
                   {sites.map((site) => (
-                    <details key={site.id}>
+                    <details key={site.id} hidden={!draftSites.includes(site.id)}>
                       <summary>{site.name}</summary>
                       {getManagedSiteSystems(site).map((system) => (
                         <label className="superadmin-checkbox" key={system.id}>
@@ -623,7 +632,7 @@ export function UserManagement({
                       : "Never signed in"}
                   </p>
                   <ul className="superadmin-event-list">
-                    {audit
+                    {scopedAudit(audit, profile)
                       .filter(
                         ({ category, target }) =>
                           category === "Users" && target === account.email,

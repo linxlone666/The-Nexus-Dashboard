@@ -24,11 +24,11 @@
 ### Sites, Initialize Site และ Audit Logs
 
 1. **เลือกไซต์** — `SiteDirectory` อ่านไซต์จาก `useManagement()` แล้วกรองชื่อหรือสถานที่ `selectSite()` เก็บ ID ของแถวที่เลือก ส่วน `subscribeHash()` ฟังการเปลี่ยน URL รูปแบบ `#site-…` เพื่อเปิดรายละเอียดจากลิงก์ได้หลังรีโหลด
-2. **เริ่มสร้างไซต์** — `InitializeSite` มีห้าขั้น Details → Vendor → Connection → Data mapping → Review แต่ละขั้นเก็บค่าฟอร์มใน React state และ `goTo()` สลับขั้น จึงกดย้อนกลับแล้วอ่านค่าที่เคยกรอกได้
-3. **ทดสอบการเชื่อมต่อ** — `testConnection()` เรียก `checkMockRest()` เมื่อเลือก Sample แล้วแสดง HTTP status และจำนวน readings หากเลือก Custom REST จะใช้ `validEndpoint()` ตรวจ URL เท่านั้น `resetConnection()` ล้างผลเทสต์และ mapping เมื่อเปลี่ยนค่าที่เกี่ยวข้อง พร้อมเพิ่มเลขคำขอเพื่อทิ้งผลตอบกลับเก่าที่มาช้า
+2. **เริ่มสร้างไซต์** — `InitializeSite` ใช้ Details → Vendor → Data mapping → Review สำหรับ Sample และเพิ่มขั้น Connection สำหรับ Custom REST แต่ละขั้นเก็บค่าฟอร์มใน React state และ `goTo()` สลับขั้น จึงกดย้อนกลับแล้วอ่านค่าที่เคยกรอกได้
+3. **ทดสอบการเชื่อมต่อ** — `testConnection()` เรียก `checkMockRest()` เมื่อเลือก Sample แล้วแสดง HTTP status และจำนวน readings หากเลือก Custom REST จะใช้ `validEndpoint()` ตรวจ URL เท่านั้น `resetConnection()` ล้างผลเทสต์เมื่อเปลี่ยนค่าที่เกี่ยวข้อง พร้อมเพิ่มเลขคำขอเพื่อทิ้งผลตอบกลับเก่าที่มาช้า
 4. **บันทึกไซต์** — `submit()` ตรวจข้อมูลก่อนเลื่อนไปขั้นต่อไป ที่ Review จะสร้าง UUID แล้วเรียก `saveSite()` ตัว store ตรวจบทบาท Superadmin และชื่อไซต์ซ้ำก่อนบันทึกและเพิ่ม Audit Log จากนั้นเปิดรายละเอียดไซต์ผ่าน URL ไซต์ใหม่ใช้รหัสของตัวเองและถูกนับใต้ Nexus Operations สำหรับ Overview รุ่นเดิม
 5. **ลบไซต์** — `removeSite()` ตรวจผู้ใช้ปัจจุบันและชื่อที่พิมพ์ยืนยัน ลบเฉพาะไซต์ตาม ID และล้าง ID นั้นออกจากสิทธิ์ของบัญชี แล้วเขียน Audit Log ส่วนนับภาพรวมจะเปลี่ยนตามข้อมูลที่อ่านใหม่
-6. **ตั้งค่าและอ่านประวัติ** — `saveSettings()` ตรวจค่า Table density และ Time zone ก่อนบันทึก หน้า Audit Logs ค้นข้อความจาก action และ target กรองหมวด แล้วจัดรูปแบบวันเวลาตาม timezone ที่กำหนด รายการมาจากการเปลี่ยนข้อมูลที่ store บันทึกไว้
+6. **ตั้งค่าและอ่านประวัติ** — `saveSettings()` ตรวจค่า Table density และ Time zone ก่อนบันทึก หน้า Audit Logs ค้นข้อความจาก action และ target กรอง Category, Event และ User พร้อมกันได้ แล้วจัดรูปแบบวันเวลาตาม timezone ที่กำหนด รายการมาจากการเปลี่ยนข้อมูลที่ store บันทึกไว้
 
 ไฟล์ต้นทาง [SiteDirectory](../app/superadmin/sites/SiteDirectory.tsx) · [InitializeSite](../app/superadmin/sites/InitializeSite.tsx) · [management-store](../utils/management-store.ts) · [project-storage](../utils/project-storage.ts) · [Audit Logs](../app/superadmin/audit-logs/page.tsx) · [Settings](../app/superadmin/settings/page.tsx)
 
@@ -42,14 +42,16 @@
 | [เมนูโทรศัพท์ใน Home](../app/home/view.tsx) | เมื่อ `useDashboardDevice()` คืน `mobile` หน้า Home ใช้ปุ่ม ☰ มุมขวาล่าง `mobileMenuOpen` คุมแผง Workspace, Monitoring, Search, โปรไฟล์และเปลี่ยนไซต์ เมื่อเลือก Monitoring เมนูปิดแล้วโฟกัสไปเนื้อหา |
 | [BottomNavigation](../components/mobile-ui/BottomNavigation.tsx) และ [PhonePreview](../components/mobile-ui/PhonePreview.tsx) | ชุดเดโม `/mobile-ui` ใช้ลิงก์ Overview, Activity, CCTV, Alarms และ Site dashboard ปุ่ม ☰ สลับแผงด้วย state และตรวจเส้นทางด้วย `usePathname()` ส่วน PhonePreview รอให้รู้ประเภทอุปกรณ์แล้วแสดงเดโมเฉพาะโทรศัพท์ |
 
-**ตอนเดโม** สร้างไซต์ด้วย Sample → ทดสอบ API → Mapping → เปิดรายละเอียดหลังรีโหลด → ดู Audit Logs แล้วสลับทดสอบ Sidebar แบบ hover และปุ่ม ☰ แบบโทรศัพท์
+**ตอนเดโม** สร้างไซต์ด้วย Sample → Mapping → เปิดรายละเอียดหลังรีโหลด → ดู Audit Logs แล้วสลับทดสอบ Sidebar แบบ hover และปุ่ม ☰ แบบโทรศัพท์
+
+**ตรวจเมนูของแต่ละบทบาท** — เปิด User, Admin และ Superadmin แล้วดู badge หลังชื่อใน Top Bar เมนู Profile ใช้สำหรับเลือกคำสั่ง ส่วนข้อมูลบัญชีเต็มอยู่ใน My profile ตัวเลือกไซต์ใน Home ใช้ native select และอ่านเฉพาะไซต์ที่บัญชีได้รับสิทธิ์
 
 ## คนที่ 2 — Admin, Login และสิทธิ์
 
 | ฟังก์ชัน | ทำงานอย่างไร |
 | --- | --- |
 | [handleLogin](../app/login/Sign_In.tsx) และ [login](../data/credential.ts) | อ่านอีเมลและรหัสผ่านจากฟอร์ม ตรวจว่าบัญชี Active และรหัสผ่านตรง ค่อยสุ่มผลสำเร็จ ลิงก์หมดอายุ หรือเข้าไม่ได้ในเดโม เมื่อสำเร็จส่ง Superadmin ไปหน้าจัดการ ส่วน Admin และ User ไปเลือกไซต์ |
-| [เซสชันและโปรไฟล์](../utils/demo-session.ts) | `saveDemoSession()` ล้างไซต์จากเซสชันก่อน เก็บอีเมลและ token เดโมที่คีย์ `credential` และบันทึกเวลาเข้าสู่ระบบ `readDemoProfile()` อ่านบัญชีปัจจุบันจาก store ใหม่ จึงเห็นสิทธิ์และสถานะล่าสุด `signOutDemoSession()` ล้างเซสชันกับไซต์ที่เลือก |
+| [เซสชันและโปรไฟล์](../utils/demo-session.ts) | `saveDemoSession()` ล้างไซต์จากเซสชันก่อน เก็บอีเมลและ token เดโมใน sessionStorage ที่คีย์ `credential` และบันทึกเวลาเข้าสู่ระบบ `readDemoProfile()` อ่านบัญชีปัจจุบันจาก store ใหม่ จึงเห็นสิทธิ์และสถานะล่าสุด `signOutDemoSession()` ล้างเซสชันกับไซต์ที่เลือก |
 | [chooseSite](../app/login/sites/page.tsx) | เรียก `availableSites()` จากข้อมูลล่าสุด ตรวจไซต์ Active และสิทธิ์ของบัญชีอีกครั้งก่อนเซฟ `selectWorkSite()` เก็บ ID ที่ `nexus-selected-site` แล้วนำไป Workspace |
 | [AdminLayout](../app/admin/layout.tsx) และ [Users](../app/admin/users/page.tsx) | Layout ตรวจบทบาท Admin หน้า Users ส่ง `manager="Admin"` เข้า UI เดียวกับ Superadmin และจำกัดหน้าจอให้แก้สิทธิ์ของบัญชี User ในไซต์ที่ Admin ดูแล |
 | [saveStandardUserAccess](../utils/management-store.ts) | ตรวจผู้แก้ว่าเป็น Admin และบัญชีเป้าหมายเป็น User ปฏิเสธไซต์นอกขอบเขตและระบบที่ไซต์นั้นไม่ได้ตั้งไว้ บันทึก `siteIds` และ `systemsBySite` โดยเก็บสิทธิ์นอกขอบเขตของ Admin คนนี้ไว้ |
@@ -58,7 +60,9 @@
 
 **สิทธิ์ไหลไปถึง Home อย่างไร** — `siteIds` กำหนดว่าเข้าไซต์ได้หรือไม่ เมื่ออยู่ในไซต์ที่เข้าได้ Home ใช้ `systemsBySite[siteId]` จำกัดระบบ ถ้าไม่มีรายการ ระบบที่ไซต์เปิดไว้ใช้ได้ตามค่าเริ่มต้น ถ้าเป็นอาร์เรย์ว่างจะไม่มีระบบให้ดู รายการระบบเดียวกันถูกส่งให้ Monitoring, Search และตัวเลือกไทล์
 
-**งานต่อและเดโม** — หน้า `/admin` ยังมีเฉพาะหัวข้อ Overview ฟังก์ชันอยู่ในเมนูย่อย ให้เดโมตั้งสิทธิ์ CCTV ต่างกันสำหรับ User สองคนในไซต์เดียวกัน แล้วถอนสิทธิ์ไซต์หนึ่งและรีโหลดเพื่อตรวจผล
+**งานต่อและเดโม** — หน้า [Admin Overview](../app/admin/AdminOverview.tsx) สรุปไซต์และผู้ใช้ในขอบเขตของ Admin และมีทางเข้า Dashboard ให้เดโมตั้งสิทธิ์ CCTV ต่างกันสำหรับ User สองคนในไซต์เดียวกัน แล้วถอนสิทธิ์ไซต์หนึ่งและรีโหลดเพื่อตรวจผล
+
+**เซสชันและโปรไฟล์** — DemoEntry เปิดบัญชีจาก /login?demo=user, /login?demo=admin หรือ /login?demo=superadmin เมื่อโหมดเดโมเปิดอยู่ บัญชีและไซต์ที่เลือกเก็บใน sessionStorage รายแท็บ สิทธิ์ Audit Logs และขนาดตัวอักษรอ่านจาก localStorage โดยขนาดตัวอักษรแยกตามบัญชี หน้า My profile แสดง Recent activity ของบัญชีตามขอบเขตไซต์ Reset Password ครั้งแรกบันทึกเพียงสถานะว่าตั้งเสร็จแล้ว
 
 ## คนที่ 3 — Workspace, ตัวแก้ไขแดชบอร์ด และไทล์
 
@@ -77,20 +81,24 @@
 
 **ตอนเดโม** — เพิ่มกล้องสองตัว สลับลำดับ ย้ายและปรับขนาดไทล์ กด Apply settings แล้ว Save changes รีโหลดเช็กผล แล้วลองเปิดจากโหมดจำลองโทรศัพท์ในเบราว์เซอร์เดียวกัน
 
+**ตรวจ Preview และการปรับขนาด** — DashboardGrid ใช้ renderer เดียวกันกับ Settings Preview และ Tile จริง กราฟเส้นและแท่งอยู่ใน TileChart ส่วนโดนัทอยู่ใน TileDonut ตัวเลขและหน่วยมาจาก mock รายวัน กริด desktop ตั้งได้สูงสุด 4 คอลัมน์ มือถืออ่าน layout ที่บันทึกไว้ในเบราว์เซอร์และจัดเป็นคอลัมน์เดียว
+
 ## คนที่ 4 — Monitoring, Search และ Mock REST API
 
 | ฟังก์ชัน | ทำงานอย่างไร |
 | --- | --- |
 | [WorkspaceSearch](../app/home/WorkspaceSearch.tsx) | รับรายการระบบที่อนุญาตจาก Home สร้างผลค้นจากชื่อระบบ ชื่อกล้อง เหตุการณ์ และรายการในระบบนั้น กรองตามคำค้น แล้วใช้ `select()` ส่งรหัสระบบให้ `openMonitoring()` รองรับลูกศร Enter และ Escape |
-| [MonitoringView](../app/home/MonitoringView.tsx) | อ่าน dataset สำหรับไซต์และระบบที่เปิด แสดงค่าล่าสุด รายการเหตุการณ์ และตารางย้อนหลัง Finance มีชุดราคา OHLC เพิ่ม ถ้าข้อมูลไซต์ว่างจะแสดงสถานะของข้อมูล |
+| [MonitoringView](../app/home/MonitoringView.tsx) | อ่าน dataset สำหรับไซต์และระบบที่เปิด แสดงสรุปและรายละเอียดตาม Sample day ที่เลือกในช่วง 9–11 พฤศจิกายน 2026 พร้อมตารางย้อนหลัง Finance มีชุดราคา OHLC เพิ่ม ถ้าข้อมูลไซต์ว่างจะแสดงสถานะของข้อมูล |
 | [CameraMonitoring](../app/home/CameraMonitoring.tsx) | `getCameraMonitoring()` คืนกล้องและเหตุการณ์ที่ใช้ camera ID เดียวกัน เมื่อเลือกกล้องจะกรองเหตุการณ์ของ ID นั้น และกด Show all cameras เพื่อคืนรายการทั้งหมด |
 | [mock-system-data](../data/mock-system-data.ts) | `siteDataset()` แปลง mock ตัวเลขตามไซต์เป็น metrics และ readings ตามวันที่ `getManagedSiteSystems()` เลือกระบบที่ไซต์เปิดไว้ `getManagedSiteDataset()` อ่านข้อมูลจากไซต์ตั้งต้นหรือไซต์ Sample ที่ผูกไว้ |
 | [mock-monitoring-records](../data/mock-monitoring-records.ts) | `getMonitoringRecords()` สร้างคอลัมน์และแถวต่างกันตามระบบ `getCameraMonitoring()` คืนชื่อ รหัสและสถานะกล้องพร้อมเหตุการณ์ `getPortfolioPrices()` คืน Open, High, Low, Close ตามวันที่ของ Finance |
 | [Route Handler GET](../app/api/mock/monitoring/route.ts) | รับ `site`, `system`, `scenario` จาก query เลือก dataset แล้วคืน JSON จากไฟล์ใน repo `success` คืนข้อมูลตัวอย่าง, `empty` คืน rows ว่าง, `unavailable` คืน 503, `malformed` คืน 200 พร้อมรูปแบบผิด หากไม่รู้จักไซต์/ระบบจะคืน 404 และ scenario ที่ไม่รองรับจะคืน 400 |
 | [checkMockRest](../utils/mock-rest.ts) | ฝั่งเบราว์เซอร์ใช้ `fetch()` เรียก API เดียวกับแอปจากหน้า Initialize Site มี timeout ตรวจ HTTP status, รหัสไซต์และระบบ, รายการ metric และรูปแบบ readings ก่อนคืนจำนวนแถวให้หน้าทดสอบ |
-| [MobileDashboard](../components/mobile-ui/MobileDashboard.tsx) | เลือกคอมโพเนนต์ Overview, Activity, CCTV หรือ Alarms จากค่า `screen` ของแต่ละ route หน้าชุดนี้ใช้ข้อมูลตัวอย่างในไฟล์ของตัวเอง ส่วน BottomNavigation และเงื่อนไขเข้าจากโทรศัพท์อยู่ในงานคนที่ 1 |
+| [MobileDashboard](../components/mobile-ui/MobileDashboard.tsx) | เลือกคอมโพเนนต์ Overview, Activity, CCTV หรือ Alarms จากค่า `screen` ของแต่ละ route หน้าชุดนี้ใช้ข้อมูลระบบเดียวกับ Home ผ่าน MobileSystemView และ MobileCctv และตรวจสิทธิ์ไซต์ก่อนแสดงข้อมูล ส่วน BottomNavigation และเงื่อนไขเข้าจากโทรศัพท์อยู่ในงานคนที่ 1 |
 
 **ตอนเดโม** — ค้นชื่อกล้องแล้วกด Enter สลับกล้องใน CCTV เพื่อดูเหตุการณ์เฉพาะเครื่อง จากนั้นเปิด Mock API ผ่านตัวช่วยตั้งค่าไซต์ ทดลองทั้งผลปกติ ข้อมูลว่าง 503 และ schema ผิด
+
+**ตรวจยอดรายวัน** — ตารางเหตุการณ์และยอดของ CCTV, Alarms, Attendance, Visitors, CRM และ Access ใช้รายการจำลองร่วมกัน ส่วนข้อมูลที่เป็นค่ารายวันอย่าง kWh อ่านจาก readings ของวันนั้น Search เปิดผลไปที่วันของรายการ Mock REST ยังรองรับกรณีข้อมูลว่าง 503 และข้อมูลผิดรูปแบบ
 
 ## จุดส่งต่องาน
 

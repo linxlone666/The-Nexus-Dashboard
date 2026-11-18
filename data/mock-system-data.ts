@@ -1,3 +1,6 @@
+import { demoDates } from "./demo-dates";
+import { getOperationCounts } from "./mock-operation-records";
+import { getSecurityCounts } from "./mock-security-events";
 import type { ManagedSite } from "./management";
 import type { workSites } from "./work-sites";
 
@@ -18,7 +21,7 @@ type System = {
 };
 
 // Fixed dates and fictional totals make the demo repeatable.
-const dates = ["2026-11-09", "2026-11-10", "2026-11-11"];
+const dates = demoDates;
 
 const systems = [
   {
@@ -30,21 +33,9 @@ const systems = [
       { key: "onTime", label: "On time", unit: "count" },
     ],
     samples: {
-      headquarters: [
-        [180, 174, 166],
-        [180, 177, 171],
-        [180, 175, 169],
-      ],
-      "north-campus": [
-        [96, 92, 87],
-        [96, 94, 91],
-        [96, 90, 86],
-      ],
-      "muang-thong": [
-        [222, 214, 203],
-        [222, 216, 208],
-        [222, 219, 214],
-      ],
+      headquarters: dates.map((date) => getOperationCounts(date).attendance),
+      "north-campus": dates.map((date) => getOperationCounts(date).attendance),
+      "muang-thong": dates.map((date) => getOperationCounts(date).attendance),
     },
   },
   {
@@ -56,21 +47,9 @@ const systems = [
       { key: "denied", label: "Denied check-ins", unit: "count" },
     ],
     samples: {
-      headquarters: [
-        [55, 52, 2],
-        [62, 61, 1],
-        [58, 55, 0],
-      ],
-      "north-campus": [
-        [31, 29, 1],
-        [26, 26, 0],
-        [34, 32, 2],
-      ],
-      "muang-thong": [
-        [41, 38, 2],
-        [46, 42, 1],
-        [48, 44, 2],
-      ],
+      headquarters: dates.map((date) => getOperationCounts(date).visitors),
+      "north-campus": dates.map((date) => getOperationCounts(date).visitors),
+      "muang-thong": dates.map((date) => getOperationCounts(date).visitors),
     },
   },
   {
@@ -82,21 +61,9 @@ const systems = [
       { key: "openPositions", label: "Open positions", unit: "count" },
     ],
     samples: {
-      headquarters: [
-        [184, 4, 6],
-        [184, 4, 6],
-        [185, 5, 5],
-      ],
-      "north-campus": [
-        [99, 3, 3],
-        [99, 3, 3],
-        [99, 3, 2],
-      ],
-      "muang-thong": [
-        [228, 6, 8],
-        [228, 6, 8],
-        [229, 7, 7],
-      ],
+      headquarters: [[5, 1, 3], [5, 1, 2], [5, 1, 2]],
+      "north-campus": [[5, 1, 2], [5, 1, 3], [5, 1, 2]],
+      "muang-thong": [[5, 1, 3], [5, 1, 3], [5, 1, 2]],
     },
   },
   {
@@ -134,21 +101,9 @@ const systems = [
       { key: "wonDeals", label: "Deals won today", unit: "count" },
     ],
     samples: {
-      headquarters: [
-        [12, 48, 3],
-        [16, 51, 4],
-        [13, 52, 2],
-      ],
-      "north-campus": [
-        [4, 19, 1],
-        [6, 21, 0],
-        [5, 20, 2],
-      ],
-      "muang-thong": [
-        [8, 36, 2],
-        [11, 39, 2],
-        [10, 40, 3],
-      ],
+      headquarters: dates.map((date) => getOperationCounts(date).crm),
+      "north-campus": dates.map((date) => getOperationCounts(date).crm),
+      "muang-thong": dates.map((date) => getOperationCounts(date).crm),
     },
   },
   {
@@ -157,50 +112,26 @@ const systems = [
     metrics: [
       { key: "totalCameras", label: "Total cameras", unit: "count" },
       { key: "online", label: "Online cameras", unit: "count" },
-      { key: "motionEvents", label: "Motion events", unit: "count" },
+      { key: "motionEvents", label: "Camera events", unit: "count" },
     ],
     samples: {
-      headquarters: [
-        [42, 40, 87],
-        [42, 42, 103],
-        [42, 41, 95],
-      ],
-      "north-campus": [
-        [24, 23, 43],
-        [24, 24, 54],
-        [24, 23, 47],
-      ],
-      "muang-thong": [
-        [50, 48, 132],
-        [50, 49, 149],
-        [50, 48, 141],
-      ],
+      headquarters: dates.map((date) => getSecurityCounts(date).cctv),
+      "north-campus": dates.map((date) => getSecurityCounts(date).cctv),
+      "muang-thong": dates.map((date) => getSecurityCounts(date).cctv),
     },
   },
   {
     id: "alarms",
     name: "Alarms and Incidents",
     metrics: [
-      { key: "raised", label: "Alarms raised", unit: "count" },
-      { key: "critical", label: "Critical alarms", unit: "count" },
-      { key: "resolved", label: "Alarms resolved", unit: "count" },
+      { key: "raised", label: "Tracked incidents", unit: "count" },
+      { key: "critical", label: "Unresolved critical incidents", unit: "count" },
+      { key: "resolved", label: "Resolved incidents", unit: "count" },
     ],
     samples: {
-      headquarters: [
-        [8, 1, 7],
-        [6, 0, 5],
-        [9, 2, 8],
-      ],
-      "north-campus": [
-        [4, 0, 4],
-        [5, 1, 4],
-        [3, 0, 3],
-      ],
-      "muang-thong": [
-        [14, 3, 10],
-        [11, 2, 9],
-        [13, 2, 12],
-      ],
+      headquarters: dates.map((date) => getSecurityCounts(date).alarms),
+      "north-campus": dates.map((date) => getSecurityCounts(date).alarms),
+      "muang-thong": dates.map((date) => getSecurityCounts(date).alarms),
     },
   },
   {
@@ -209,24 +140,12 @@ const systems = [
     metrics: [
       { key: "granted", label: "Access granted", unit: "count" },
       { key: "denied", label: "Access denied", unit: "count" },
-      { key: "activeDoors", label: "Doors reporting", unit: "count" },
+      { key: "activeDoors", label: "Doors with events", unit: "count" },
     ],
     samples: {
-      headquarters: [
-        [765, 11, 18],
-        [810, 8, 18],
-        [794, 10, 17],
-      ],
-      "north-campus": [
-        [374, 4, 9],
-        [382, 2, 9],
-        [368, 5, 9],
-      ],
-      "muang-thong": [
-        [941, 15, 14],
-        [988, 13, 14],
-        [1004, 9, 14],
-      ],
+      headquarters: dates.map((date) => getOperationCounts(date).access),
+      "north-campus": dates.map((date) => getOperationCounts(date).access),
+      "muang-thong": dates.map((date) => getOperationCounts(date).access),
     },
   },
   {

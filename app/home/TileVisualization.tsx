@@ -1,3 +1,6 @@
+import { TileDonut } from "./TileDonut";
+import { TileChart } from "./TileChart";
+import { formatDemoDate, formatDemoPeriod } from "@/data/demo-dates";
 import { DemoCameraVideo } from "@/components/DemoCameraVideo";
 import {
   getCameraMonitoring,
@@ -11,18 +14,16 @@ import type { TileDisplay } from "./tile-displays";
 type Dataset = NonNullable<ReturnType<typeof getManagedSiteDataset>>;
 type Metric = Dataset["metrics"][number];
 
-const colors = ["#08786d", "#6ca598", "#a9692b"];
-
 function day(value: string) {
-  return value.slice(8, 10) + "/" + value.slice(5, 7);
+  return formatDemoDate(value);
 }
 
 function format(value: number) {
   return value.toLocaleString("en-US");
 }
 
-function parts(dataset: Dataset) {
-  const values = dataset.rows.at(-1)?.values;
+function parts(dataset: Dataset, date?: string) {
+  const values = (date ? dataset.rows.find((row) => row.date === date) : dataset.rows.at(-1))?.values;
   if (!values) return [];
   switch (dataset.id) {
     case "attendance":
@@ -51,8 +52,8 @@ function parts(dataset: Dataset) {
       ];
     case "alarms":
       return [
-        { label: "Critical", value: values.critical },
-        { label: "Other alarms", value: values.raised - values.critical },
+        { label: "Unresolved critical", value: values.critical },
+        { label: "Other tracked incidents", value: values.raised - values.critical },
       ];
     default:
       return [];
@@ -66,6 +67,8 @@ export function TileVisualization({
   display,
   dataKey,
   cameraIds,
+  date,
+  miniature,
 }: {
   site: ManagedSite;
   dataset: Dataset;
@@ -73,9 +76,11 @@ export function TileVisualization({
   display: Exclude<TileDisplay, "summary">;
   dataKey: string;
   cameraIds?: readonly string[];
+  date?: string;
+  miniature?: boolean;
 }) {
   if (display === "cameras") {
-    const available = getCameraMonitoring(site)?.cameras ?? [];
+    const available = getCameraMonitoring(site, date)?.cameras ?? [];
     const cameras =
       dataKey === "cameras"
         ? (cameraIds?.flatMap((id) =>
@@ -94,14 +99,19 @@ export function TileVisualization({
             : "Selected camera feed"
         }
       >
-        {cameras.map(({ id, name, status, footage }, index) => (
+        {cameras.map(({ id, name, status, footage, changedAt }, index) => (
           <div
             key={id}
             className="tile-camera-preview"
             data-offline={status === "Offline"}
-            data-extra={!cameraIds && index > 0 && status !== "Offline"}
+            data-extra={index > 0}
+            data-beyond-medium={index > 1}
           >
             <strong title={name}>{name}</strong>
+            <span className="tile-status" data-tone={status === "Offline" ? "warning" : "ok"}>{status}</span>
+            {changedAt && <small className="camera-tile-updated">
+              Updated · {formatDemoDate(changedAt.slice(0, 10))} {changedAt.slice(11)}
+            </small>}
             {footage ? (
               <DemoCameraVideo
                 name={name}
@@ -109,42 +119,62 @@ export function TileVisualization({
                 className="tile-camera-video"
               />
             ) : (
-              <small>{status} · Feed unavailable</small>
+              <small>Feed unavailable</small>
             )}
           </div>
         ))}
+        {cameras.length > 1 && <p className="operational-hidden-count compact-count">+{cameras.length - 1} more cameras</p>}
+        {cameras.length > 2 && <p className="operational-hidden-count medium-count">+{cameras.length - 2} more cameras</p>}
       </div>
     );
   }
 
   if (display === "table" && dataKey === "records" && dataset.id !== "cctv") {
-    const records = getMonitoringRecords(site, dataset.id);
+    const records = getMonitoringRecords(site, dataset.id, date);
     if (!records?.rows.length)
       return <p className="system-tile-empty">No records available.</p>;
-    return (
-      <table className="tile-data-table tile-records">
-        <caption>{records.title}</caption>
-        <thead>
-          <tr>
-            {records.columns.map((column) => (
-              <th scope="col" key={column} title={column}>
-                {column}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {records.rows.map((row, index) => (
-            <tr key={row.join("|")} data-extra={index > 0}>
-              {row.map((value, index) => (
-                <td key={records.columns[index]} title={String(value)}>
-                  {value}
-                </td>
-              ))}
-            </tr>
+    if (dataset.id === "alarms") {
+      const event = records.columns.indexOf("Incident");
+      const severity = records.columns.indexOf("Severity");
+      const status = records.columns.indexOf("Status");
+      const changed = records.columns.indexOf("Last status change");
+      return (
+        <ol className="tile-recent-events" aria-label="Recent incident updates">
+          {records.rows.slice(0, 3).map((row, index) => (
+            <li key={String(row[event])} data-row-number={index + 1}>
+              <strong>{row[event]}</strong>
+              <span className="tile-status" data-tone={row[status] === "Open" ? "warning" : "ok"}>{row[status]}</span>
+              <small>{row[changed]} · {row[severity]}</small>
+            </li>
           ))}
-        </tbody>
-      </table>
+          {[1, 2, 3].map((shown) => records.rows.length > shown && (
+            <li key={shown} className="operational-hidden-count" data-after-rows={shown}>
+              +{records.rows.length - shown} more incidents
+            </li>
+          ))}
+        </ol>
+      );
+    }
+    return (
+      <div className="tile-record-scroll">
+        <table className="tile-data-table tile-records">
+          <caption>{records.title}{records.coverage === "sample" ? " · Sample records" : ""}</caption>
+          <thead>
+            <tr>{records.columns.map((column) => <th scope="col" key={column}>{column}</th>)}</tr>
+          </thead>
+          <tbody>
+            {records.rows.slice(0, 3).map((row, index) => (
+              <tr key={row.join("|")} data-row-number={index + 1}>
+                {row.map((value, index) => (
+                  <td key={records.columns[index]} data-number={typeof value === "number"}>
+                    {typeof value === "number" ? format(value) : value}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   }
 
@@ -168,14 +198,14 @@ export function TileVisualization({
           </thead>
           <tbody>
             {[...dataset.rows].reverse().map((row, index) => (
-              <tr key={row.date} data-extra={index > 0}>
+              <tr key={row.date} data-row-number={index + 1}>
                 <th scope="row">{day(row.date)}</th>
                 {[
                   metric,
                   ...dataset.metrics.filter((item) => item.key !== metric.key),
                 ].map(({ key }, index) => (
-                  <td key={key} data-secondary={index > 0}>
-                    {format(row.values[key])}
+                  <td key={key} data-secondary={index > 0} data-number="true">
+                    {Number.isFinite(row.values[key]) ? format(row.values[key]) : "No reading"}
                   </td>
                 ))}
               </tr>
@@ -185,71 +215,28 @@ export function TileVisualization({
       </div>
     );
 
-  if (display === "pie" || display === "bar") {
-    const segments = parts(dataset);
-    const total = segments.reduce((sum, segment) => sum + segment.value, 0);
-    if (!total) return <p className="system-tile-empty">No totals to chart.</p>;
-    if (display === "bar")
-      return (
-        <figure className="tile-chart" data-chart="bar">
-          <figcaption>Category breakdown</figcaption>
-          <div className="tile-chart-values">
-            {segments.map(({ label, value }) => (
-              <div className="tile-chart-column" key={label}>
-                <span className="tile-bar-track" aria-hidden="true">
-                  <span
-                    style={{
-                      height:
-                        (100 * value) /
-                          Math.max(...segments.map((item) => item.value)) +
-                        "%",
-                    }}
-                  />
-                </span>
-                <strong>{format(value)}</strong>
-                <small title={label}>{label}</small>
-              </div>
-            ))}
-          </div>
-        </figure>
-      );
-    const gradient = segments
-      .map(({ value }, index) => {
-        const before = segments
-          .slice(0, index)
-          .reduce((sum, segment) => sum + segment.value, 0);
-        const start = (100 * before) / total;
-        const end = (100 * (before + value)) / total;
-        return colors[index] + " " + start + "% " + end + "%";
-      })
-      .join(", ");
-    return (
-      <div className="tile-pie">
-        <div
-          aria-hidden="true"
-          style={{ background: "conic-gradient(" + gradient + ")" }}
-        />
-        <ul>
-          {segments.map(({ label, value }, index) => (
-            <li key={label} style={{ borderColor: colors[index] }}>
-              {label}: <strong>{format(value)}</strong>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
+  if (display === "pie" || (display === "bar" && dataKey === "breakdown")) {
+    const segments = parts(dataset, date);
+    const unit = chartUnit(dataset.id, "count");
+    if (display === "pie") return <TileDonut segments={segments} unit={unit} />;
+    return <TileChart type="bar" title="Category breakdown" unit={unit}
+      period={date ? formatDemoDate(date) : undefined}
+      series={["Count"]} groups={segments.map(({ label, value }) => ({
+        label, values: [Number.isFinite(value) ? value : null],
+      }))} />;
   }
 
   if (display === "candle") {
     const prices = getPortfolioPrices(site);
     if (!prices.length)
       return <p className="system-tile-empty">No price data available.</p>;
+    const latest = prices.at(-1)!;
     const min = Math.min(...prices.map(({ low }) => low));
     const max = Math.max(...prices.map(({ high }) => high));
     const pct = (value: number) => (100 * (value - min)) / (max - min || 1);
     return (
       <figure className="tile-chart" data-chart="candle">
-        <figcaption>Demo portfolio price (THB)</figcaption>
+        <figcaption>Portfolio close · {format(latest.close)} THB · {formatDemoPeriod()}</figcaption>
         <div className="tile-candles">
           {prices.map(({ date, open, high, low, close }) => (
             <div
@@ -296,47 +283,29 @@ export function TileVisualization({
     );
   }
 
-  const points = dataset.rows.map((row) => ({
-    date: row.date,
-    value: row.values[metric.key],
+  const financeComparison = dataKey === "finance-comparison";
+  const series = financeComparison ? ["Revenue", "Operating cost"] : [metric.label];
+  const keys = financeComparison ? ["revenue", "cost"] : [metric.key];
+  const groups = dataset.rows.map((row) => ({
+    label: day(row.date),
+    shortLabel: new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(row.date)),
+    values: keys.map((key) => Number.isFinite(row.values[key]) ? row.values[key] : null),
   }));
-  const max = Math.max(1, ...points.map(({ value }) => value));
-  const label =
-    metric.label + (metric.unit === "count" ? "" : " (" + metric.unit + ")");
-  return (
-    <figure className="tile-chart" data-chart="line">
-      <figcaption>{label}</figcaption>
-      {display === "line" && (
-        <svg
-          className="tile-line"
-          aria-hidden="true"
-          viewBox="0 0 100 50"
-          preserveAspectRatio="none"
-        >
-          <polyline
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            vectorEffect="non-scaling-stroke"
-            points={points
-              .map(
-                ({ value }, index) =>
-                  (100 * (index + 0.5)) / points.length +
-                  "," +
-                  (48 - (44 * value) / max),
-              )
-              .join(" ")}
-          />
-        </svg>
-      )}
-      <div className="tile-chart-values">
-        {points.map(({ date, value }) => (
-          <div className="tile-chart-column" key={date}>
-            <strong>{format(value)}</strong>
-            <small>{day(date)}</small>
-          </div>
-        ))}
-      </div>
-    </figure>
-  );
+
+  return <TileChart
+    type={display === "bar" ? "bar" : "line"}
+    title={financeComparison ? "Daily revenue and operating cost" : metric.label}
+    unit={chartUnit(dataset.id, metric.unit, metric.key)}
+    series={series}
+    groups={groups}
+    period={formatDemoPeriod()}
+    miniature={miniature}
+  />;
+}
+
+function chartUnit(system: Dataset["id"], unit: string, metric?: string) {
+  if (unit !== "count") return unit;
+  if (system === "parking") return metric === "vehicleEntries" ? "vehicles" : "spaces";
+  if (system === "alarms") return "incidents";
+  return "count";
 }

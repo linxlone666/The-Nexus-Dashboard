@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { profileActivity } from "@/utils/profile-activity";
+import { fontSizes, saveFontPreference, useFontPreference } from "@/utils/font-preferences";
 import { TopBar } from "@/components/TopBar";
 import { availableSites } from "@/data/management";
 import { useManagement } from "@/utils/management-store";
@@ -11,6 +13,8 @@ export default function ProfilePage() {
   const profile = useDemoProfile();
   const site = useSelectedWorkSite();
   const management = useManagement();
+  const fontSize = useFontPreference(profile?.email);
+  const account = management.accounts.find(({ email }) => email === profile?.email);
 
   if (profile === undefined)
     return (
@@ -29,6 +33,12 @@ export default function ProfilePage() {
   }
 
   const workSites = availableSites(management, profile);
+  const recentActivity = profileActivity(management.audit, profile, management.sites).slice(0, 10);
+  const activityTime = new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: management.settings.timeZone,
+  });
   const dashboardHref = workSites.some(({ id }) => id === site?.id)
     ? "/home"
     : "/login/sites?view=dashboard";
@@ -67,6 +77,8 @@ export default function ProfilePage() {
               <dt className="text-[#506769]">Role</dt>
               <dd className="font-semibold">{profile.role}</dd>
             </div>
+            <div><dt>Account status</dt><dd>{account?.active ? "Active" : "Inactive"}</dd></div>
+            <div><dt>Last sign-in</dt><dd>{account?.lastSignIn ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: management.settings.timeZone }).format(new Date(account.lastSignIn)) : "No sign-in recorded"}</dd></div>
             <div>
               <dt className="text-[#506769]">Selected site</dt>
               <dd className="font-semibold">
@@ -75,6 +87,21 @@ export default function ProfilePage() {
               </dd>
             </div>
           </dl>
+        </section>
+        <section className="rounded-xl border border-[#dce6e4] bg-white p-5">
+          <h2 className="mb-3 text-lg font-bold">Display preferences</h2>
+          <label>Text size{" "}
+            <select className="rounded border p-2" value={fontSize}
+              onChange={(event) => {
+                const size = fontSizes.find((item) => item === event.target.value);
+                if (size) saveFontPreference(profile.email, size);
+              }}>
+              <option value="small">Small</option>
+              <option value="standard">Standard</option>
+              <option value="large">Large</option>
+            </select>
+          </label>
+          <p className="mt-2 text-sm" lang="th">ตัวอย่างข้อความภาษาไทย</p>
         </section>
         <section
           className="rounded-xl border border-[#dce6e4] bg-white p-5"
@@ -100,6 +127,30 @@ export default function ProfilePage() {
               </li>
             ))}
           </ul>
+        </section>
+        <section
+          className="rounded-xl border border-[#dce6e4] bg-white p-5"
+          aria-labelledby="profile-activity-title"
+        >
+          <h2 className="text-lg font-bold" id="profile-activity-title">Recent activity</h2>
+          <p className="mt-1 text-sm text-[#506769]">
+            Account activity within your current site access · {management.settings.timeZone}
+          </p>
+          {recentActivity.length ? (
+            <ul className="mt-4 divide-y divide-[#dce6e4] text-sm">
+              {recentActivity.map((event) => (
+                <li key={event.id} className="grid gap-1 py-3">
+                  <strong>{event.action}</strong>
+                  <span className="break-words">{event.target}</span>
+                  <time className="text-[#506769]" dateTime={event.date}>
+                    {activityTime.format(new Date(event.date))}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm">No recent activity for this account within your current access.</p>
+          )}
         </section>
       </main>
     </div>

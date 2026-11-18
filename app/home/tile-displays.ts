@@ -63,13 +63,13 @@ export function tileSources(
       sources.push({
         key: "metric:" + metric.key,
         label: metric.label,
-        displays: dataset.rows.length > 1 ? ["summary", "line"] : ["summary"],
+        displays: dataset.rows.length > 1 ? ["summary", "line", "bar"] : ["summary"],
       });
     }
     sources.push({
       key: "history",
       label: "Daily readings",
-      displays: ["table", "line"],
+      displays: ["table", "line", "bar"],
     });
   }
   if (system !== "cctv" && getMonitoringRecords(site, system)?.rows.length) {
@@ -84,6 +84,13 @@ export function tileSources(
       key: "breakdown",
       label: "Category breakdown",
       displays: ["bar", "pie"],
+    });
+  }
+  if (system === "finance") {
+    sources.push({
+      key: "finance-comparison",
+      label: "Revenue and operating cost",
+      displays: ["bar"],
     });
   }
   if (system === "finance" && getPortfolioPrices(site).length) {

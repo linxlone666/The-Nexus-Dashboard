@@ -2,15 +2,17 @@
 
 import type { ManagedSite } from "@/data/management";
 import Link from "next/link";
-import { canAccessSite } from "@/data/management";
+import { availableSites, canAccessSite } from "@/data/management";
 import { getManagedSiteSystems } from "@/data/mock-system-data";
 import type { SystemId } from "@/data/mock-system-data";
 
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { TopBar } from "@/components/TopBar";
+import topBarStyles from "@/components/TopBar.module.css";
 import { managementLinks } from "@/components/management/navigation";
 import { useSidebarNavigation } from "@/utils/sidebar-state";
-import { useSelectedWorkSite } from "@/utils/selected-work-site";
+import { useManagement } from "@/utils/management-store";
+import { selectWorkSite, useSelectedWorkSite } from "@/utils/selected-work-site";
 import {
   addDashboard,
   dashboardScope,
@@ -21,7 +23,7 @@ import {
 import type { SavedDashboard } from "./saved-dashboards";
 import { DashboardGrid } from "./DashboardGrid";
 import { SystemTile } from "./SystemTile";
-import { MonitoringView } from "./MonitoringView";
+import { MonitoringLayout } from "./MonitoringLayout";
 import { useDemoProfile } from "@/utils/demo-session";
 import {
   defaultLayout,
@@ -35,7 +37,26 @@ import { useDashboardDevice } from "./dashboard-device";
 import { WorkspaceSearch } from "./WorkspaceSearch";
 import "./overview.css";
 
-type ViewMode = "edit-dashboard" | SystemId;
+function subscribeView(callback: () => void) {
+  window.addEventListener("hashchange", callback);
+  window.addEventListener("popstate", callback);
+  return () => {
+    window.removeEventListener("hashchange", callback);
+    window.removeEventListener("popstate", callback);
+  };
+}
+
+function readView() {
+  return window.location.hash;
+}
+
+function setCurrentView(view: "edit-dashboard" | SystemId, date?: string) {
+  const url = new URL(window.location.href);
+  url.hash = view === "edit-dashboard" ? "" : "system=" + view + (date ? "&date=" + date : "");
+  if (url.href === window.location.href) return;
+  window.history.replaceState(null, "", url);
+  window.dispatchEvent(new Event("hashchange"));
+}
 
 const monitoringIcons: Partial<Record<SystemId, string>> = {
   cctv: "camera",
@@ -92,7 +113,27 @@ function Workspace({
   const mobileMenuButton = useRef<HTMLButtonElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const toggleLabel = collapsed ? "Expand sidebar" : "Collapse sidebar";
-  const [currentView, setCurrentView] = useState<ViewMode>("edit-dashboard");
+  const viewHash = useSyncExternalStore(subscribeView, readView, () => "");
+  const viewParams = new URLSearchParams(viewHash.slice(1));
+  const currentView = viewParams.get("system") ?? "edit-dashboard";
+  const monitoringDate = viewParams.get("date") ?? undefined;
+  const management = useManagement();
+  const workSites = profile ? availableSites(management, profile) : [];
+
+  function changeSite(id: string) {
+    if (!workSites.some((item) => item.id === id)) return;
+    selectWorkSite(id);
+  }
+
+  const sitePicker = workSites.length ? (
+    <span className={topBarStyles.sitePicker}>
+      <select aria-label="Work site" title={site?.name} value={site?.id ?? ""}
+        onChange={(event) => changeSite(event.target.value)}>
+        {!site && <option value="" disabled>Choose site</option>}
+        {workSites.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+      </select>
+    </span>
+  ) : undefined;
   const [dashboardName, setDashboardName] = useState("");
   const [draftLayout, setDraftLayout] = useState(emptyLayout);
   const [dashboardError, setDashboardError] = useState("");
@@ -186,8 +227,8 @@ function Workspace({
     }
   }
 
-  function openMonitoring(id: SystemId) {
-    setCurrentView(id);
+  function openMonitoring(id: SystemId, date?: string) {
+    setCurrentView(id, date);
     setMobileMenuOpen(false);
     main.current?.scrollTo(0, 0);
     main.current?.focus({ preventScroll: true });
@@ -205,6 +246,7 @@ function Workspace({
           home="/home"
           workspace={{
             site: site?.name ?? "Choose site",
+            sitePicker,
             dashboard: addingDashboard
               ? dashboardName.trim() || "New dashboard"
               : (selectedDashboard?.name ?? "Workspace"),
@@ -295,12 +337,13 @@ function Workspace({
           {mobile && (
             <div className="mobile-workspace-account">
               <strong>{site?.name ?? "Workspace"}</strong>
+              {profile && <span className="mobile-profile-summary">{profile.name} · {profile.role}<br />{profile.email}</span>}
               <WorkspaceSearch
                 site={site}
                 systems={monitoringSystems}
                 onOpen={openMonitoring}
               />
-              <Link href="/login/sites?view=dashboard">Change site</Link>
+              {sitePicker ?? <Link href="/login/sites?view=dashboard">Choose site</Link>}
               <Link href="/profile">My profile</Link>
               {managementLinks(profile?.role).map(({ href, label }) => (
                 <Link key={href} href={href}>
@@ -338,7 +381,7 @@ function Workspace({
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
-                    <use href="/nexus-navigation.svg#grid" />
+                    <use href="/nexus-navigation.svg#sliders" />
                   </svg>
                   <span className="overview-nav-label overview-dashboard-link-label">
                     {name}
@@ -477,9 +520,22 @@ function Workspace({
           )}
         {currentView !== "edit-dashboard" &&
           (site && monitoredSystem ? (
-            <MonitoringView site={site} system={monitoredSystem} />
+            <MonitoringLayout
+              key={monitoredSystem.id + (monitoringDate ?? "")}
+              site={site}
+              system={monitoredSystem}
+              initialDate={monitoringDate}
+              scope={scope}
+              mobile={mobile}
+              onBack={() => {
+                setCurrentView("edit-dashboard");
+                main.current?.scrollTo(0, 0);
+                main.current?.focus({ preventScroll: true });
+              }}
+            />
           ) : (
             <section className="monitoring-history">
+              <button className="overview-secondary-button" type="button" onClick={() => setCurrentView("edit-dashboard")}>Back to Dashboard</button>
               <h1 className="overview-page-title">Monitoring</h1>
               <p className="overview-subtitle">
                 {site
@@ -660,6 +716,7 @@ function DashboardView({
             display={display}
             dataKey={dataKey}
             cameraIds={cameraIds}
+            preview={preview}
             onOpen={
               !preview && site && permitted.includes(tileSystem(kind))
                 ? () => onMonitor(tileSystem(kind))

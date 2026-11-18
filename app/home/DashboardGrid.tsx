@@ -105,6 +105,7 @@ export function DashboardGrid({
   const [preview, setPreview] = useState<{
     tile: TileId;
     layout: DashboardLayout;
+    resizing: boolean;
   } | null>(null);
   const [adding, setAdding] = useState(false);
   const [buildingWithAi, setBuildingWithAi] = useState(false);
@@ -176,6 +177,8 @@ export function DashboardGrid({
   const positions = placeTiles(layout);
   const previewPosition = preview && placeTiles(preview.layout)?.[preview.tile];
   const previewSize = preview?.layout.tiles[preview.tile];
+  const resizeLayout = preview?.resizing ? preview.layout : null;
+  const displayPositions = resizeLayout ? placeTiles(resizeLayout) ?? positions : positions;
 
   function closeSettings() {
     settingsDialog.current?.close();
@@ -255,7 +258,7 @@ export function DashboardGrid({
           column: start.position.column + offset.column,
           row: start.position.row + offset.row,
         });
-    return { tile: start.tile, layout: next };
+    return { tile: start.tile, layout: next, resizing: Boolean(start.edge) };
   }
 
   function clearDrag() {
@@ -277,7 +280,7 @@ export function DashboardGrid({
     onPointerMove(event: PointerEvent<HTMLButtonElement>) {
       const draft = draftFromPointer(event);
       setPreview(
-        draft?.layout ? { tile: draft.tile, layout: draft.layout } : null,
+        draft?.layout ? { ...draft, layout: draft.layout } : null,
       );
     },
     onPointerUp(event: PointerEvent<HTMLButtonElement>) {
@@ -812,10 +815,10 @@ export function DashboardGrid({
               />
             )}
             {tileOrder(layout).map((tile) => {
-              const size = layout.tiles[tile];
+              const size = resizeLayout?.tiles[tile] ?? layout.tiles[tile];
               const kind = tileKind(layout, tile);
               const title = tileTitle(layout, tile);
-              const position = positions[tile];
+              const position = displayPositions?.[tile] ?? positions[tile];
               return (
                 <section
                   key={tile}
@@ -825,6 +828,7 @@ export function DashboardGrid({
                     gridRow: `${position.row} / span ${size.rows}`,
                   }}
                   aria-label={title}
+                  data-saved-rows={size.rows}
                   data-dragging={preview?.tile === tile}
                 >
                   <div className="dashboard-grid-tile-content" inert={editing}>

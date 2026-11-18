@@ -1,3 +1,4 @@
+import { demoDates, formatDemoDate } from "@/data/demo-dates";
 import { Input } from "@/components/tailgrids/core/input";
 import type { ManagedSite } from "@/data/management";
 import {
@@ -14,7 +15,7 @@ export function WorkspaceSearch({
 }: {
   site?: ManagedSite;
   systems: readonly { id: SystemId; name: string }[];
-  onOpen: (id: SystemId) => void;
+  onOpen: (id: SystemId, date?: string) => void;
 }) {
   const listId = useId();
   const [query, setQuery] = useState("");
@@ -25,30 +26,33 @@ export function WorkspaceSearch({
   const matches = showing
     ? systems
         .flatMap(({ id, name }) => {
-          const cameras =
-            site && id === "cctv" ? getCameraMonitoring(site) : undefined;
-          const records =
-            site && id !== "cctv" ? getMonitoringRecords(site, id) : undefined;
-          const labels = new Set([
-            name,
-            ...(cameras?.cameras.map((camera) => camera.name) ?? []),
-            ...(cameras?.events.map((event) => event.name) ?? []),
-            ...(records?.rows
-              .map((row) => row[0])
-              .filter((value) => typeof value === "string") ?? []),
-          ]);
-          return [...labels]
-            .filter((label) => label.toLowerCase().includes(term))
-            .map((label) => ({ id, label, category: name }));
+          const matches = [{ id, label: name, category: name, date: undefined as string | undefined }];
+          if (site) {
+            for (const date of demoDates) {
+              const cameras = id === "cctv" ? getCameraMonitoring(site, date) : undefined;
+              const records = id !== "cctv" ? getMonitoringRecords(site, id, date) : undefined;
+              const labels = new Set([
+                ...(cameras?.cameras.map((camera) => camera.name + " · " + camera.status) ?? []),
+                ...(cameras?.events.map((event) => event.name + " · " + event.time + " · " + event.status) ?? []),
+                ...(records?.rows.map((row) => row.join(" · ")) ?? []),
+              ]);
+              for (const label of labels) {
+                matches.push({ id, label, category: name + " · " + formatDemoDate(date), date });
+              }
+            }
+          }
+          return matches.filter((match) =>
+            (match.label + " " + match.category).toLowerCase().includes(term),
+          );
         })
         .slice(0, 12)
     : [];
   const active = matches.length ? Math.min(highlight, matches.length - 1) : -1;
 
-  function select(id: SystemId) {
+  function select(id: SystemId, date?: string) {
     setOpen(false);
     setQuery("");
-    onOpen(id);
+    onOpen(id, date);
   }
 
   return (
@@ -82,7 +86,7 @@ export function WorkspaceSearch({
             }
           } else if (event.key === "Enter" && active >= 0) {
             event.preventDefault();
-            select(matches[active].id);
+            select(matches[active].id, matches[active].date);
           }
         }}
       />
@@ -94,14 +98,14 @@ export function WorkspaceSearch({
             aria-label="Search results"
             hidden={!matches.length}
           >
-            {matches.map(({ id, label, category }, index) => (
+            {matches.map(({ id, label, category, date }, index) => (
               <li
                 id={listId + "-" + index}
                 role="option"
                 aria-selected={index === active}
-                key={id + label}
+                key={id + date + label}
                 onPointerDown={(event) => event.preventDefault()}
-                onClick={() => select(id)}
+                onClick={() => select(id, date)}
               >
                 <strong>{label}</strong>
                 <small>{category}</small>

@@ -6,8 +6,8 @@ import { getCameraMonitoring } from "@/data/mock-monitoring-records";
 import type { ManagedSite } from "@/data/management";
 import { formatSystemDate } from "./SystemTile";
 
-export function CameraMonitoring({ site }: { site: ManagedSite }) {
-  const data = getCameraMonitoring(site);
+export function CameraMonitoring({ site, date }: { site: ManagedSite; date?: string }) {
+  const data = getCameraMonitoring(site, date);
   const [cameraId, setCameraId] = useState<string | null>(null);
   if (!data) return null;
 
@@ -51,6 +51,9 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
                 <span>
                   <strong>{camera.name}</strong>
                   <small>{camera.id}</small>
+                  {camera.changedAt && (
+                    <small>Last connection change · {formatSystemDate(camera.changedAt.slice(0, 10))} {camera.changedAt.slice(11)}</small>
+                  )}
                 </span>
                 <span
                   className="monitoring-camera-status"
@@ -84,13 +87,14 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
         </div>
         <p className="monitoring-record-date">
           <time dateTime={data.date}>{formatSystemDate(data.date)}</time> ·
-          Sample events
+          Complete demo event log for selected day
         </p>
         {events.length ? (
           <div className="monitoring-table-scroll">
             <table className="monitoring-records">
               <thead>
                 <tr>
+                  <th scope="col">Date</th>
                   <th scope="col">Time</th>
                   <th scope="col">Camera</th>
                   <th scope="col">Event</th>
@@ -100,6 +104,7 @@ export function CameraMonitoring({ site }: { site: ManagedSite }) {
               <tbody>
                 {events.map((event) => (
                   <tr key={event.time + event.cameraId}>
+                    <td>{formatSystemDate(event.date)}</td>
                     <td>{event.time}</td>
                     <td>
                       {

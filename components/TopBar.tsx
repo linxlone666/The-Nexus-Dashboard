@@ -12,7 +12,7 @@ type TopBarProps = {
   searchLabel: string;
   searchPlaceholder: string;
   search?: ReactNode;
-  workspace?: { site: string; dashboard: string };
+  workspace?: { site: string; dashboard: string; sitePicker?: ReactNode };
 };
 
 export function TopBar({
@@ -33,13 +33,13 @@ export function TopBar({
         </Link>
         {workspace && (
           <div className={styles.workspace}>
-            <Link
+            {workspace.sitePicker ?? <Link
               href="/login/sites?view=dashboard"
               className={styles.siteLink}
               title="Change work site"
             >
               {workspace.site}
-            </Link>
+            </Link>}
             <span aria-hidden="true"> | </span>
             <span className={styles.dashboardName} title={workspace.dashboard}>
               {workspace.dashboard}

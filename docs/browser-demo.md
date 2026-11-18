@@ -10,7 +10,7 @@ Audit Logs show recent management mutations recorded in this browser. Each site 
 
 ## Dashboard devices
 
-Home renders after device classification in the browser. Android and iOS phones and tablets use the mobile view, including iPad Safari with a desktop-style user agent and multitouch. Windows touch laptops use the desktop editor. Narrowing a desktop window keeps the desktop editor and its responsive layout.
+Home renders after device classification in the browser. Phone user agents such as iPhone and Android Mobile use the view-only dashboard with the floating menu. Tablets, including iPad, and touch laptops use the desktop shell. Narrowing a desktop window keeps its responsive desktop layout. The separate Mobile UI demo uses the same phone check.
 
 Mobile displays the most recently saved dashboard for the signed-in account and selected site in this browser. Older saves without a timestamp use the first eligible dashboard in stored order. Mobile does not edit or rewrite layouts. Desktop and phone browsers on separate devices need shared persistence to sync.
 

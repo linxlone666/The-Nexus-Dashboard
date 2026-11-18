@@ -3,8 +3,7 @@ import { useSyncExternalStore } from "react";
 export function isMobileDashboard() {
   const agent = navigator.userAgent;
   return (
-    /Android|iPhone|iPad|iPod|Windows Phone/i.test(agent) ||
-    (/Macintosh/i.test(agent) && navigator.maxTouchPoints > 1)
+    /iPhone|iPod|Windows Phone/i.test(agent) || /Android.*Mobile/i.test(agent)
   );
 }
 

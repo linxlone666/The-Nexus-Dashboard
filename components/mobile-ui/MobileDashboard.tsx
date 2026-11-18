@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BottomNavigation from "./BottomNavigation";
+import { PhonePreview } from "./PhonePreview";
 import "./mobile-preview.css";
 
 type Screen = "overview" | "activity" | "alarms" | "cctv";
@@ -241,19 +242,21 @@ function Cctv() {
 
 export default function MobileDashboard({ screen }: { screen: Screen }) {
   return (
-    <main className="mobile-ui-preview">
-      <div className={`mobile-app app-${screen}`}>
-        {screen !== "overview" && (
-          <h1 className="mobile-preview-heading">{screens[screen].title}</h1>
-        )}
-        <div className={`screen-content screen-${screen}`}>
-          {screen === "overview" && <Overview />}
-          {screen === "activity" && <Activity />}
-          {screen === "alarms" && <Alarms />}
-          {screen === "cctv" && <Cctv />}
+    <PhonePreview>
+      <main className="mobile-ui-preview">
+        <div className={`mobile-app app-${screen}`}>
+          {screen !== "overview" && (
+            <h1 className="mobile-preview-heading">{screens[screen].title}</h1>
+          )}
+          <div className={`screen-content screen-${screen}`}>
+            {screen === "overview" && <Overview />}
+            {screen === "activity" && <Activity />}
+            {screen === "alarms" && <Alarms />}
+            {screen === "cctv" && <Cctv />}
+          </div>
+          <BottomNavigation />
         </div>
-        <BottomNavigation />
-      </div>
-    </main>
+      </main>
+    </PhonePreview>
   );
 }

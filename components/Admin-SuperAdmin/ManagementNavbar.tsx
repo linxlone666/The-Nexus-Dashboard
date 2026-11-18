@@ -1,7 +1,9 @@
 "use client";
 
 import { TopBar } from "@/components/TopBar";
+import { managementLinks } from "@/components/management/navigation";
 import Link from "next/link";
+import { canAccessSite } from "@/data/management";
 import { usePathname } from "next/navigation";
 import { useId } from "react";
 import type { ReactNode } from "react";
@@ -9,39 +11,6 @@ import { useSidebarNavigation } from "@/utils/sidebar-state";
 import { useDemoProfile } from "@/utils/demo-session";
 import { useSelectedWorkSite } from "@/utils/selected-work-site";
 import styles from "./ManagementNavbar.module.css";
-
-const navigation = [
-  {
-    label: "Overview",
-    icon: "management-home",
-    Admin: "/admin",
-    Superadmin: "/superadmin",
-  },
-  {
-    label: "Users",
-    icon: "management-users",
-    Admin: "/admin/users",
-    Superadmin: "/superadmin/users",
-  },
-  {
-    label: "Sites",
-    icon: "management-projects",
-    Admin: "/admin/projects",
-    Superadmin: "/superadmin/sites",
-  },
-  {
-    label: "Audit Logs",
-    icon: "management-audit",
-    Admin: "/admin/audit-logs",
-    Superadmin: "/superadmin/audit-logs",
-  },
-  {
-    label: "Settings",
-    icon: "management-settings",
-    Admin: null,
-    Superadmin: "/superadmin/settings",
-  },
-];
 
 type ManagementNavbarProps = {
   role: "Admin" | "Superadmin";
@@ -68,9 +37,7 @@ export function ManagementNavbar({ role, children }: ManagementNavbarProps) {
   const profile = useDemoProfile();
   const site = useSelectedWorkSite();
   const dashboardHref =
-    site &&
-    profile &&
-    (profile.role === "Superadmin" || profile.siteIds.includes(site.id))
+    site && profile && canAccessSite(site, profile)
       ? "/home"
       : "/login/sites?view=dashboard";
   const pathname = usePathname();
@@ -120,29 +87,20 @@ export function ManagementNavbar({ role, children }: ManagementNavbarProps) {
               <span className={styles.sidebarLabel}>Site dashboard</span>
             </Link>
           )}
-          {navigation.map((item) => {
-            const href = item[role];
-            const content = (
-              <>
-                <Icon name={item.icon} />
-                <span className={styles.sidebarLabel}>{item.label}</span>
-              </>
-            );
-
-            if (!href) return null;
-
-            return (
+          {managementLinks(profile?.role === role ? role : undefined).map(
+            ({ href, icon, label }) => (
               <Link
-                key={item.label}
+                key={href}
                 href={href}
-                aria-label={item.label}
-                title={collapsed ? item.label : undefined}
+                aria-label={label}
+                title={collapsed ? label : undefined}
                 aria-current={pathname === href ? "page" : undefined}
               >
-                {content}
+                <Icon name={icon} />
+                <span className={styles.sidebarLabel}>{label}</span>
               </Link>
-            );
-          })}
+            ),
+          )}
         </nav>
       </aside>
 

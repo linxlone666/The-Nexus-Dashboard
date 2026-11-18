@@ -2,11 +2,13 @@
 
 import type { ManagedSite } from "@/data/management";
 import Link from "next/link";
+import { canAccessSite } from "@/data/management";
 import { getManagedSiteSystems } from "@/data/mock-system-data";
 import type { SystemId } from "@/data/mock-system-data";
 
 import { useId, useRef, useState } from "react";
 import { TopBar } from "@/components/TopBar";
+import { managementLinks } from "@/components/management/navigation";
 import { useSidebarNavigation } from "@/utils/sidebar-state";
 import { useSelectedWorkSite } from "@/utils/selected-work-site";
 import {
@@ -57,9 +59,7 @@ export default function NexusDashboardPage() {
       </main>
     );
   const site =
-    profile &&
-    selectedSite &&
-    (profile.role === "Superadmin" || profile.siteIds.includes(selectedSite.id))
+    profile && selectedSite && canAccessSite(selectedSite, profile)
       ? selectedSite
       : undefined;
   const scope = profile && site ? dashboardScope(profile.email, site.id) : "";
@@ -302,10 +302,11 @@ function Workspace({
               />
               <Link href="/login/sites?view=dashboard">Change site</Link>
               <Link href="/profile">My profile</Link>
-              {profile?.role === "Admin" && <Link href="/admin">Admin</Link>}
-              {profile?.role === "Superadmin" && (
-                <Link href="/superadmin">Superadmin</Link>
-              )}
+              {managementLinks(profile?.role).map(({ href, label }) => (
+                <Link key={href} href={href}>
+                  {label}
+                </Link>
+              ))}
             </div>
           )}
           <div

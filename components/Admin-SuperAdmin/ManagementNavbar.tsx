@@ -56,8 +56,6 @@ export function ManagementNavbar({ role, children }: ManagementNavbarProps) {
         name={profile?.name ?? role}
         initials=""
         roleLabel={role}
-        searchLabel="Search management"
-        searchPlaceholder={"Search users and sites..."}
       />
 
       <aside className={styles.sidebar} {...railProps}>

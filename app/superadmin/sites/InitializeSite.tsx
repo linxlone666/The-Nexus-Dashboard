@@ -122,7 +122,7 @@ export function InitializeSite({
     }
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (step === 0 && (!name.trim() || !location.trim())) {
       setError("Enter a site name and location.");
@@ -155,7 +155,7 @@ export function InitializeSite({
     submitting.current = true;
     try {
       const id = crypto.randomUUID();
-      saveSite({
+      await saveSite({
         id,
         setupStatus: source === "sample" ? "ready" : "onboarding",
         name,

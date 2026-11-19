@@ -236,18 +236,18 @@ export function SiteDirectory({ admin = false }: { admin?: boolean }) {
               <form
                 key={site.id + site.name + site.location + site.active}
                 className="superadmin-form directory-site-form"
-                onSubmit={(event) => {
+                onSubmit={async (event) => {
                   event.preventDefault();
                   const fields = new FormData(event.currentTarget);
                   try {
                     if (admin) {
-                      saveSitePreferences(
+                      await saveSitePreferences(
                         site.id,
                         String(fields.get("name") ?? ""),
                         String(fields.get("timeZone") ?? ""),
                       );
                     } else
-                      saveSite({
+                      await saveSite({
                         ...site,
                         name: String(fields.get("name") ?? ""),
                         location: String(fields.get("location") ?? ""),
@@ -345,10 +345,10 @@ export function SiteDirectory({ admin = false }: { admin?: boolean }) {
               {!admin && confirmation?.id === site.id && (
                 <form
                   className="superadmin-form directory-site-form"
-                  onSubmit={(event) => {
+                  onSubmit={async (event) => {
                     event.preventDefault();
                     try {
-                      removeSite(site.id, confirmation.value);
+                      await removeSite(site.id, confirmation.value);
                       selectSite();
                       setMessage(site.name + " was removed.");
                     } catch (error) {

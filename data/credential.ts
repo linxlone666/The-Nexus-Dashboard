@@ -1,4 +1,4 @@
-import { readManagement } from "@/utils/management-store";
+import { loginManagement, readManagement } from "@/utils/management-store";
 
 export type Credential = { token: string; email: string };
 
@@ -6,17 +6,7 @@ export async function login(
   email: string,
   password: string,
 ): Promise<Credential> {
-  const account = readManagement().accounts.find(
-    (item) => item.email === email,
-  );
-
-  if (!account || !account.active || account.password !== password) {
-    throw new Error(
-      "Email or password is incorrect, or the account is inactive.",
-    );
-  }
-
-  return { token: crypto.randomUUID(), email: account.email };
+  return loginManagement(email, password);
 }
 
 export function getDemoProfile(email: string) {

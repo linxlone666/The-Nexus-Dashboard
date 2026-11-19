@@ -61,7 +61,7 @@ export function tileName(kind: TileKind) {
 }
 
 export const defaultLayout: DashboardLayout = {
-  rows: 2,
+  rows: 4,
   columns: 4,
   tiles: {
     cameras: { rows: 2, columns: 2 },
@@ -70,7 +70,7 @@ export const defaultLayout: DashboardLayout = {
   },
 };
 
-export const emptyLayout: DashboardLayout = { rows: 2, columns: 4, tiles: {} };
+export const emptyLayout: DashboardLayout = { rows: 4, columns: 4, tiles: {} };
 
 export const gridColumns = [1, 2, 3, 4];
 export const gridSizes = [1, 2, 3, 4, 5, 6, 7, 8];

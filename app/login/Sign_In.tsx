@@ -56,13 +56,6 @@ function DemoSignIn() {
         return;
       }
 
-      // Sample outcomes are only rolled after the demo credentials pass.
-      const roll = Math.random();
-      if (roll < 0.25) {
-        setFailure(roll < 0.15 ? "expired" : "unavailable");
-        return;
-      }
-
       saveDemoSession(credential);
       router.replace(
         getDemoProfile(credential.email)?.role === "Superadmin"

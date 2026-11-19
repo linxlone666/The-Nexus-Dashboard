@@ -19,10 +19,10 @@ export default function SettingsPage() {
         <h2>Display preferences</h2>
         <form
           className="superadmin-form"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             try {
-              saveSettings(values);
+              await saveSettings(values);
               setDraft({});
               setMessage("Preferences saved.");
             } catch (error) {

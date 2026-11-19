@@ -34,7 +34,6 @@ import {
 } from "./dashboard-layout";
 import type { DashboardLayout } from "./dashboard-layout";
 import { useDashboardDevice } from "./dashboard-device";
-import { WorkspaceSearch } from "./WorkspaceSearch";
 import "./overview.css";
 
 function subscribeView(callback: () => void) {
@@ -261,15 +260,6 @@ function Workspace({
               .toUpperCase() || "U"
           }
           roleLabel={profile?.role ?? "User"}
-          search={
-            <WorkspaceSearch
-              site={site}
-              systems={monitoringSystems}
-              onOpen={openMonitoring}
-            />
-          }
-          searchLabel="Search devices and events"
-          searchPlaceholder="Search devices and events"
         />
       )}
 
@@ -338,11 +328,6 @@ function Workspace({
             <div className="mobile-workspace-account">
               <strong>{site?.name ?? "Workspace"}</strong>
               {profile && <span className="mobile-profile-summary">{profile.name} · {profile.role}<br />{profile.email}</span>}
-              <WorkspaceSearch
-                site={site}
-                systems={monitoringSystems}
-                onOpen={openMonitoring}
-              />
               {sitePicker ?? <Link href="/login/sites?view=dashboard">Choose site</Link>}
               <Link href="/profile">My profile</Link>
               {managementLinks(profile?.role).map(({ href, label }) => (

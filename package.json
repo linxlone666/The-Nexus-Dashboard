@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint", "test:demo": "node --test tests/demo-management.test.mjs"
   },
   "dependencies": {
     "@tailgrids/icons": "^2.0.1",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SharedDemoData } from "@/components/management/SharedDemoData";
 import { ApplyFontPreference } from "@/utils/font-preferences";
 
 const geistSans = Geist({
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><ApplyFontPreference />{children}</body>
+      <body className="min-h-full flex flex-col"><ApplyFontPreference /><SharedDemoData>{children}</SharedDemoData></body>
     </html>
   );
 }

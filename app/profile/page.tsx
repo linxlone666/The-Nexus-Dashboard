@@ -49,8 +49,6 @@ export default function ProfilePage() {
         name={profile.name}
         initials=""
         roleLabel={profile.role}
-        searchLabel="Search profile"
-        searchPlaceholder="Search"
       />
       <main className="mx-auto max-w-4xl space-y-5 p-5 sm:p-8">
         <Link href={dashboardHref} className="text-sm text-teal-800 underline">

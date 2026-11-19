@@ -237,3 +237,11 @@ Preview URL. The account and selected site are stored per tab in
 `sessionStorage`. Demo permissions, audit logs, and layouts use
 `localStorage` and are shared only on the same origin within the same browser
 profile. A second browser profile or device can sign in independently.
+
+## Shared multi-account demo
+
+Management accounts, sites, access permissions, settings, and audit history are now stored on the Node.js demo server. Each tab keeps its own login in session storage, so normal and incognito browsers can sign in as different accounts. Open browsers sync shared management data every second and when focused.
+
+Run one server with `npm run dev` and use the same URL in both browsers. Sign in as `superadmin@company.com` / `pass` to add an account, then use the new account's email and password in incognito. An Admin signed in in the other browser will see the new user without refreshing. Signing out in one browser leaves the other signed in.
+
+Data and sessions persist across server restarts in `.nexus-demo/management.json` (ignored by Git). Browser-local management records from older versions are not automatically imported. Set `NEXUS_DEMO_DATA_FILE` to use another persistent path. For a production build used as a demo, set `NEXT_PUBLIC_NEXUS_DEMO=true` at build and runtime. This file-backed demo supports one Node.js server with persistent storage; serverless or multiple replicas need a shared database. Passwords remain demo-only data and are excluded from API read responses. Dashboard layouts and other personal browser preferences remain browser-local.

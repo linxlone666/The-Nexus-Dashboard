@@ -7,6 +7,7 @@ import { saveDemoSession, readDemoProfile, signOutDemoSession } from "@/utils/de
 import { selectWorkSite } from "@/utils/selected-work-site";
 import { availableSites } from "@/data/management";
 import Reset from "./Reset_Password";
+import { login } from "@/data/credential";
 
 const emails = {
   user: "user@company.com",
@@ -24,7 +25,7 @@ export default function DemoEntry({ children }: { children: ReactNode }) {
 function OpenDemo({ email }: { email: string }) {
   const [status, setStatus] = useState<"opening" | "reset" | "error">("opening");
   useEffect(() => {
-    const task = window.setTimeout(() => {
+    const task = window.setTimeout(async () => {
       const account = readManagement().accounts.find((item) => item.email === email && item.active);
       if (!account) {
         setStatus("error");
@@ -36,7 +37,7 @@ function OpenDemo({ email }: { email: string }) {
           setStatus("reset");
           return;
         }
-        openDemo(email);
+        await openDemo(email);
       } catch {
         setStatus("error");
       }
@@ -48,10 +49,10 @@ function OpenDemo({ email }: { email: string }) {
     return (
       <Reset
         firstLoginEmail={email}
-        onComplete={() => {
+        onComplete={async () => {
           try {
             localStorage.setItem(passwordSetupKey(email), "complete");
-            openDemo(email);
+            await openDemo(email);
           } catch {
             setStatus("error");
           }
@@ -75,8 +76,8 @@ export function needsFirstPassword(email: string) {
   return email === emails["first-login"] && !localStorage.getItem(passwordSetupKey(email));
 }
 
-function openDemo(email: string) {
-  if (readDemoProfile()?.email !== email) saveDemoSession({ email, token: crypto.randomUUID() });
+async function openDemo(email: string) {
+  if (readDemoProfile()?.email !== email) saveDemoSession(await login(email, "pass"));
   const profile = readDemoProfile();
   if (!profile) return;
   const site = availableSites(readManagement(), profile)[0];

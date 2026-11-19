@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Input } from "@/components/tailgrids/core/input";
 import { ProfileMenu } from "./ProfileMenu";
 import styles from "./TopBar.module.css";
 
@@ -9,9 +8,6 @@ type TopBarProps = {
   name: string;
   initials: string;
   roleLabel: string;
-  searchLabel: string;
-  searchPlaceholder: string;
-  search?: ReactNode;
   workspace?: { site: string; dashboard: string; sitePicker?: ReactNode };
 };
 
@@ -20,9 +16,6 @@ export function TopBar({
   name,
   initials,
   roleLabel,
-  searchLabel,
-  searchPlaceholder,
-  search,
   workspace,
 }: TopBarProps) {
   return (
@@ -48,15 +41,6 @@ export function TopBar({
         )}
       </div>
       <div className={styles.headerActions}>
-        {search ?? (
-          <Input
-            className={styles.headerSearch}
-            type="search"
-            aria-label={searchLabel}
-            placeholder={searchPlaceholder}
-            disabled
-          />
-        )}
         <svg
           className={styles.icon}
           width="16"

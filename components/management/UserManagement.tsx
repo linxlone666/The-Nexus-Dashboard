@@ -436,9 +436,10 @@ export function UserManagement({
               key={account?.email ?? "new"}
               noValidate
               className="superadmin-form"
-              onSubmit={(event) => {
+              onSubmit={async (event) => {
                 event.preventDefault();
-                const fields = new FormData(event.currentTarget);
+                const form = event.currentTarget;
+                const fields = new FormData(form);
                 const value = (key: string) => String(fields.get(key) ?? "");
                 const siteIds = fields.getAll("site").map(String);
                 const systemsBySite = Object.fromEntries(
@@ -458,7 +459,7 @@ export function UserManagement({
                 );
                 if (admin && account) {
                   try {
-                    saveStandardUserAccess(
+                    await saveStandardUserAccess(
                       account.email,
                       siteIds,
                       systemsBySite,
@@ -484,9 +485,9 @@ export function UserManagement({
                 };
 
                 try {
-                  saveAccount(input, account?.email);
+                  await saveAccount(input, account?.email);
                   if (!account) setPanel(input.email.trim().toLowerCase());
-                  const password = event.currentTarget.elements.namedItem(
+                  const password = form.elements.namedItem(
                     "password",
                   ) as HTMLInputElement | null;
                   if (password) password.value = "";

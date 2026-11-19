@@ -25,12 +25,6 @@ const navigation = [
     Admin: "/admin/audit-logs",
     Superadmin: "/superadmin/audit-logs",
   },
-  {
-    label: "Settings",
-    icon: "management-settings",
-    Admin: null,
-    Superadmin: "/superadmin/settings",
-  },
 ];
 
 export function managementLinks(role?: ManagementRole) {

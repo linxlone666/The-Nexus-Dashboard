@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { getDemoProfile } from "@/data/credential";
 import type { Credential } from "@/data/credential";
 import { clearWorkSite } from "./selected-work-site";
-import { recordSignIn, subscribeManagement } from "./management-store";
+import { managementRequest, demoCredential, subscribeManagement } from "./management-store";
 
 const storageKey = "credential";
 const changedEvent = "nexus-credential-changed";
@@ -75,11 +75,12 @@ export function saveDemoSession(credential: Credential) {
   if (!demoEnabled) throw new Error("Demo sign-in is disabled.");
   clearWorkSite();
   sessionStorage.setItem(storageKey, JSON.stringify(credential));
-  recordSignIn(credential.email);
   window.dispatchEvent(new Event(changedEvent));
 }
 
 export function signOutDemoSession() {
+  const token = demoCredential()?.token;
+  if (token) void managementRequest({ action: "logout" }, token).catch(() => {});
   sessionStorage.removeItem(storageKey);
   window.dispatchEvent(new Event(changedEvent));
   clearWorkSite();
